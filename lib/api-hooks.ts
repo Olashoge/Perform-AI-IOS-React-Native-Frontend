@@ -172,18 +172,12 @@ export function useToggleCompletion() {
     mutationFn: async ({ type, id, completed, date }: { type: "meal" | "workout"; id: string; completed: boolean; date: string }) => {
       if (!id || id === "undefined" || id === "null") {
         console.warn("Missing id for patch:", { type, id, date });
-        return { id, completed, _date: date, _type: type, _id: id, _completed: completed };
+        throw new Error(`Missing id for ${type} toggle`);
       }
       const url = `/api/${type}s/${id}`;
-      try {
-        const response = await apiClient.patch(url, { completed });
-        logApiCall("PATCH", url, response.status);
-        return { ...response.data, _date: date, _type: type, _id: id, _completed: completed };
-      } catch (err: any) {
-        logApiCall("PATCH", url, err.response?.status ?? "ERR");
-        console.log("[Toggle] PATCH", url, "->", err.response?.status ?? err.message);
-        return { id, completed, _date: date, _type: type, _id: id, _completed: completed };
-      }
+      const response = await apiClient.patch(url, { completed });
+      logApiCall("PATCH", url, response.status);
+      return { ...response.data, _date: date, _type: type, _id: id, _completed: completed };
     },
     onMutate: async ({ type, id, completed, date }) => {
       await queryClient.cancelQueries({ queryKey: ["day-data", date] });
