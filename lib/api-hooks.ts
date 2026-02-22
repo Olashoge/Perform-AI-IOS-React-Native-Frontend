@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import apiClient from "./api-client";
+import apiClient, { getAccessToken } from "./api-client";
 import { logApiCall } from "./api-log";
 import { getWeekStartUTC, getWeekEndUTC, computeWeekStartForDate } from "./week-utils";
 
@@ -83,11 +83,17 @@ export function useWeeklySummary() {
     queryKey: ["weekly-summary"],
     queryFn: async () => {
       const url = "/api/weekly-summary";
+      const fullUrl = (apiClient.defaults.baseURL || "") + url;
+      const token = await getAccessToken();
+      console.log("POST-LOGIN FETCH =>", { url: fullUrl, hasToken: !!token, date: new Date().toISOString() });
       try {
         const response = await apiClient.get(url);
+        console.log("POST-LOGIN FETCH RESULT =>", { status: response.status, ok: response.status >= 200 && response.status < 300 });
+        console.log("POST-LOGIN FETCH DATA KEYS =>", Object.keys(response.data || {}));
         logApiCall("GET", url, response.status);
         return response.data;
       } catch (err: any) {
+        console.log("POST-LOGIN FETCH RESULT =>", { status: err.response?.status ?? "NETWORK_ERROR", ok: false });
         logApiCall("GET", url, err.response?.status ?? "ERR");
         console.log("[Dashboard] GET", url, "->", err.response?.status ?? err.message);
         const ws = getWeekStartUTC();
