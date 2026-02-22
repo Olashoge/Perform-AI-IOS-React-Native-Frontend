@@ -76,7 +76,16 @@ export function useWeekData(weekStart?: string) {
       try {
         const response = await apiClient.get(url);
         logApiCall("GET", url, response.status);
-        return response.data;
+        const responseData = response.data;
+        console.log("Calendar API raw response:", responseData);
+        console.log("Is weekData array:", Array.isArray(responseData?.weekData));
+        const raw = responseData?.weekData ?? responseData?.days ?? responseData;
+        const normalized: DayData[] = Array.isArray(raw)
+          ? raw
+          : Array.isArray(raw?.days)
+            ? raw.days
+            : [];
+        return normalized;
       } catch (err: any) {
         logApiCall("GET", url, err.response?.status ?? "ERR");
         console.log("[Calendar] GET", url, "->", err.response?.status ?? err.message);

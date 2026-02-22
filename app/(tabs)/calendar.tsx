@@ -98,6 +98,7 @@ export default function CalendarScreen() {
   const [weekOffset, setWeekOffset] = useState(0);
   const weekStart = useMemo(() => getWeekStartUTC(weekOffset), [weekOffset]);
   const { data: weekData, isLoading } = useWeekData(weekStart);
+  const safeWeekData = Array.isArray(weekData) ? weekData : [];
   const webTopInset = Platform.OS === "web" ? 67 : 0;
 
   const today = new Date().toISOString().split("T")[0];
@@ -172,7 +173,7 @@ export default function CalendarScreen() {
         </View>
       ) : (
         <View style={styles.daysList}>
-          {(weekData || []).map((day) => (
+          {safeWeekData.map((day) => (
             <DayCard key={day.date} day={day} isToday={day.date === today} />
           ))}
         </View>
