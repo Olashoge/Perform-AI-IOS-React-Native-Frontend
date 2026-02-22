@@ -114,7 +114,7 @@ export default function DailyDetailScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const newCompleted = !(localToggles[id] !== undefined ? localToggles[id] : currentCompleted);
     setLocalToggles((prev) => ({ ...prev, [id]: newCompleted }));
-    toggleMutation.mutate({ type, id, completed: newCompleted });
+    toggleMutation.mutate({ type, id, completed: newCompleted, date: date || "" });
   }
 
   function getItemCompleted(id: string, originalCompleted: boolean): boolean {

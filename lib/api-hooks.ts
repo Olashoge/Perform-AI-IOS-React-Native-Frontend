@@ -107,24 +107,75 @@ export function useToggleCompletion() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ type, id, completed }: { type: "meal" | "workout"; id: string; completed: boolean }) => {
+    mutationFn: async ({ type, id, completed, date }: { type: "meal" | "workout"; id: string; completed: boolean; date: string }) => {
       const url = `/api/${type}s/${id}`;
       try {
         const response = await apiClient.patch(url, { completed });
         logApiCall("PATCH", url, response.status);
-        return response.data;
+        return { ...response.data, _date: date, _type: type, _id: id, _completed: completed };
       } catch (err: any) {
         logApiCall("PATCH", url, err.response?.status ?? "ERR");
         console.log("[Toggle] PATCH", url, "->", err.response?.status ?? err.message);
-        return { id, completed };
+        return { id, completed, _date: date, _type: type, _id: id, _completed: completed };
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["day-data"] });
-      queryClient.invalidateQueries({ queryKey: ["week-data"] });
+    onMutate: async ({ type, id, completed, date }) => {
+      await queryClient.cancelQueries({ queryKey: ["day-data", date] });
+
+      const previousDayData = queryClient.getQueryData<DayData>(["day-data", date]);
+
+      if (previousDayData) {
+        const updated: DayData = {
+          ...previousDayData,
+          meals: previousDayData.meals.map((m) =>
+            type === "meal" && m.id === id ? { ...m, completed } : m
+          ),
+          workouts: previousDayData.workouts.map((w) =>
+            type === "workout" && w.id === id ? { ...w, completed } : w
+          ),
+        };
+        const allItems = [...updated.meals, ...updated.workouts];
+        const total = allItems.length;
+        const done = allItems.filter((i) => i.completed).length;
+        updated.score = total > 0 ? Math.round((done / total) * 100) : 0;
+
+        queryClient.setQueryData<DayData>(["day-data", date], updated);
+      }
+
+      return { previousDayData };
+    },
+    onSuccess: (_data, variables) => {
+      const { date } = variables;
+      const weekStart = computeWeekStart(date);
+
+      console.log("[Toggle] onSuccess:", {
+        date,
+        weekStart,
+        invalidating: [
+          `["day-data", "${date}"]`,
+          `["week-data", "${weekStart}"]`,
+          `["weekly-summary"]`,
+        ],
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["day-data", date] });
+      queryClient.invalidateQueries({ queryKey: ["week-data", weekStart] });
       queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
     },
+    onError: (_err, variables, context) => {
+      if (context?.previousDayData) {
+        queryClient.setQueryData(["day-data", variables.date], context.previousDayData);
+      }
+    },
   });
+}
+
+function computeWeekStart(dateStr: string): string {
+  const d = new Date(dateStr + "T12:00:00");
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  return d.toISOString().split("T")[0];
 }
 
 function getWeekStart(): string {
