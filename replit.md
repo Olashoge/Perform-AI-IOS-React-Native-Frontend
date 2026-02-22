@@ -67,9 +67,20 @@ Toggle mutations use optimistic updates on day-data, then invalidate:
 - Font: Inter (Google Fonts)
 - iOS 26 liquid glass tab bar support
 
+## Week Computation
+- All week boundaries use ISO 8601: Monday-based, UTC
+- Shared utility: `lib/week-utils.ts` (getWeekStartUTC, getWeekEndUTC, computeWeekStartForDate)
+- Server-side equivalent in `server/routes.ts` (getWeekStartISO, getWeekEndISO)
+- Both client and server use UTC to avoid timezone-dependent discrepancies
+
 ## Recent Changes
 - 2026-02-22: Initial build - Auth flow, Dashboard, Calendar, Daily Detail, Profile screens
 - 2026-02-22: Added diagnostics screen and API call logging
 - 2026-02-22: Fixed React Query cache invalidation with optimistic updates
 - 2026-02-22: Implemented local Express API routes (weekly-summary, week-data, day-data, completions)
 - 2026-02-22: Split API clients - auth goes to external backend, data goes to local server
+- 2026-02-22: Aligned week computation - shared UTC-based Monday-start utility (lib/week-utils.ts)
+- 2026-02-22: Added GET /api/meta and GET /api/week-bounds endpoints to local Express server
+- 2026-02-22: Enhanced Diagnostics screen with timezone, week bounds, computed URLs, server meta
+- 2026-02-22: Added /api/meta footer to web landing page
+- 2026-02-22: Fixed SecureStore web compatibility with localStorage fallback

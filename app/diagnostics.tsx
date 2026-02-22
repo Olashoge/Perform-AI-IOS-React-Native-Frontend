@@ -16,15 +16,20 @@ import { useAuth } from "@/lib/auth-context";
 import { getAccessToken, getRefreshToken } from "@/lib/api-client";
 import { getApiCallLog, ApiCallEntry } from "@/lib/api-log";
 import { getWeekStartUTC, getWeekEndUTC } from "@/lib/week-utils";
-import apiClient from "@/lib/api-client";
+import axios from "axios";
 
-const LOCAL_SERVER_BASE = Platform.OS === "web"
-  ? ""
-  : `https://${
-      typeof process !== "undefined" && (process as any).env?.EXPO_PACKAGER_PROXY_URL
-        ? new URL((process as any).env.EXPO_PACKAGER_PROXY_URL).host
-        : "localhost:5000"
-    }`;
+function getLocalServerBase(): string {
+  if (Platform.OS === "web") {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    if (origin.includes("localhost") || origin.includes("127.0.0.1")) {
+      return origin.replace(/:8081/, ":5000");
+    }
+    return origin;
+  }
+  const domain = (globalThis as any).__expo_public_domain;
+  if (domain) return `https://${domain}`;
+  return "http://localhost:5000";
+}
 
 interface MetaInfo {
   environmentName: string;
@@ -82,18 +87,20 @@ export default function DiagnosticsScreen() {
   const weeklySummaryURL = `${apiBaseURL}/api/weekly-summary`;
   const weekDataURL = `${apiBaseURL}/api/week-data?weekStart=${weekStart}`;
 
+  const localServerBase = getLocalServerBase();
+
   const fetchMeta = useCallback(async () => {
     setMetaLoading(true);
     setMetaError(null);
     try {
-      const response = await apiClient.get("/api/meta");
+      const response = await axios.get(`${localServerBase}/api/meta`);
       setMeta(response.data);
     } catch (err: any) {
       setMetaError(err.message || "Failed to fetch /api/meta");
     } finally {
       setMetaLoading(false);
     }
-  }, []);
+  }, [localServerBase]);
 
   const refresh = useCallback(async () => {
     const at = await getAccessToken();
@@ -134,6 +141,7 @@ export default function DiagnosticsScreen() {
         <Text style={styles.sectionTitle}>Configuration</Text>
         <View style={styles.card}>
           <Row label="API Base URL" value={apiBaseURL} />
+          <Row label="Local Server" value={localServerBase} />
           <Row label="Auth Mode" value="JWT / Bearer Token" />
           <Row label="withCredentials" value="false (disabled)" />
         </View>
