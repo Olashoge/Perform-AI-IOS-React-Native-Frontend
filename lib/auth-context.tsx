@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function login(email: string, password: string) {
     const response = await apiClient.post('/api/auth/token-login', {
-      email,
+      email: email.toLowerCase(),
       password,
     });
 
