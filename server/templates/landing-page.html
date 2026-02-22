@@ -454,6 +454,20 @@
           }, 500);
         }
       })();
+
+      (async function fetchMeta() {
+        try {
+          const res = await fetch('/api/meta');
+          const data = await res.json();
+          console.log('[DEV] /api/meta:', JSON.stringify(data, null, 2));
+          const footer = document.createElement('div');
+          footer.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#f5f5f5;border-top:1px solid #ddd;padding:8px 16px;font-size:11px;color:#888;font-family:monospace;text-align:left;z-index:9999';
+          footer.textContent = `env=${data.environmentName} | db=${data.dbNameOrIdentifierHash} | tz=${data.serverTimezone} | commit=${data.gitCommitHash} | ${data.serverTimeISO}`;
+          document.body.appendChild(footer);
+        } catch (e) {
+          console.log('[DEV] /api/meta fetch failed:', e);
+        }
+      })();
     </script>
   </body>
 </html>

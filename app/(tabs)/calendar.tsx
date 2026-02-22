@@ -14,21 +14,13 @@ import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useWeekData, DayData } from "@/lib/api-hooks";
+import { getWeekStartUTC } from "@/lib/week-utils";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
-
-function getWeekStart(offset: number = 0): string {
-  const now = new Date();
-  const day = now.getDay();
-  const diff = now.getDate() - day + (day === 0 ? -6 : 1) + offset * 7;
-  const monday = new Date(now);
-  monday.setDate(diff);
-  return monday.toISOString().split("T")[0];
-}
 
 function DayCard({ day, isToday }: { day: DayData; isToday: boolean }) {
   const date = new Date(day.date + "T12:00:00");
@@ -104,7 +96,7 @@ function DayCard({ day, isToday }: { day: DayData; isToday: boolean }) {
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
   const [weekOffset, setWeekOffset] = useState(0);
-  const weekStart = useMemo(() => getWeekStart(weekOffset), [weekOffset]);
+  const weekStart = useMemo(() => getWeekStartUTC(weekOffset), [weekOffset]);
   const { data: weekData, isLoading } = useWeekData(weekStart);
   const webTopInset = Platform.OS === "web" ? 67 : 0;
 

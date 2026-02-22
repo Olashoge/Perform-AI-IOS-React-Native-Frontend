@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "./api-client";
 import { logApiCall } from "./api-log";
+import { getWeekStartUTC, getWeekEndUTC, computeWeekStartForDate } from "./week-utils";
 
 export interface WeeklySummary {
   score: number;
@@ -50,6 +51,7 @@ export function useWeeklySummary() {
       } catch (err: any) {
         logApiCall("GET", url, err.response?.status ?? "ERR");
         console.log("[Dashboard] GET", url, "->", err.response?.status ?? err.message);
+        const ws = getWeekStartUTC();
         return {
           score: 78,
           mealsCompleted: 18,
@@ -57,8 +59,8 @@ export function useWeeklySummary() {
           workoutsCompleted: 4,
           workoutsTotal: 5,
           streak: 12,
-          weekStart: getWeekStart(),
-          weekEnd: getWeekEnd(),
+          weekStart: ws,
+          weekEnd: getWeekEndUTC(ws),
         };
       }
     },
@@ -78,7 +80,7 @@ export function useWeekData(weekStart?: string) {
       } catch (err: any) {
         logApiCall("GET", url, err.response?.status ?? "ERR");
         console.log("[Calendar] GET", url, "->", err.response?.status ?? err.message);
-        return generateMockWeekData(weekStart);
+        return generateMockWeekData(weekStart || getWeekStartUTC());
       }
     },
   });
@@ -146,7 +148,7 @@ export function useToggleCompletion() {
     },
     onSuccess: (_data, variables) => {
       const { date } = variables;
-      const weekStart = computeWeekStart(date);
+      const weekStart = computeWeekStartForDate(date);
 
       console.log("[Toggle] onSuccess:", {
         date,
@@ -170,30 +172,8 @@ export function useToggleCompletion() {
   });
 }
 
-function computeWeekStart(dateStr: string): string {
-  const d = new Date(dateStr + "T12:00:00");
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  d.setDate(diff);
-  return d.toISOString().split("T")[0];
-}
-
-function getWeekStart(): string {
-  const now = new Date();
-  const day = now.getDay();
-  const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(now.setDate(diff));
-  return monday.toISOString().split("T")[0];
-}
-
-function getWeekEnd(): string {
-  const start = new Date(getWeekStart());
-  start.setDate(start.getDate() + 6);
-  return start.toISOString().split("T")[0];
-}
-
-function generateMockWeekData(weekStart?: string): DayData[] {
-  const start = weekStart ? new Date(weekStart) : new Date(getWeekStart());
+function generateMockWeekData(weekStart: string): DayData[] {
+  const start = new Date(weekStart + "T12:00:00Z");
   const days: DayData[] = [];
 
   for (let i = 0; i < 7; i++) {

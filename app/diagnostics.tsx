@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Pressable,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -14,6 +15,24 @@ import Colors from "@/constants/colors";
 import { useAuth } from "@/lib/auth-context";
 import { getAccessToken, getRefreshToken } from "@/lib/api-client";
 import { getApiCallLog, ApiCallEntry } from "@/lib/api-log";
+import { getWeekStartUTC, getWeekEndUTC } from "@/lib/week-utils";
+import apiClient from "@/lib/api-client";
+
+const LOCAL_SERVER_BASE = Platform.OS === "web"
+  ? ""
+  : `https://${
+      typeof process !== "undefined" && (process as any).env?.EXPO_PACKAGER_PROXY_URL
+        ? new URL((process as any).env.EXPO_PACKAGER_PROXY_URL).host
+        : "localhost:5000"
+    }`;
+
+interface MetaInfo {
+  environmentName: string;
+  dbNameOrIdentifierHash: string;
+  serverTimeISO: string;
+  serverTimezone: string;
+  gitCommitHash: string;
+}
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -51,6 +70,30 @@ export default function DiagnosticsScreen() {
   const [hasAccessToken, setHasAccessToken] = useState<string>("checking...");
   const [hasRefreshToken, setHasRefreshToken] = useState<string>("checking...");
   const [callLog, setCallLog] = useState<ApiCallEntry[]>([]);
+  const [meta, setMeta] = useState<MetaInfo | null>(null);
+  const [metaError, setMetaError] = useState<string | null>(null);
+  const [metaLoading, setMetaLoading] = useState(true);
+
+  const deviceTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const weekStart = getWeekStartUTC();
+  const weekEnd = getWeekEndUTC(weekStart);
+
+  const apiBaseURL = "https://mealplanai.replit.app";
+  const weeklySummaryURL = `${apiBaseURL}/api/weekly-summary`;
+  const weekDataURL = `${apiBaseURL}/api/week-data?weekStart=${weekStart}`;
+
+  const fetchMeta = useCallback(async () => {
+    setMetaLoading(true);
+    setMetaError(null);
+    try {
+      const response = await apiClient.get("/api/meta");
+      setMeta(response.data);
+    } catch (err: any) {
+      setMetaError(err.message || "Failed to fetch /api/meta");
+    } finally {
+      setMetaLoading(false);
+    }
+  }, []);
 
   const refresh = useCallback(async () => {
     const at = await getAccessToken();
@@ -58,7 +101,8 @@ export default function DiagnosticsScreen() {
     const rt = await getRefreshToken();
     setHasRefreshToken(rt ? "yes" : "no");
     setCallLog(getApiCallLog());
-  }, []);
+    fetchMeta();
+  }, [fetchMeta]);
 
   useEffect(() => {
     refresh();
@@ -89,7 +133,7 @@ export default function DiagnosticsScreen() {
       >
         <Text style={styles.sectionTitle}>Configuration</Text>
         <View style={styles.card}>
-          <Row label="API Base URL" value="https://mealplanai.replit.app" />
+          <Row label="API Base URL" value={apiBaseURL} />
           <Row label="Auth Mode" value="JWT / Bearer Token" />
           <Row label="withCredentials" value="false (disabled)" />
         </View>
@@ -103,6 +147,43 @@ export default function DiagnosticsScreen() {
           <Row label="Refresh Token Present" value={hasRefreshToken} />
         </View>
 
+        <Text style={styles.sectionTitle}>Timezone & Week Bounds</Text>
+        <View style={styles.card}>
+          <Row label="Device Timezone" value={deviceTimezone} />
+          <Row label="Week Rule" value="ISO 8601: Monday-based, UTC" />
+          <Row label="weekStart" value={weekStart} />
+          <Row label="weekEnd" value={weekEnd} />
+        </View>
+
+        <Text style={styles.sectionTitle}>Computed Request URLs</Text>
+        <View style={styles.card}>
+          <Row label="weekly-summary" value={weeklySummaryURL} />
+          <Row label="week-data" value={weekDataURL} />
+        </View>
+
+        <Text style={styles.sectionTitle}>Server Meta (/api/meta)</Text>
+        <View style={styles.card}>
+          {metaLoading ? (
+            <View style={styles.metaLoading}>
+              <ActivityIndicator size="small" color={Colors.primary} />
+              <Text style={styles.metaLoadingText}>Fetching...</Text>
+            </View>
+          ) : metaError ? (
+            <View style={styles.metaLoading}>
+              <Ionicons name="warning" size={16} color={Colors.error} />
+              <Text style={[styles.metaLoadingText, { color: Colors.error }]}>{metaError}</Text>
+            </View>
+          ) : meta ? (
+            <>
+              <Row label="Environment" value={meta.environmentName} />
+              <Row label="DB Hash" value={meta.dbNameOrIdentifierHash} />
+              <Row label="Server Time" value={meta.serverTimeISO} />
+              <Row label="Server Timezone" value={meta.serverTimezone} />
+              <Row label="Git Commit" value={meta.gitCommitHash} />
+            </>
+          ) : null}
+        </View>
+
         <Text style={styles.sectionTitle}>Endpoints Wired</Text>
         <View style={styles.card}>
           <Row label="Login" value="POST /api/auth/token-login" />
@@ -112,6 +193,8 @@ export default function DiagnosticsScreen() {
           <Row label="Day Data" value="GET /api/day-data/:date" />
           <Row label="Toggle Meal" value="PATCH /api/meals/:id" />
           <Row label="Toggle Workout" value="PATCH /api/workouts/:id" />
+          <Row label="Meta" value="GET /api/meta" />
+          <Row label="Week Bounds" value="GET /api/week-bounds" />
         </View>
 
         <View style={styles.logHeaderRow}>
@@ -251,5 +334,16 @@ const styles = StyleSheet.create({
     color: Colors.textTertiary,
     padding: 16,
     textAlign: "center",
+  },
+  metaLoading: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: 16,
+  },
+  metaLoadingText: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textSecondary,
   },
 });
