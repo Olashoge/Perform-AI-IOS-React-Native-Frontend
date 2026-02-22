@@ -6,9 +6,8 @@ const EXTERNAL_URL = 'https://mealplanai.replit.app';
 
 function getBaseUrl(): string {
   if (Platform.OS === 'web') {
-    const domain = process.env.EXPO_PUBLIC_DOMAIN;
-    if (domain) {
-      return `https://${domain}`;
+    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+      return `${window.location.protocol}//${window.location.hostname}:5000`;
     }
     return 'http://localhost:5000';
   }
@@ -31,7 +30,7 @@ const REFRESH_KEY = 'perform_refresh_token';
 async function secureGet(key: string): Promise<string | null> {
   if (Platform.OS === 'web') {
     try {
-      return SecureStore.getItemAsync(key);
+      return await SecureStore.getItemAsync(key);
     } catch {
       return typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null;
     }

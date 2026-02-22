@@ -16,6 +16,7 @@ import * as Haptics from "expo-haptics";
 import { StatusBar } from "expo-status-bar";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/lib/auth-context";
+import apiClient from "@/lib/api-client";
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
@@ -39,14 +40,23 @@ export default function LoginScreen() {
     setError("");
 
     try {
+      console.log("LOGIN ATTEMPT => email:", email.trim(), "baseURL:", apiClient.defaults.baseURL);
       await login(email.trim(), password);
+      console.log("LOGIN SUCCESS => navigating to tabs");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/(tabs)");
     } catch (err: any) {
+      console.log("LOGIN ERROR =>", JSON.stringify({
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message,
+        code: err.code,
+      }));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       const message =
         err.response?.data?.message ||
         err.response?.data?.error ||
+        err.message ||
         "Login failed. Check your credentials.";
       setError(message);
     } finally {
