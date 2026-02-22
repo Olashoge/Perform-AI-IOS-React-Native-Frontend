@@ -32,6 +32,10 @@ function getWeekEndISO(weekStart: string): string {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  app.get("/health", (_req, res) => {
+    res.json({ status: "ok", uptime: process.uptime(), timestamp: new Date().toISOString() });
+  });
+
   app.get("/api/meta", (_req, res) => {
     const commitHash = getGitCommitHash();
     const dbHash = getDbIdentifierHash();
