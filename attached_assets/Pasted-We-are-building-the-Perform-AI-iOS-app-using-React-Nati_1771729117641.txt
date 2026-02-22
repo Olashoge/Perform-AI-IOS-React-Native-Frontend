@@ -1,0 +1,100 @@
+We are building the Perform AI iOS app using React Native (Expo).
+This is a separate project from the backend.
+
+Backend API base URL:
+https://mealplanai.replit.app
+
+Use JWT authentication (Bearer tokens).
+
+-------------------------------------
+PHASE 1 — PROJECT SETUP
+-------------------------------------
+
+1) Initialize Expo with TypeScript.
+2) Install required dependencies:
+   - @react-navigation/native
+   - @react-navigation/native-stack
+   - react-native-safe-area-context
+   - react-native-screens
+   - expo-secure-store
+   - axios
+   - @tanstack/react-query
+
+3) Create folder structure:
+
+src/
+  api/
+  auth/
+  navigation/
+  screens/
+    Auth/
+    Dashboard/
+    Calendar/
+    Daily/
+    Profile/
+  components/
+  theme/
+  hooks/
+
+-------------------------------------
+PHASE 2 — API CLIENT
+-------------------------------------
+
+Create src/api/client.ts:
+
+- Base URL = https://mealplanai.replit.app
+- Axios instance
+- Automatically attach Authorization: Bearer <accessToken>
+- Handle 401 responses by attempting refresh token
+- If refresh fails → log user out
+
+-------------------------------------
+PHASE 3 — AUTH FLOW
+-------------------------------------
+
+Implement:
+
+1) Login Screen
+   - Calls POST /api/auth/token-login
+   - Stores accessToken + refreshToken in SecureStore
+
+2) Refresh logic
+   - On app start:
+       Try refreshing token using stored refreshToken
+   - If successful → set accessToken
+   - If fails → redirect to login
+
+-------------------------------------
+PHASE 4 — MINIMAL VERTICAL SLICE
+-------------------------------------
+
+Implement these screens only:
+
+1) Login
+2) Dashboard
+   - Fetch weekly summary
+   - Show score ring placeholder
+3) Calendar (Week View)
+   - Fetch week data
+4) Daily Detail
+   - Show meals/workouts for a selected day
+   - Add completion toggle
+
+Navigation:
+Auth Stack → Main Stack (Dashboard, Calendar, Profile)
+
+-------------------------------------
+RULES
+-------------------------------------
+
+- Do NOT build everything at once.
+- Do NOT style heavily yet.
+- Focus on clean architecture.
+- Use React Query for all data fetching.
+- Keep code modular.
+
+When finished, output:
+1) Folder structure
+2) How to run locally
+3) How to test JWT login
+4) What endpoints are currently wired
