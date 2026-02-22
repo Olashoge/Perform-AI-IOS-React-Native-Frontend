@@ -3,6 +3,45 @@ import apiClient from "./api-client";
 import { logApiCall } from "./api-log";
 import { getWeekStartUTC, getWeekEndUTC, computeWeekStartForDate } from "./week-utils";
 
+function normalizeId(item: any): string | null {
+  return item?.id ?? item?.mealId ?? item?.workoutId ?? item?._id ?? null;
+}
+
+function normalizeMeal(item: any, date: string, index: number): Meal {
+  const id = normalizeId(item) || `meal-${date}-${index}`;
+  return {
+    id,
+    name: item.name ?? item.title ?? `Meal ${index + 1}`,
+    type: item.type ?? item.mealType ?? "",
+    calories: item.calories ?? item.cals ?? undefined,
+    completed: item.completed ?? item.done ?? false,
+    time: item.time ?? item.scheduledTime ?? undefined,
+  };
+}
+
+function normalizeWorkout(item: any, date: string, index: number): Workout {
+  const id = normalizeId(item) || `workout-${date}-${index}`;
+  return {
+    id,
+    name: item.name ?? item.title ?? `Workout ${index + 1}`,
+    type: item.type ?? item.workoutType ?? "",
+    duration: item.duration ?? item.durationMinutes ?? undefined,
+    completed: item.completed ?? item.done ?? false,
+    time: item.time ?? item.scheduledTime ?? undefined,
+  };
+}
+
+function normalizeDayData(raw: any, date: string): DayData {
+  const rawMeals = Array.isArray(raw?.meals) ? raw.meals : [];
+  const rawWorkouts = Array.isArray(raw?.workouts) ? raw.workouts : [];
+  const meals = rawMeals.map((m: any, i: number) => normalizeMeal(m, date, i));
+  const workouts = rawWorkouts.map((w: any, i: number) => normalizeWorkout(w, date, i));
+  const totalItems = meals.length + workouts.length;
+  const completedItems = [...meals, ...workouts].filter((i) => i.completed).length;
+  const score = raw?.score ?? (totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0);
+  return { date: raw?.date ?? date, meals, workouts, score };
+}
+
 export interface WeeklySummary {
   score: number;
   mealsCompleted: number;
@@ -78,14 +117,17 @@ export function useWeekData(weekStart?: string) {
         const response = await apiClient.get(url);
         logApiCall("GET", url, response.status);
         const responseData = response.data;
-        console.log("Calendar API raw response:", responseData);
-        console.log("Is weekData array:", Array.isArray(responseData?.weekData));
-        const raw = responseData?.weekData ?? responseData?.days ?? responseData;
-        const normalized: DayData[] = Array.isArray(raw)
-          ? raw
-          : Array.isArray(raw?.days)
-            ? raw.days
+        console.log("Calendar API raw response:", JSON.stringify(responseData).slice(0, 300));
+        const rawArr = responseData?.weekData ?? responseData?.days ?? responseData;
+        const daysArray = Array.isArray(rawArr)
+          ? rawArr
+          : Array.isArray(rawArr?.days)
+            ? rawArr.days
             : [];
+        const normalized: DayData[] = daysArray.map((day: any) =>
+          normalizeDayData(day, day?.date ?? "unknown")
+        );
+        console.log("Normalized week sample meal:", JSON.stringify(normalized[0]?.meals?.[0]));
         return normalized;
       } catch (err: any) {
         logApiCall("GET", url, err.response?.status ?? "ERR");
@@ -104,7 +146,15 @@ export function useDayData(date: string) {
       try {
         const response = await apiClient.get(url);
         logApiCall("GET", url, response.status);
-        return response.data;
+        const raw = response.data;
+        const normalized = normalizeDayData(raw, date);
+        console.log("PATCH meal object:", JSON.stringify(normalized.meals[0]));
+        console.log("PATCH meal id:", normalized.meals[0]?.id);
+        if (normalized.workouts.length > 0) {
+          console.log("PATCH workout object:", JSON.stringify(normalized.workouts[0]));
+          console.log("PATCH workout id:", normalized.workouts[0]?.id);
+        }
+        return normalized;
       } catch (err: any) {
         logApiCall("GET", url, err.response?.status ?? "ERR");
         console.log("[DailyDetail] GET", url, "->", err.response?.status ?? err.message);
@@ -120,6 +170,10 @@ export function useToggleCompletion() {
 
   return useMutation({
     mutationFn: async ({ type, id, completed, date }: { type: "meal" | "workout"; id: string; completed: boolean; date: string }) => {
+      if (!id || id === "undefined" || id === "null") {
+        console.warn("Missing id for patch:", { type, id, date });
+        return { id, completed, _date: date, _type: type, _id: id, _completed: completed };
+      }
       const url = `/api/${type}s/${id}`;
       try {
         const response = await apiClient.patch(url, { completed });
