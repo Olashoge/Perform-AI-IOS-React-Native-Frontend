@@ -2,7 +2,20 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-const BASE_URL = 'https://mealplanai.replit.app';
+const EXTERNAL_URL = 'https://mealplanai.replit.app';
+
+function getBaseUrl(): string {
+  if (Platform.OS === 'web') {
+    const domain = process.env.EXPO_PUBLIC_DOMAIN;
+    if (domain) {
+      return `https://${domain}`;
+    }
+    return 'http://localhost:5000';
+  }
+  return EXTERNAL_URL;
+}
+
+const BASE_URL = getBaseUrl();
 console.log("MOBILE API BASE URL =>", BASE_URL);
 
 const apiClient = axios.create({

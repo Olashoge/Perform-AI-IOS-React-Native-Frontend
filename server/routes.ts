@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "node:http";
 import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import https from "node:https";
+import http from "node:http";
 
 function getGitCommitHash(): string {
   try {
@@ -31,10 +33,54 @@ function getWeekEndISO(weekStart: string): string {
   return d.toISOString().split("T")[0];
 }
 
+const EXTERNAL_BACKEND = "https://mealplanai.replit.app";
+
+function proxyToExternal(req: any, res: any) {
+  const targetUrl = new URL(req.originalUrl, EXTERNAL_BACKEND);
+  const options: https.RequestOptions = {
+    hostname: targetUrl.hostname,
+    port: 443,
+    path: targetUrl.pathname + targetUrl.search,
+    method: req.method,
+    headers: {
+      "Content-Type": "application/json",
+      ...(req.headers.authorization ? { Authorization: req.headers.authorization } : {}),
+    },
+  };
+
+  const proxyReq = https.request(options, (proxyRes) => {
+    res.status(proxyRes.statusCode || 500);
+    Object.entries(proxyRes.headers).forEach(([key, value]) => {
+      if (key.toLowerCase() !== "transfer-encoding" && key.toLowerCase() !== "access-control-allow-origin") {
+        res.setHeader(key, value as string);
+      }
+    });
+    proxyRes.pipe(res);
+  });
+
+  proxyReq.on("error", (err) => {
+    console.error("Proxy error:", err.message);
+    res.status(502).json({ error: "Backend proxy error", message: err.message });
+  });
+
+  if (req.body && Object.keys(req.body).length > 0) {
+    proxyReq.write(JSON.stringify(req.body));
+  }
+  proxyReq.end();
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/health", (_req, res) => {
     res.json({ status: "ok", uptime: process.uptime(), timestamp: new Date().toISOString() });
   });
+
+  app.post("/api/auth/token-login", proxyToExternal);
+  app.post("/api/auth/refresh", proxyToExternal);
+  app.get("/api/weekly-summary", proxyToExternal);
+  app.get("/api/week-data", proxyToExternal);
+  app.get("/api/day-data/:date", proxyToExternal);
+  app.patch("/api/meals/:id", proxyToExternal);
+  app.patch("/api/workouts/:id", proxyToExternal);
 
   app.get("/api/meta", (_req, res) => {
     const commitHash = getGitCommitHash();
