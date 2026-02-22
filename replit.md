@@ -73,6 +73,25 @@ Toggle mutations use optimistic updates on day-data, then invalidate:
 - Server-side equivalent in `server/routes.ts` (getWeekStartISO, getWeekEndISO)
 - Both client and server use UTC to avoid timezone-dependent discrepancies
 
+## Mobile Dev Connectivity
+
+### How it works
+- The Expo dev server runs on port 8081 (internal) → mapped to external port 80 via Replit proxy
+- Expo Go connects via `exp://<REPLIT_DEV_DOMAIN>` which routes through the Replit proxy to Metro
+- The Express backend runs on port 5000 (internal) → mapped to external port 5000
+
+### Troubleshooting: "Could not connect to the server" on iPhone
+1. **Disable iCloud Private Relay**: Settings → Apple ID → iCloud → Private Relay → OFF. Private Relay blocks dev domain connections.
+2. **Disable VPN/DNS blockers**: AdGuard, 1Blocker, NextDNS, Pi-hole can block `*.replit.dev` domains. Temporarily disable them.
+3. **Check Wi-Fi captive portal**: Some networks (hotel, corporate) block non-standard ports. Try mobile data instead.
+4. **Restart Expo Go**: Force-close and reopen the app, then scan the QR code again.
+5. **Restart the frontend workflow**: The dev server may have gone idle. Restart it from the Replit workspace.
+6. **Verify backend health**: Visit `https://<REPLIT_DEV_DOMAIN>/health` in a browser to confirm the server is responding.
+7. **Web fallback**: If Expo Go won't connect, use the web version at port 8081 for development and testing.
+
+### Backend health endpoint
+- `GET /health` → `{ status: "ok", uptime, timestamp }`
+
 ## Recent Changes
 - 2026-02-22: Initial build - Auth flow, Dashboard, Calendar, Daily Detail, Profile screens
 - 2026-02-22: Added diagnostics screen and API call logging
