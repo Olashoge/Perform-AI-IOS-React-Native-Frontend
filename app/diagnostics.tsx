@@ -89,7 +89,8 @@ export default function DiagnosticsScreen() {
       >
         <Text style={styles.sectionTitle}>Configuration</Text>
         <View style={styles.card}>
-          <Row label="API Base URL" value="https://mealplanai.replit.app" />
+          <Row label="Auth API" value="https://mealplanai.replit.app" />
+          <Row label="Data API" value={process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "http://localhost:5000"} />
           <Row label="Auth Mode" value="JWT / Bearer Token" />
           <Row label="withCredentials" value="false (disabled)" />
         </View>

@@ -1,10 +1,25 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
-const BASE_URL = 'https://mealplanai.replit.app';
+const AUTH_BASE_URL = 'https://mealplanai.replit.app';
+
+function getDataBaseUrl(): string {
+  const domain = process.env.EXPO_PUBLIC_DOMAIN;
+  if (domain) {
+    return `https://${domain}`;
+  }
+  return 'http://localhost:5000';
+}
 
 const apiClient = axios.create({
-  baseURL: BASE_URL,
+  baseURL: AUTH_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export const dataClient = axios.create({
+  baseURL: getDataBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
@@ -42,6 +57,14 @@ apiClient.interceptors.request.use(async (config) => {
   return config;
 });
 
+dataClient.interceptors.request.use(async (config) => {
+  const token = await getAccessToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -71,7 +94,7 @@ apiClient.interceptors.response.use(
           throw new Error('No refresh token');
         }
 
-        const response = await axios.post(`${BASE_URL}/api/auth/refresh`, {
+        const response = await axios.post(`${AUTH_BASE_URL}/api/auth/refresh`, {
           refreshToken,
         });
 
