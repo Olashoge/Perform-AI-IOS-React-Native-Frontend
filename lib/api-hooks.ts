@@ -74,6 +74,7 @@ export function useWeekData(weekStart?: string) {
       const params = weekStart ? `?weekStart=${weekStart}` : "";
       const url = `/api/week-data${params}`;
       try {
+        console.log("FETCHING =>", (apiClient.defaults.baseURL || "") + url);
         const response = await apiClient.get(url);
         logApiCall("GET", url, response.status);
         const responseData = response.data;

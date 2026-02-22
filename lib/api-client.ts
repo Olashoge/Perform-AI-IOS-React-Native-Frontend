@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 const BASE_URL = 'https://mealplanai.replit.app';
+console.log("MOBILE API BASE URL =>", BASE_URL);
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
