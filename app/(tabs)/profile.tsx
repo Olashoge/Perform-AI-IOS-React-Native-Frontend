@@ -117,6 +117,18 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Developer</Text>
+        <View style={styles.menuGroup}>
+          <ProfileMenuItem
+            icon="bug-outline"
+            label="Diagnostics"
+            onPress={() => router.push("/diagnostics")}
+            color={Colors.warning}
+          />
+        </View>
+      </View>
+
+      <View style={styles.section}>
         <View style={styles.menuGroup}>
           <ProfileMenuItem
             icon="log-out-outline"

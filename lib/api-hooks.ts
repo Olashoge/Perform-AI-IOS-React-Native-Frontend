@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "./api-client";
+import { logApiCall } from "./api-log";
 
 export interface WeeklySummary {
   score: number;
@@ -41,10 +42,14 @@ export function useWeeklySummary() {
   return useQuery<WeeklySummary>({
     queryKey: ["weekly-summary"],
     queryFn: async () => {
+      const url = "/api/weekly-summary";
       try {
-        const response = await apiClient.get("/api/weekly-summary");
+        const response = await apiClient.get(url);
+        logApiCall("GET", url, response.status);
         return response.data;
-      } catch {
+      } catch (err: any) {
+        logApiCall("GET", url, err.response?.status ?? "ERR");
+        console.log("[Dashboard] GET", url, "->", err.response?.status ?? err.message);
         return {
           score: 78,
           mealsCompleted: 18,
@@ -64,11 +69,15 @@ export function useWeekData(weekStart?: string) {
   return useQuery<DayData[]>({
     queryKey: ["week-data", weekStart],
     queryFn: async () => {
+      const params = weekStart ? `?weekStart=${weekStart}` : "";
+      const url = `/api/week-data${params}`;
       try {
-        const params = weekStart ? `?weekStart=${weekStart}` : "";
-        const response = await apiClient.get(`/api/week-data${params}`);
+        const response = await apiClient.get(url);
+        logApiCall("GET", url, response.status);
         return response.data;
-      } catch {
+      } catch (err: any) {
+        logApiCall("GET", url, err.response?.status ?? "ERR");
+        console.log("[Calendar] GET", url, "->", err.response?.status ?? err.message);
         return generateMockWeekData(weekStart);
       }
     },
@@ -79,10 +88,14 @@ export function useDayData(date: string) {
   return useQuery<DayData>({
     queryKey: ["day-data", date],
     queryFn: async () => {
+      const url = `/api/day-data/${date}`;
       try {
-        const response = await apiClient.get(`/api/day-data/${date}`);
+        const response = await apiClient.get(url);
+        logApiCall("GET", url, response.status);
         return response.data;
-      } catch {
+      } catch (err: any) {
+        logApiCall("GET", url, err.response?.status ?? "ERR");
+        console.log("[DailyDetail] GET", url, "->", err.response?.status ?? err.message);
         return generateMockDayData(date);
       }
     },
@@ -95,10 +108,14 @@ export function useToggleCompletion() {
 
   return useMutation({
     mutationFn: async ({ type, id, completed }: { type: "meal" | "workout"; id: string; completed: boolean }) => {
+      const url = `/api/${type}s/${id}`;
       try {
-        const response = await apiClient.patch(`/api/${type}s/${id}`, { completed });
+        const response = await apiClient.patch(url, { completed });
+        logApiCall("PATCH", url, response.status);
         return response.data;
-      } catch {
+      } catch (err: any) {
+        logApiCall("PATCH", url, err.response?.status ?? "ERR");
+        console.log("[Toggle] PATCH", url, "->", err.response?.status ?? err.message);
         return { id, completed };
       }
     },
