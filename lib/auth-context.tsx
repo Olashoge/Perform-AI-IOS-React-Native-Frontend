@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
-import apiClient, { setSessionFlag, clearSession, getSessionFlag } from './api-client';
+import apiClient, { storeTokens, clearTokens, getAccessToken, getRefreshToken } from './api-client';
 
 interface AuthContextValue {
   isAuthenticated: boolean;
@@ -22,26 +22,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function checkAuth() {
     try {
-      const session = await getSessionFlag();
-      if (!session) {
+      const token = await getAccessToken();
+      if (!token) {
         setIsLoading(false);
         return;
       }
 
-      try {
-        const response = await apiClient.get('/api/auth/me');
-        if (response.data && response.data.user) {
-          setUser(response.data.user);
+      const refreshToken = await getRefreshToken();
+      if (refreshToken) {
+        try {
+          const response = await apiClient.post('/api/auth/refresh', {
+            refreshToken,
+          });
+          const { accessToken, refreshToken: newRefresh } = response.data;
+          await storeTokens(accessToken, newRefresh || refreshToken);
           setIsAuthenticated(true);
-        } else if (response.data) {
-          setUser(response.data);
-          setIsAuthenticated(true);
-        } else {
-          await clearSession();
+          if (response.data.user) {
+            setUser(response.data.user);
+          }
+        } catch {
+          await clearTokens();
+          setIsAuthenticated(false);
         }
-      } catch {
-        await clearSession();
-        setIsAuthenticated(false);
       }
     } catch {
       setIsAuthenticated(false);
@@ -51,39 +53,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function login(email: string, password: string) {
-    const url = '/api/auth/login';
-    console.log('[Auth] Login request URL:', apiClient.defaults.baseURL + url);
-    console.log('[Auth] Login payload:', JSON.stringify({ email, password: '***' }));
+    const response = await apiClient.post('/api/auth/token-login', {
+      email,
+      password,
+    });
 
-    try {
-      const response = await apiClient.post(url, { email, password });
-
-      console.log('[Auth] Login response status:', response.status);
-      console.log('[Auth] Login response data:', JSON.stringify(response.data));
-
-      await setSessionFlag('active');
-
-      if (response.data?.user) {
-        setUser(response.data.user);
-      } else if (response.data) {
-        setUser(response.data);
-      }
-
-      setIsAuthenticated(true);
-    } catch (err: any) {
-      console.log('[Auth] Login error status:', err.response?.status);
-      console.log('[Auth] Login error data:', JSON.stringify(err.response?.data));
-      console.log('[Auth] Login error message:', err.message);
-      throw err;
-    }
+    const { accessToken, refreshToken, user: userData } = response.data;
+    await storeTokens(accessToken, refreshToken);
+    setUser(userData || null);
+    setIsAuthenticated(true);
   }
 
   async function logout() {
-    try {
-      await apiClient.post('/api/auth/logout');
-    } catch {
-    }
-    await clearSession();
+    await clearTokens();
     setUser(null);
     setIsAuthenticated(false);
   }
