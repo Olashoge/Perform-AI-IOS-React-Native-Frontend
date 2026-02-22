@@ -219,13 +219,13 @@ export function useToggleCompletion() {
         weekStart,
         invalidating: [
           `["day-data", "${date}"]`,
-          `["week-data", "${weekStart}"]`,
+          `["week-data"] (all weeks)`,
           `["weekly-summary"]`,
         ],
       });
 
       queryClient.invalidateQueries({ queryKey: ["day-data", date] });
-      queryClient.invalidateQueries({ queryKey: ["week-data", weekStart] });
+      queryClient.invalidateQueries({ queryKey: ["week-data"] });
       queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
     },
     onError: (_err, variables, context) => {
