@@ -92,6 +92,14 @@ Toggle mutations use optimistic updates on day-data, then invalidate:
 ### Backend health endpoint
 - `GET /health` → `{ status: "ok", uptime, timestamp }`
 
+## Completion Toggle Architecture
+- PATCH /api/meals/:id and /api/workouts/:id are handled **locally** (not proxied)
+- Completions saved to PostgreSQL `completions` table with columns: id, userId, itemType, completed
+- GET endpoints (weekly-summary, week-data, day-data) proxy to external backend then **merge** local completion state
+- Mutation uses optimistic updates on day-data, then onSuccess invalidates ["day-data", date], ["week-data"], ["weekly-summary"]
+- staleTime is 30 seconds (not Infinity) to ensure queries refresh after navigation
+- Mutation throws on error (not swallowed) so onError properly rolls back optimistic updates
+
 ## Recent Changes
 - 2026-02-22: Initial build - Auth flow, Dashboard, Calendar, Daily Detail, Profile screens
 - 2026-02-22: Added diagnostics screen and API call logging
@@ -103,3 +111,7 @@ Toggle mutations use optimistic updates on day-data, then invalidate:
 - 2026-02-22: Enhanced Diagnostics screen with timezone, week bounds, computed URLs, server meta
 - 2026-02-22: Added /api/meta footer to web landing page
 - 2026-02-22: Fixed SecureStore web compatibility with localStorage fallback
+- 2026-02-22: Fixed cache invalidation - staleTime 30s, broad ["week-data"] invalidation, PATCH in CORS
+- 2026-02-22: Implemented local completion storage (PostgreSQL) - PATCH no longer proxied to external backend
+- 2026-02-22: GET routes now merge local completion state with external backend data
+- 2026-02-22: Added server/db.ts for Drizzle/PostgreSQL connection
