@@ -1,0 +1,43 @@
+Build the iOS Profile screen as a faithful replica of the existing web Profile (Performance Blueprint) using the SAME backend schema and endpoints. Do not redesign the data model.
+
+GOAL
+- In the mobile app, the Profile tab must show an editable Profile with the same sections + fields as the web profile.
+- It must GET the profile from the backend, populate all inputs, and PATCH updates back.
+- Keep one long scroll layout (like the web) with the same section order and labels.
+
+BACKEND
+- Use the already-working apiClient (session/cookie auth). Do NOT switch auth modes.
+- Implement hooks:
+  - GET /api/profile
+  - PATCH /api/profile
+
+UI/SECTIONS (match web order)
+1) Physical Stats & Goals
+2) Health & Medical
+3) Training Capacity
+4) Workout Location & Equipment (pills + optional notes)
+5) Nutrition & Lifestyle (includes Favorite Meals field)
+
+FIELDS
+- Render EVERY field that exists in the web profile payload. Do not omit anything.
+- Ensure the new “Favorite Meals (optional)” field exists and is wired to the same profile property used on web.
+- If the profile payload includes any “body goals/body type/challenges/other notes for AI” field, include it under Physical Stats & Goals (or same location as web) and wire it to the same profile property.
+
+DATA INTEGRITY
+- Use the exact same keys/values the backend expects (enums, arrays, lowercase values, etc).
+- For pills (foods to avoid, equipment, training days), mirror the web values exactly.
+
+BEHAVIOR
+- On screen mount: fetch profile, populate form.
+- Update Profile button: PATCH changes; show success toast; handle errors with message.
+- Disable button while saving.
+- Single scroll (no nested scroll). Add keyboard avoidance.
+
+DELIVERABLES
+- Add/modify files:
+  - mobile/lib/api-hooks.ts (or create if missing) to include useProfileQuery + useUpdateProfileMutation
+  - mobile/app/(tabs)/profile.tsx to implement the full editable screen
+- After implementation, list:
+  1) endpoints used
+  2) profile fields rendered (bullet list from actual payload keys)
+  3) any enums/pill lists you mirrored

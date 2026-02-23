@@ -317,6 +317,64 @@ export function useToggleCompletion() {
   });
 }
 
+export interface ProfileData {
+  unitSystem: string;
+  age: number | null;
+  sex: string;
+  heightCm: number | null;
+  weightKg: number | null;
+  targetWeightKg: number | null;
+  primaryGoal: string;
+  trainingExperience: string;
+  injuries: string[];
+  mobilityLimitations: string[];
+  chronicConditions: string[];
+  healthConstraints: string[];
+  sleepHours: number | null;
+  stressLevel: string | null;
+  activityLevel: string;
+  trainingDaysOfWeek: string[];
+  sessionDurationMinutes: number | null;
+  allergies: string[];
+  intolerances: string[];
+  religiousRestrictions: string[];
+  allergiesIntolerances: string[];
+  foodsToAvoid: string[];
+  foodsToAvoidNotes: string;
+  appetiteLevel: string;
+  spicePreference: string;
+  bodyContext: string;
+  favoriteMealsText: string;
+  workoutLocationDefault: string;
+  equipmentAvailable: string[];
+  equipmentOtherNotes: string;
+}
+
+export function useProfile() {
+  return useQuery<ProfileData>({
+    queryKey: ["profile"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/profile");
+      logApiCall("GET", "/api/profile", response.status);
+      return response.data;
+    },
+  });
+}
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (updates: Partial<ProfileData>) => {
+      const response = await apiClient.patch("/api/profile", updates);
+      logApiCall("PATCH", "/api/profile", response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+    },
+  });
+}
+
 export interface WeekScore {
   weekStart: string;
   label: string;

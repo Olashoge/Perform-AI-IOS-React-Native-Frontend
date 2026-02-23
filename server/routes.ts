@@ -277,6 +277,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/completions/toggle", proxyToExternal);
 
+  app.get("/api/profile", proxyToExternal);
+  app.patch("/api/profile", proxyToExternal);
+
   app.get("/api/meta", (_req, res) => {
     const commitHash = getGitCommitHash();
     const dbHash = getDbIdentifierHash();
