@@ -50,20 +50,20 @@ export default function CreateScreen() {
     {
       id: "daily_meal",
       title: "Daily Meal",
-      subtitle: "Generate a single day's meals",
+      subtitle: "AI-generated meals for today based on your profile",
       icon: "nutrition" as const,
       color: "#FFB347",
       recommended: false,
-      enabled: false,
+      enabled: true,
     },
     {
       id: "daily_workout",
       title: "Daily Workout",
-      subtitle: "Generate a single workout session",
+      subtitle: "AI-generated workout for today based on your profile",
       icon: "barbell" as const,
       color: "#9B59B6",
       recommended: false,
-      enabled: false,
+      enabled: true,
     },
   ], [Colors]);
 
@@ -108,6 +108,16 @@ export default function CreateScreen() {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 if (plan.id === "wellness") {
                   router.push("/wellness/step1");
+                } else if (plan.id === "meal_7day") {
+                  router.push("/meal/new");
+                } else if (plan.id === "workout_7day") {
+                  router.push("/workout/new");
+                } else if (plan.id === "daily_meal") {
+                  const today = new Date().toISOString().split("T")[0];
+                  router.push({ pathname: "/daily/[date]", params: { date: today, generate: "meal" } });
+                } else if (plan.id === "daily_workout") {
+                  const today = new Date().toISOString().split("T")[0];
+                  router.push({ pathname: "/daily/[date]", params: { date: today, generate: "workout" } });
                 }
               }}
               disabled={!plan.enabled}

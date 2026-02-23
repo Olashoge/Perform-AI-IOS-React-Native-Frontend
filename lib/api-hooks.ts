@@ -37,9 +37,67 @@ function extractCompletionStatus(raw: any, itemType: string, itemKey: string): b
   return match ? !!match.completed : undefined;
 }
 
+function normalizeDailyMeals(dailyMeal: any, date: string, completions: any[]): Meal[] {
+  if (!dailyMeal || typeof dailyMeal !== "object") return [];
+  const mealsObj = dailyMeal.meals || dailyMeal;
+  if (typeof mealsObj !== "object") return [];
+  
+  const mealOrder = ["breakfast", "lunch", "dinner", "snack"];
+  const keys = Object.keys(mealsObj).filter(k => 
+    typeof mealsObj[k] === "object" && mealsObj[k] !== null && mealsObj[k].name
+  ).sort(
+    (a, b) => (mealOrder.indexOf(a) === -1 ? 99 : mealOrder.indexOf(a)) - (mealOrder.indexOf(b) === -1 ? 99 : mealOrder.indexOf(b))
+  );
+  
+  return keys.map((key, i) => {
+    const m = mealsObj[key];
+    const completionRecord = completions.find((c: any) => c.itemType === "meal" && c.itemKey === key);
+    const completed = completionRecord ? !!completionRecord.completed : (m.completed ?? false);
+    return {
+      id: m.id || `daily-meal-${date}-${i}`,
+      name: m.name ?? m.title ?? key,
+      type: key,
+      calories: m.nutritionEstimateRange?.calories ? parseInt(m.nutritionEstimateRange.calories) : (m.calories ?? undefined),
+      completed,
+      time: m.time ?? undefined,
+      itemKey: key,
+      sourceType: completionRecord?.sourceType ?? "daily_meal",
+      sourceId: completionRecord?.sourceId ?? dailyMeal.id ?? undefined,
+    };
+  });
+}
+
+function normalizeDailyWorkout(dailyWorkout: any, date: string, completions: any[]): Workout[] {
+  if (!dailyWorkout || typeof dailyWorkout !== "object") return [];
+  const session = dailyWorkout.session || dailyWorkout;
+  if (!session || typeof session !== "object") return [];
+  
+  const mainExercises = Array.isArray(session.main) ? session.main : [];
+  const warmupItems = Array.isArray(session.warmup) ? session.warmup : [];
+  if (mainExercises.length === 0 && warmupItems.length === 0) return [];
+  
+  const name = session.name ?? session.title ?? (mainExercises[0]?.type ? `${mainExercises[0].type} workout` : "Daily Workout");
+  const duration = session.estimatedDuration ?? session.duration ?? undefined;
+  const completionRecord = completions.find((c: any) => c.itemType === "workout");
+  const completed = completionRecord ? !!completionRecord.completed : (dailyWorkout.completed ?? false);
+  
+  return [{
+    id: dailyWorkout.id || `daily-workout-${date}-0`,
+    name,
+    type: mainExercises[0]?.type ?? "strength",
+    duration,
+    completed,
+    time: session.time ?? undefined,
+    itemKey: "main",
+    sourceType: completionRecord?.sourceType ?? "daily_workout",
+    sourceId: completionRecord?.sourceId ?? dailyWorkout.id ?? undefined,
+  }];
+}
+
 function normalizeDayData(raw: any, date: string): DayData {
   let meals: Meal[] = [];
   let workouts: Workout[] = [];
+  const completions = Array.isArray(raw?.completions) ? raw.completions : [];
 
   if (Array.isArray(raw?.meals)) {
     meals = raw.meals.map((m: any, i: number) => normalizeMeal(m, date, i));
@@ -51,7 +109,7 @@ function normalizeDayData(raw: any, date: string): DayData {
     const planId = Array.isArray(raw?.planIds) ? raw.planIds[0] : null;
     meals = mealKeys.map((key, i) => {
       const m = raw.meals[key];
-      const completionRecord = Array.isArray(raw?.completions) ? raw.completions.find((c: any) => c.itemType === "meal" && c.itemKey === key) : null;
+      const completionRecord = completions.find((c: any) => c.itemType === "meal" && c.itemKey === key);
       const completed = completionRecord ? !!completionRecord.completed : (m.completed ?? false);
       return {
         id: m.id || `meal-${date}-${i}`,
@@ -65,6 +123,10 @@ function normalizeDayData(raw: any, date: string): DayData {
         sourceId: completionRecord?.sourceId ?? planId ?? undefined,
       };
     });
+  }
+
+  if (meals.length === 0 && raw?.hasDailyMeal && raw?.dailyMeal) {
+    meals = normalizeDailyMeals(raw.dailyMeal, date, completions);
   }
 
   if (Array.isArray(raw?.workouts)) {
@@ -94,10 +156,23 @@ function normalizeDayData(raw: any, date: string): DayData {
     }
   }
 
+  if (workouts.length === 0 && raw?.hasDailyWorkout && raw?.dailyWorkout) {
+    workouts = normalizeDailyWorkout(raw.dailyWorkout, date, completions);
+  }
+
   const totalItems = meals.length + workouts.length;
   const completedItems = [...meals, ...workouts].filter((i) => i.completed).length;
   const score = raw?.score ?? (totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0);
-  return { date: raw?.date ?? date, meals, workouts, score };
+  return {
+    date: raw?.date ?? date,
+    meals,
+    workouts,
+    score,
+    hasDailyMeal: raw?.hasDailyMeal ?? (meals.length > 0 && meals[0]?.sourceType === "daily_meal"),
+    hasDailyWorkout: raw?.hasDailyWorkout ?? (workouts.length > 0 && workouts[0]?.sourceType === "daily_workout"),
+    dailyMealGenerating: raw?.dailyMealGenerating ?? false,
+    dailyWorkoutGenerating: raw?.dailyWorkoutGenerating ?? false,
+  };
 }
 
 export interface WeeklySummary {
@@ -116,6 +191,10 @@ export interface DayData {
   meals: Meal[];
   workouts: Workout[];
   score: number;
+  hasDailyMeal: boolean;
+  hasDailyWorkout: boolean;
+  dailyMealGenerating?: boolean;
+  dailyWorkoutGenerating?: boolean;
 }
 
 export interface Meal {
@@ -627,6 +706,52 @@ export function useCreateWorkoutPlan() {
   });
 }
 
+export function useCreateDailyMeal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ date, mealsPerDay }: { date: string; mealsPerDay: number }) => {
+      const response = await apiClient.post("/api/daily-meals", { date, mealsPerDay });
+      logApiCall("POST", "/api/daily-meals", response.status);
+      return response.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["day-data", variables.date] });
+      queryClient.invalidateQueries({ queryKey: ["week-data"] });
+      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-coverage"] });
+    },
+  });
+}
+
+export function useCreateDailyWorkout() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ date }: { date: string }) => {
+      const response = await apiClient.post("/api/daily-workouts", { date });
+      logApiCall("POST", "/api/daily-workouts", response.status);
+      return response.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["day-data", variables.date] });
+      queryClient.invalidateQueries({ queryKey: ["week-data"] });
+      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-coverage"] });
+    },
+  });
+}
+
+export function useDailyCoverage() {
+  return useQuery<Record<string, { hasMeal: boolean; hasWorkout: boolean }>>({
+    queryKey: ["daily-coverage"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/daily-coverage");
+      logApiCall("GET", "/api/daily-coverage", response.status);
+      return response.data;
+    },
+    staleTime: 30000,
+  });
+}
+
 export function useMealPlanStatus(planId: string | null, enabled: boolean) {
   return useQuery({
     queryKey: ["meal-plan-status", planId],
@@ -820,5 +945,5 @@ function generateMockDayData(date: string): DayData {
   const completedItems = [...meals, ...workouts].filter((item) => item.completed).length;
   const score = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
-  return { date, meals, workouts, score };
+  return { date, meals, workouts, score, hasDailyMeal: false, hasDailyWorkout: false };
 }

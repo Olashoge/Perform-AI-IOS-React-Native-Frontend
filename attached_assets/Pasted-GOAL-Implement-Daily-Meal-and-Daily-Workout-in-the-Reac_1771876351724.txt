@@ -1,0 +1,116 @@
+GOAL
+Implement Daily Meal and Daily Workout in the React Native app end-to-end:
+- Create daily items for a selected date
+- View daily items on the Daily Detail screen
+- Mark meals/workouts completed (checkbox)
+- Keep everything aligned with backend behavior and the web app.
+
+NON-NEGOTIABLE
+- Use existing backend endpoints/contracts only (no backend changes).
+- No placeholders for core flows. If an endpoint is unknown, locate it by searching the codebase + docs/ and use the real route.
+- Every user input that exists in profile + wizards must be sent/considered by the AI when generating daily items (same as web).
+- Respect weekStartsOn and all date logic.
+
+SCOPE
+1) Daily Detail screen (app/daily/[date].tsx)
+- Must show:
+  - Daily Meal card (with 2–3 meals inside: breakfast/lunch/dinner or lunch/dinner depending on backend data)
+  - Daily Workout card (list of exercises)
+  - Completion toggles per meal and per workout (or per workout session if backend uses one completion field)
+
+2) Create Daily Meal / Daily Workout actions
+- Entry points:
+  A) Daily Detail screen: “Plan this day” CTA
+  B) Calendar week view: tap empty day row → show bottom sheet with:
+     - Add Daily Meal (only if missing)
+     - Add Daily Workout (only if missing)
+- Tapping an option should:
+  - Open a confirmation modal showing the date + what will be created
+  - Then call backend to generate/schedule the daily item
+  - On success: refetch day data + show it immediately
+
+3) Completion toggles
+- Daily Meal:
+  - Checkbox per meal item (e.g., lunch completed)
+- Daily Workout:
+  - Checkbox for workout completed (or per exercise if backend supports it)
+- Must persist via backend PATCH endpoint(s)
+- Immediately reflect in:
+  - Daily detail UI
+  - Weekly summary score (Dashboard + Calendar)
+
+BACKEND CONTRACT DISCOVERY (DO THIS FIRST)
+- Search the mobile project + docs/ for the real endpoints already used on web:
+  - GET day data (date param)
+  - POST create daily meal
+  - POST create daily workout
+  - PATCH meal completion
+  - PATCH workout completion
+- Print a short “Resolved API map” in the agent output:
+  - METHOD path -> purpose
+  - request body shape
+  - response shape fields used in UI
+
+DATA MODEL RULES
+- A “Daily Meal” and “Daily Workout” must be tied to a date and the current user.
+- Do not create duplicates for the same date.
+- If the day already has a 7-day plan scheduled, daily items can still exist only if backend allows; otherwise enforce backend rules and display a clear message.
+
+AI INPUT FIDELITY (CRITICAL)
+When generating Daily Meal or Daily Workout, include the FULL user context:
+- Profile physical stats, goal, training experience
+- Injuries/limitations
+- Training capacity (days/week, session duration)
+- Equipment available + equipment notes
+- Nutrition preferences, foods to avoid, allergies, spice preference, appetite level
+- Favorite meals text field (must bias the meal selection to include healthier versions)
+- Body type / body goals / challenges note field (must be included prominently)
+- Any wizard-specific overrides if user triggered creation from a wizard flow
+
+If the backend endpoint already builds the prompt server-side, ensure the mobile request includes any required flags so the backend uses the full profile. If the endpoint expects a “profileSnapshot” or “constraints” object, populate it.
+
+UI/UX REQUIREMENTS
+- Match the web: clean cards, subtle icons, minimal lines
+- Use the same completion toggle style as web (small circle/checkbox at right)
+- Loading states: skeleton or spinner inside the card
+- Errors: non-blocking banner/toast, keep screen usable
+
+IMPLEMENTATION TASKS (ORDER)
+A) Confirm day routing + date formatting
+- Ensure date is ISO yyyy-mm-dd for API calls, regardless of locale.
+
+B) Build API hooks in lib/api-hooks.ts
+- useDayData(date)
+- useCreateDailyMeal(date)
+- useCreateDailyWorkout(date)
+- useToggleMealComplete(mealId, completed)
+- useToggleWorkoutComplete(workoutId, completed)
+
+C) Update Daily Detail UI
+- Render cards from dayData
+- Render toggles
+- “Plan this day” shows add options based on missing items
+
+D) Update Calendar empty-day interaction
+- Add press handler to day rows
+- Show bottom sheet with context-aware actions
+
+E) Verify scoring updates
+- After toggles, invalidate/refetch:
+  - weekly summary query
+  - week data query
+  - day data query
+
+TESTS (MUST PASS)
+1) Pick an empty date → Add Daily Meal → appears on Daily Detail
+2) Pick an empty date → Add Daily Workout → appears on Daily Detail
+3) Toggle completion → persists after app restart
+4) Weekly score changes appropriately after completion
+5) No duplicate daily items can be created for same date
+
+DO NOT BUILD YET
+- 7-day Meal Plan / 7-day Workout Plan
+- Plan hub / delete / unschedule
+Those come next after daily is stable.
+
+START NOW.

@@ -301,6 +301,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/workouts/:id", proxyToExternal);
   app.get("/api/calendar/occupied-dates", proxyToExternal);
 
+  app.post("/api/daily-meals", proxyToExternal);
+  app.get("/api/daily-meals/:date", proxyToExternal);
+  app.post("/api/daily-workouts", proxyToExternal);
+  app.get("/api/daily-workouts/:date", proxyToExternal);
+  app.get("/api/daily-coverage", proxyToExternal);
+
   app.get("/api/meta", (_req, res) => {
     const commitHash = getGitCommitHash();
     const dbHash = getDbIdentifierHash();

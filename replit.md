@@ -33,7 +33,7 @@ Perform AI is a React Native (Expo) mobile app for meal and workout tracking. It
 - `app/(tabs)/performance.tsx` - Performance tab (adherence %, 4-week trend, meal/workout split, streak, AI insight banner)
 - `app/(tabs)/settings.tsx` - Settings tab (profile card, preferences, week start, theme, sign out)
 - `app/(tabs)/profile.tsx` - User profile editing (accessible from Settings)
-- `app/daily/[date].tsx` - Daily detail view with completion toggles
+- `app/daily/[date].tsx` - Daily detail view with completion toggles + "Plan This Day" generation
 - `app/diagnostics.tsx` - Developer diagnostics (API config, auth state, call log)
 
 ## API Endpoints
@@ -48,6 +48,9 @@ Perform AI is a React Native (Expo) mobile app for meal and workout tracking. It
 - GET `/api/day-data/:date` - Single day meals + workouts + score
 - PATCH `/api/meals/:id` - Toggle meal completion
 - PATCH `/api/workouts/:id` - Toggle workout completion
+- POST `/api/daily-meals` - Create daily meal (body: { date, mealsPerDay })
+- POST `/api/daily-workouts` - Create daily workout (body: { date })
+- GET `/api/daily-coverage` - Check which dates have daily items
 
 All data routes require `Authorization: Bearer <token>` header.
 JWT is decoded (not verified) to extract userId.
@@ -159,3 +162,6 @@ Toggle mutations use optimistic updates on day-data, then invalidate:
 - 2026-02-23: Built food preferences screen (favorites, foods to avoid, allergies)
 - 2026-02-23: Built exercise preferences screen (training capacity, equipment, constraints)
 - 2026-02-23: Implemented dynamic theming - all 30 screens converted from static Colors to useColors() hook, Light/Dark/System modes now fully functional
+- 2026-02-23: Added Daily Meal + Daily Workout generation: "Plan This Day" bottom sheet in daily detail, polling for generation, daily normalization in api-hooks
+- 2026-02-23: Enabled Daily Meal / Daily Workout in Create screens with navigation to daily detail + auto-generate trigger
+- 2026-02-23: Added proxy routes for daily-meals, daily-workouts, daily-coverage endpoints
