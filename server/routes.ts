@@ -145,17 +145,23 @@ async function getCompletionsForUser(userId: string, idPrefix?: string): Promise
 
 function applyCompletionsToDay(day: any, completionMap: Map<string, boolean>, date: string): any {
   if (!day) return day;
-  const meals = Array.isArray(day.meals) ? day.meals.map((m: any, i: number) => {
-    const id = m.id || `meal-${date}-${i}`;
-    const hasLocal = completionMap.has(id);
-    return { ...m, id, completed: hasLocal ? completionMap.get(id) : (m.completed ?? false) };
-  }) : [];
-  const workouts = Array.isArray(day.workouts) ? day.workouts.map((w: any, i: number) => {
-    const id = w.id || `workout-${date}-${i}`;
-    const hasLocal = completionMap.has(id);
-    return { ...w, id, completed: hasLocal ? completionMap.get(id) : (w.completed ?? false) };
-  }) : [];
-  return { ...day, date: day.date || date, meals, workouts };
+  if (completionMap.size === 0) return { ...day, date: day.date || date };
+
+  if (Array.isArray(day.meals)) {
+    const meals = day.meals.map((m: any, i: number) => {
+      const id = m.id || `meal-${date}-${i}`;
+      const hasLocal = completionMap.has(id);
+      return { ...m, id, completed: hasLocal ? completionMap.get(id) : (m.completed ?? false) };
+    });
+    const workouts = Array.isArray(day.workouts) ? day.workouts.map((w: any, i: number) => {
+      const id = w.id || `workout-${date}-${i}`;
+      const hasLocal = completionMap.has(id);
+      return { ...w, id, completed: hasLocal ? completionMap.get(id) : (w.completed ?? false) };
+    }) : (day.workouts ?? []);
+    return { ...day, date: day.date || date, meals, workouts };
+  }
+
+  return { ...day, date: day.date || date };
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -268,6 +274,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to save completion" });
     }
   });
+
+  app.post("/api/completions/toggle", proxyToExternal);
 
   app.get("/api/meta", (_req, res) => {
     const commitHash = getGitCommitHash();

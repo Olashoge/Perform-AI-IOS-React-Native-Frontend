@@ -3,10 +3,23 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 export const API_BASE_URL = 'https://mealplanai.replit.app';
+
+function getEffectiveBaseUrl(): string {
+  if (Platform.OS === 'web') {
+    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+      return `${window.location.protocol}//${window.location.hostname}:5000`;
+    }
+    return 'http://localhost:5000';
+  }
+  return API_BASE_URL;
+}
+
+const EFFECTIVE_BASE_URL = getEffectiveBaseUrl();
 console.log("FINAL API_BASE_URL =>", API_BASE_URL);
+console.log("EFFECTIVE_BASE_URL =>", EFFECTIVE_BASE_URL);
 
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: EFFECTIVE_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -108,7 +121,7 @@ apiClient.interceptors.response.use(
           throw new Error('No refresh token');
         }
 
-        const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
+        const response = await axios.post(`${EFFECTIVE_BASE_URL}/api/auth/refresh`, {
           refreshToken,
         });
 
