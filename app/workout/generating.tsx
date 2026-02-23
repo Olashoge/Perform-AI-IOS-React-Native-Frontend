@@ -52,7 +52,7 @@ export default function WorkoutGeneratingScreen() {
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
       queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
       queryClient.invalidateQueries({ queryKey: ["occupied-dates"] });
-      router.replace(`/plans`);
+      router.replace(`/plan/workout/${planId}`);
     }
   }, [data?.status]);
 

@@ -101,6 +101,16 @@ Toggle mutations use optimistic updates on day-data, then invalidate:
 - staleTime is 30 seconds (not Infinity) to ensure queries refresh after navigation
 - Mutation throws on error (not swallowed) so onError properly rolls back optimistic updates
 
+## Plan Detail Architecture
+- Plan detail screens live at `app/plan/{type}/[id].tsx` (meal, workout, wellness)
+- Meal detail: Shows 7 days of meals with expandable recipe cards (ingredients, instructions, macros), nutrition notes, grocery list
+- Workout detail: Shows 7 days with workout sessions (exercises, sets, reps, rest) and rest days
+- Wellness detail: Shows goal plan overview with tappable linked meal/workout plan cards
+- All detail screens use the corresponding hooks: `useMealPlan(id)`, `useWorkoutPlan(id)`, `useGoalPlan(id)`
+- Generating screens navigate to detail view on completion (not Plans Hub)
+- Plan cards in Plans Hub are tappable → navigate to `/plan/{type}/{id}`
+- Detail screens handle "generating" status with spinner + refresh option
+
 ## Recent Changes
 - 2026-02-22: Initial build - Auth flow, Dashboard, Calendar, Daily Detail, Profile screens
 - 2026-02-22: Added diagnostics screen and API call logging
@@ -128,3 +138,6 @@ Toggle mutations use optimistic updates on day-data, then invalidate:
 - 2026-02-23: Added plan management hooks: useWellnessPlans, useMealPlans, useWorkoutPlans, useUpdateGoalPlan, useDelete* with cache invalidation
 - 2026-02-23: Added proxy routes for GET /api/goal-plans, /api/plans, /api/workouts; PATCH/DELETE mutations
 - 2026-02-23: Added "View My Plans" link on Dashboard and Ready screen navigation to Plans Hub
+- 2026-02-23: Built plan detail screens: meal (7-day with expandable recipes, grocery list), workout (sessions, exercises, rest days), wellness (overview with linked plan cards)
+- 2026-02-23: Made plan cards tappable in Plans Hub → navigates to detail views
+- 2026-02-23: Generating screens now navigate to plan detail view on completion (not just Plans Hub)

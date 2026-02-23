@@ -54,7 +54,7 @@ export default function MealGeneratingScreen() {
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
       queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
       queryClient.invalidateQueries({ queryKey: ["occupied-dates"] });
-      router.replace(`/plans`);
+      router.replace(`/plan/meal/${planId}`);
     }
   }, [data?.status]);
 

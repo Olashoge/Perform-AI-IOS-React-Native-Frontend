@@ -54,6 +54,13 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="plan"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
+      <Stack.Screen
         name="plans"
         options={{
           headerShown: false,

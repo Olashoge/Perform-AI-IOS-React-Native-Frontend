@@ -66,11 +66,13 @@ function PlanCard({
   type,
   onDelete,
   onMoveDate,
+  onPress,
 }: {
   plan: any;
   type: "wellness" | "meal" | "workout";
   onDelete: () => void;
   onMoveDate?: () => void;
+  onPress: () => void;
 }) {
   const [showActions, setShowActions] = useState(false);
   const icon: any =
@@ -100,7 +102,14 @@ function PlanCard({
   const endDate = plan.endDate || plan.end_date;
 
   return (
-    <View style={styles.planCard}>
+    <Pressable
+      style={styles.planCard}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress();
+      }}
+      testID={`plan-card-${plan._id || plan.id}`}
+    >
       <View style={styles.cardHeader}>
         <View style={[styles.iconCircle, { backgroundColor: iconColor + "20" }]}>
           <Ionicons name={icon} size={20} color={iconColor} />
@@ -193,7 +202,7 @@ function PlanCard({
           </Pressable>
         </View>
       )}
-    </View>
+    </Pressable>
   );
 }
 
@@ -406,6 +415,15 @@ export default function PlansHubScreen() {
                     ? () => promptMoveDate(plan)
                     : undefined
                 }
+                onPress={() => {
+                  if (planType === "meal") {
+                    router.push(`/plan/meal/${id}`);
+                  } else if (planType === "workout") {
+                    router.push(`/plan/workout/${id}`);
+                  } else {
+                    router.push(`/plan/wellness/${id}`);
+                  }
+                }}
               />
             );
           })
