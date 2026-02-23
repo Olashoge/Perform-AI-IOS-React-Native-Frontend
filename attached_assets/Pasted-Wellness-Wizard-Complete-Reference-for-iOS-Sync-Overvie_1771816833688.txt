@@ -1,0 +1,385 @@
+Wellness Wizard — Complete Reference for iOS Sync
+Overview & Flow
+The Wellness Wizard is a multi-step form (route: /goals/new) that creates a GoalPlan — a container that links together a meal plan and/or workout plan. It follows this flow:
+
+Wizard (goal-wizard) → Generating Screen (goal-generating) → Ready Screen (goal-ready)
+Route: /goals/new → /goals/:id/generating?meal=true&workout=true → /goals/:id/ready
+
+Prerequisites
+Before the wizard can be used, the user must have a saved Profile (Performance Blueprint). If no profile exists, the wizard shows a blocker screen: "Profile Required — Set up your Performance Blueprint before creating a plan." with a button to navigate to the profile page.
+
+The profile is fetched via GET /api/profile.
+
+Step Navigation Logic
+The wizard has 4 conceptual steps, but steps are conditionally shown based on the selected plan type:
+
+Step	Title	Shown When
+1	Wellness Overview	Always
+2	Nutrition Setup	planType is "both" or "meal"
+3	Training Setup	planType is "both" or "workout"
+4	Review	Always
+The step indicators (progress dots) only show visible steps. For example, if planType is "workout", the user sees steps 1 → 3 → 4 (step 2 is skipped). Navigation uses Next/Back buttons.
+
+Profile Summary Card
+A read-only profile summary card is displayed on every step, showing:
+
+Age, Weight (in user's preferred unit), Goal, Experience
+Training days (if set)
+Allergies & intolerances (if any)
+Foods to avoid (if any)
+Health constraints (if any)
+Favorite meals (if set)
+Body notes (if set)
+It includes an "Edit" link to navigate to the profile page.
+
+Profile → Wizard Auto-Prefill Logic
+When the profile loads, several wizard fields are automatically populated from profile data. This is a one-time prefill (uses a prefillDone ref to prevent re-runs):
+
+Profile Field	Wizard Field	Transformation
+primaryGoal	goalType (step 1 state)	Direct copy if it matches a valid wizard goal option
+foodsToAvoid	mealForm.foodsToAvoid	Direct copy (string array)
+allergiesIntolerances	mealForm.allergies	Array joined with ", " into a single string
+spicePreference	mealForm.spiceLevel	Map: mild→mild, medium→medium, spicy→hot
+trainingExperience	workoutForm.experienceLevel	Direct copy ("beginner" / "intermediate" / "advanced")
+trainingDaysOfWeek	workoutForm.daysOfWeek	Capitalize first letter: "mon"→"Mon", "tue"→"Tue", etc.
+sessionDurationMinutes	workoutForm.sessionLength	Snapped to nearest valid option: 20, 30, 45, or 60
+healthConstraints	workoutForm.limitations	Array joined with ", " into a single string
+workoutLocationDefault	workoutForm.location	Direct copy ("gym" / "home" / "outdoors")
+equipmentAvailable	workoutForm.equipmentAvailable	Direct copy; if empty but location is set, uses location presets
+Step 1: Wellness Overview
+Goal Type — goalType (local state, not form field)
+
+Type: string
+Default: "weight_loss" (or prefilled from profile)
+Options (exact values and labels):
+"weight_loss" — "Weight Loss"
+"muscle_gain" — "Muscle Gain"
+"performance" — "Performance"
+"general_fitness" — "General Fitness"
+"mobility" — "Mobility"
+"endurance" — "Endurance"
+"strength" — "Strength"
+"energy" — "Energy & Focus"
+UI: 2-column grid of toggle buttons
+Note: This list is larger than the profile's goal list. The wizard supports more specialized goals.
+Goal Mapping — When proceeding to step 2/3, the wizard maps this goal into the narrower enum required by meal/workout schemas:
+
+Meal goal mapping (mapGoalForMeal):
+
+general_fitness, mobility → "maintenance"
+energy → "energy"
+endurance → "performance"
+strength → "muscle_gain"
+All others pass through directly
+Workout goal mapping (mapGoalForWorkout):
+
+general_fitness, energy, mobility → "maintenance"
+endurance → "performance"
+strength → "muscle_gain"
+All others pass through directly
+Plan Type — planType (local state)
+
+Type: string
+Default: "both"
+Values: "both" | "meal" | "workout"
+Labels: "Meal + Workout", "Meal Only", "Workout Only"
+Controls which steps (2 and/or 3) are shown
+Start Date — startDate (local state)
+
+Type: string (YYYY-MM-DD format)
+Default: "" (empty = not scheduled yet, user can schedule later)
+Validation: Minimum is today's date
+Optional — plans can be created without a date and scheduled later
+Date Conflict Detection:
+
+Fetches GET /api/availability which returns { mealDates: string[], workoutDates: string[], allDates: string[] }
+For each day in the selected 7-day range, checks if it overlaps with existing scheduled plans
+Shows a warning like "3 meal days overlap. 2 workout days overlap." but does NOT block — user can still proceed
+Pace — pace (local state)
+
+Type: string
+Default: "" (unselected)
+Values: "gentle" | "steady" | "aggressive" (toggleable — clicking again deselects)
+Optional
+Descriptions:
+Gentle: "small, sustainable changes you can stick with long-term"
+Steady: "a balanced approach that keeps you progressing without burning out"
+Aggressive: "pushes harder for faster results; best if you have experience and strong habits"
+Step 2: Nutrition Setup (Meal Preferences Form)
+All fields here use the preferencesSchema from shared/schema.ts.
+
+Diet / Cuisine Styles — dietStyles
+
+Type: string[]
+Required: Yes (min 1)
+Default: ["No Preference"]
+Preset options: "No Preference", "Nigerian", "Mediterranean", "Vegetarian", "Vegan", "Keto", "Paleo", "Indian", "Chinese", "Mexican", "Japanese", "Korean", "Thai", "Italian", "American"
+Behavior: Multi-select. Selecting "No Preference" clears all others. Selecting any other clears "No Preference". Custom styles can be typed in.
+UI: Selected items show as removable badges at top, unselected show as outline buttons below, plus a custom input field
+Foods to Avoid — foodsToAvoid
+
+Type: string[]
+Default: [] (or prefilled from profile)
+Preset checkboxes (same list as profile): Pork, Shellfish, Dairy, Gluten, Soy, Eggs, Nuts, Red Meat, Fish, Mushrooms, Chicken, Beans/Legumes, Spicy Foods, Garlic/Onion
+UI: Checkbox grid (2-3 columns)
+Allergies & Intolerances — allergies
+
+Type: string (free text, not array)
+Default: "" (or prefilled from profile's allergiesIntolerances array joined with ", ")
+UI: Textarea
+Optional
+Meals Per Day — mealsPerDay
+
+Type: number — literal 2 or 3
+Default: 3
+UI: Two toggle buttons: "2 Meals" | "3 Meals (Full Day)"
+Meal Slots — mealSlots (only shown when mealsPerDay = 2)
+
+Type: string[] of "breakfast" | "lunch" | "dinner"
+Default when choosing 2 meals: ["lunch", "dinner"]
+Validation: Must select exactly 2 when mealsPerDay is 2
+UI: 3 checkboxes (breakfast, lunch, dinner), disabled once 2 are selected
+Cleared (set to undefined) when switching to 3 meals
+Prep Style — prepStyle
+
+Type: string enum
+Default: "cook_daily"
+Values:
+"cook_daily" — "Cook Daily"
+"batch_2day" — "Meal Prep (2-day)"
+"batch_3to4day" — "Meal Prep (3-4 day)"
+Budget — budgetMode
+
+Type: string enum
+Default: "normal"
+Values: "normal" | "budget_friendly"
+Cooking Time — cookingTime
+
+Type: string enum
+Default: "normal"
+Values: "quick" ("Quick (under 30 min)") | "normal" ("Normal")
+Spice Level — spiceLevel
+
+Type: string enum
+Default: "medium" (or prefilled from profile)
+Values: "none" | "mild" | "medium" | "hot"
+Note: Profile uses "spicy", wizard uses "hot" — mapping: spicy→hot
+Recipe Style — authenticityMode
+
+Type: string enum
+Default: "mixed"
+Values:
+"traditional" — "Traditional" (uses authentic methods)
+"weeknight" — "Weeknight Easy" (keeps it simple)
+"mixed" — "Mixed"
+Household Size — householdSize (hidden under "Show advanced options")
+
+Type: integer
+Default: 1
+Validation: Min 1, max 8
+Purpose: Scales recipe servings
+Hidden/computed meal form fields (not shown in UI, set programmatically):
+
+goal — set from mapGoalForMeal(goalType) when leaving step 1
+workoutDays — set from workoutForm.daysOfWeek when leaving step 3 (for cross-plan awareness)
+workoutDaysPerWeek — computed from workoutDays.length on submit
+age, currentWeight, targetWeight, weightUnit — these exist in the schema but are NOT shown in the wizard UI (they come from the profile)
+Step 3: Training Setup (Workout Preferences Form)
+All fields here use the workoutPreferencesSchema from shared/schema.ts.
+
+Workout Location — location
+
+Type: string
+Default: "" (or prefilled from profile)
+Values: "gym" | "home" | "outdoors"
+Auto-preselect: Changing location auto-fills equipmentAvailable with the same presets as the profile page (see equipment-constants.ts)
+Equipment Available — equipmentAvailable
+
+Type: string[]
+Default: [] (or prefilled from profile)
+Same categories and items as the profile page
+UI: Flat list grouped by category headers (not accordion like profile), each item is a toggleable badge
+Auto-populates when location changes
+Training Mode — trainingMode
+
+Type: string enum
+Default: "both"
+Values: "strength" | "cardio" | "both"
+Side effect: Changing training mode filters the available focus areas and resets focus to valid ones (or ["Full Body"] if none remain valid)
+Experience Level — experienceLevel
+
+Type: string enum
+Default: "intermediate" (or prefilled from profile's trainingExperience)
+Values: "beginner" | "intermediate" | "advanced"
+Focus Areas — focusAreas
+
+Type: string[]
+Required: Min 1
+Default: ["Full Body"]
+Available options depend on training mode:
+Strength: Full Body, Upper Body, Lower Body, Core, Back, Chest, Arms, Shoulders, Glutes, Legs
+Cardio: Full Body, Core, Endurance, Conditioning, Mobility, Lower Body
+Both: Full Body, Upper Body, Lower Body, Core, Back, Chest, Arms, Shoulders, Glutes, Legs, Flexibility, Endurance, Conditioning, Mobility
+Multi-select toggle badges
+Workout Days — daysOfWeek
+
+Type: string[] of "Sun" | "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat"
+Required: Min 1
+Default: ["Mon", "Wed", "Fri"] (or prefilled from profile)
+UI: 7 toggle buttons in a row
+Note: Uses title-case ("Mon") unlike profile which uses lowercase ("mon")
+Session Length — sessionLength
+
+Type: number
+Default: 45 (or snapped from profile's sessionDurationMinutes)
+Values: 20 | 30 | 45 | 60 (displayed as "20 min", "30 min", etc.)
+Limitations — limitations
+
+Type: string (free text)
+Default: "" (or prefilled from profile's healthConstraints joined with ", ")
+Optional
+Placeholder: "e.g. bad knees, lower back pain, recovering from shoulder surgery..."
+Hidden workout form field:
+
+goal — set from mapGoalForWorkout(goalType) when leaving step 1
+Step 4: Review
+A read-only summary of all selections across steps 1-3. Shows:
+
+Goal Overview: Goal type, Plan type, Date range (if set), Pace (if set), Age/Weight (if set)
+Nutrition Highlights (if meal included): Meals/day, Diet styles, Foods to avoid, Spice level
+Training Highlights (if workout included): Location, Workout days, Training mode, Session length, Focus areas
+The "Build My Plan" button triggers submission.
+
+Submission (API Call)
+Endpoint: POST /api/goal-plans/generate
+
+Request Body:
+
+{
+  "goalType": "weight_loss",
+  "planType": "both",
+  "startDate": "2026-02-23",     // optional, YYYY-MM-DD
+  "pace": "steady",              // optional
+  "globalInputs": {              // optional
+    "age": 30,
+    "currentWeight": 180,
+    "targetWeight": 165,
+    "weightUnit": "lb"
+  },
+  "mealPreferences": {           // only if planType includes meals
+    "goal": "weight_loss",
+    "dietStyles": ["Mediterranean"],
+    "foodsToAvoid": ["Pork", "Shellfish"],
+    "householdSize": 1,
+    "prepStyle": "cook_daily",
+    "budgetMode": "normal",
+    "cookingTime": "normal",
+    "mealsPerDay": 3,
+    "mealSlots": undefined,
+    "allergies": "peanuts, lactose",
+    "spiceLevel": "medium",
+    "authenticityMode": "mixed",
+    "workoutDays": ["Mon", "Wed", "Fri"],
+    "workoutDaysPerWeek": 3
+  },
+  "workoutPreferences": {        // only if planType includes workouts
+    "goal": "weight_loss",
+    "location": "gym",
+    "trainingMode": "both",
+    "focusAreas": ["Full Body", "Core"],
+    "daysOfWeek": ["Mon", "Wed", "Fri"],
+    "sessionLength": 45,
+    "experienceLevel": "intermediate",
+    "limitations": "bad knees",
+    "equipmentAvailable": ["Dumbbells", "Barbells", ...]
+  }
+}
+Response (success): { goalPlanId: string }
+
+Error responses:
+
+400 with { blocked: true, violations: [...] } — Constraint Engine blocked the plan (e.g. safety violations)
+400 with { message: "Profile is required..." } — No profile exists
+429 — Daily AI call limit reached (10/day)
+500 — Server error
+Backend processing flow:
+
+Rate limit check (10 AI calls/day)
+Profile required check
+Constraint Engine evaluation (pre-check against safety rules)
+If blocked → return 400 with violation details
+Compute adaptive modifiers (based on user history + pace)
+Create GoalPlan record with auto-generated title (e.g. "Lean Start · Feb 23")
+Kick off async generation (workout first, then meal — sequential)
+Return { goalPlanId } immediately (generation happens in background)
+Generation Progress Screen (/goals/:id/generating)
+After submission, the user is redirected to a polling-based progress screen.
+
+Polling endpoint: GET /api/goal-plans/:id/generation-status
+
+Response:
+
+{
+  "goalPlanId": "...",
+  "status": "generating" | "ready" | "failed",
+  "progress": {
+    "stage": "TRAINING",
+    "stageStatuses": {
+      "TRAINING": "PENDING" | "RUNNING" | "DONE" | "FAILED" | "SKIPPED",
+      "NUTRITION": "PENDING" | "RUNNING" | "DONE" | "FAILED" | "SKIPPED",
+      "SCHEDULING": "PENDING" | "RUNNING" | "DONE" | "FAILED" | "SKIPPED",
+      "FINALIZING": "PENDING" | "RUNNING" | "DONE" | "FAILED" | "SKIPPED"
+    },
+    "errorMessage": "..."  // only on failure
+  },
+  "planType": "both",
+  "mealPlan": { "id": "...", "status": "..." } | null,
+  "workoutPlan": { "id": "...", "status": "..." } | null
+}
+Visual behavior:
+
+Polls every 2 seconds
+Shows a progress bar and stage checklist
+Uses a visual step timer (20 seconds per step) to smooth the animation — the visual progress advances at a fixed rate, not tied to actual backend progress
+When backend reports done, all remaining visual steps instantly complete
+Rotates wellness tips every 5 seconds
+Client-side timeout: 3 minutes — shows "Taking Longer Than Expected" message
+Stages shown depend on plan type (TRAINING is skipped if meal-only, NUTRITION is skipped if workout-only)
+Outcomes:
+
+All success: Shows "Your Wellness Plan is Ready!" with "See Your Plan" button → navigates to /goals/:id/ready
+Partial failure: Shows "Partial Generation" — one succeeded, one failed
+Total failure: Shows "Generation Failed" with error message and "Try Again" button
+Ready Screen (/goals/:id/ready)
+Displays a summary of the generated GoalPlan after successful generation.
+
+Data fetching:
+
+GET /api/goal-plans/:id → GoalPlan object
+GET /api/plan/:mealPlanId → MealPlan (if exists)
+GET /api/workout/:workoutPlanId → WorkoutPlan (if exists)
+Displays:
+
+Goal type with icon, auto-generated title, date range
+Meal plan summary card: title, meals/day, diet style badges, calorie/protein targets (clickable → navigates to /plan/:mealPlanId)
+Workout plan summary card: title, days/week, session length, training mode, focus area badges (clickable → navigates to /workout/:workoutPlanId)
+"Back to Wellness Plans" button → /goals
+Goal type icons:
+
+weight_loss → Flame
+muscle_gain → Dumbbell
+performance → Trophy
+maintenance → Heart
+energy → Zap
+general_fitness → Target
+mobility → Heart
+endurance → Zap
+strength → Dumbbell
+Key Differences Between Profile and Wizard Values
+Field	Profile Value	Wizard Value	Mapping
+Training days	["mon", "tue"] (lowercase)	["Mon", "Tue"] (title-case)	Capitalize first letter
+Spice	"mild"/"medium"/"spicy"	"none"/"mild"/"medium"/"hot"	spicy→hot, wizard adds "none" option
+Health constraints	string[]	Single string (joined with ", ")	Array → comma-separated text
+Allergies	string[] (allergiesIntolerances)	Single string (allergies)	Array → comma-separated text
+Session duration	Any integer 10-180	Only 20/30/45/60	Snaps to nearest valid option
+Goal options	6 options	8 options (adds mobility, endurance, strength)	Extra goals mapped down for API

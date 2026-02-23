@@ -486,6 +486,101 @@ export function usePerformanceData() {
   return { data, isLoading };
 }
 
+export interface AvailabilityData {
+  mealDates: string[];
+  workoutDates: string[];
+  allDates: string[];
+}
+
+export function useAvailability() {
+  return useQuery<AvailabilityData>({
+    queryKey: ["availability"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/availability");
+      logApiCall("GET", "/api/availability", response.status);
+      return response.data;
+    },
+    staleTime: 60000,
+  });
+}
+
+export interface GenerationStatus {
+  goalPlanId: string;
+  status: "generating" | "ready" | "failed";
+  progress: {
+    stage: string;
+    stageStatuses: {
+      TRAINING: string;
+      NUTRITION: string;
+      SCHEDULING: string;
+      FINALIZING: string;
+    };
+    errorMessage?: string;
+  };
+  planType: string;
+  mealPlan: { id: string; status: string } | null;
+  workoutPlan: { id: string; status: string } | null;
+}
+
+export function useGenerationStatus(goalPlanId: string | null, enabled: boolean) {
+  return useQuery<GenerationStatus>({
+    queryKey: ["generation-status", goalPlanId],
+    queryFn: async () => {
+      const response = await apiClient.get(`/api/goal-plans/${goalPlanId}/generation-status`);
+      logApiCall("GET", `/api/goal-plans/${goalPlanId}/generation-status`, response.status);
+      return response.data;
+    },
+    enabled: !!goalPlanId && enabled,
+    refetchInterval: 2000,
+  });
+}
+
+export function useGenerateGoalPlan() {
+  return useMutation({
+    mutationFn: async (payload: any) => {
+      const response = await apiClient.post("/api/goal-plans/generate", payload);
+      logApiCall("POST", "/api/goal-plans/generate", response.status);
+      return response.data;
+    },
+  });
+}
+
+export function useGoalPlan(id: string | null) {
+  return useQuery({
+    queryKey: ["goal-plan", id],
+    queryFn: async () => {
+      const response = await apiClient.get(`/api/goal-plans/${id}`);
+      logApiCall("GET", `/api/goal-plans/${id}`, response.status);
+      return response.data;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useMealPlan(id: string | null) {
+  return useQuery({
+    queryKey: ["meal-plan", id],
+    queryFn: async () => {
+      const response = await apiClient.get(`/api/plan/${id}`);
+      logApiCall("GET", `/api/plan/${id}`, response.status);
+      return response.data;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useWorkoutPlan(id: string | null) {
+  return useQuery({
+    queryKey: ["workout-plan", id],
+    queryFn: async () => {
+      const response = await apiClient.get(`/api/workout/${id}`);
+      logApiCall("GET", `/api/workout/${id}`, response.status);
+      return response.data;
+    },
+    enabled: !!id,
+  });
+}
+
 function generateMockWeekData(weekStart: string): DayData[] {
   const start = new Date(weekStart + "T12:00:00Z");
   const days: DayData[] = [];
