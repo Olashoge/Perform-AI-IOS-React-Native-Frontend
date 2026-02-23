@@ -23,8 +23,6 @@ import {
   Meal,
   Workout,
 } from "@/lib/api-hooks";
-import { useQueryClient } from "@tanstack/react-query";
-
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
@@ -250,7 +248,6 @@ export default function DailyDetailScreen() {
 
   const { date, generate } = useLocalSearchParams<{ date: string; generate?: string }>();
   const insets = useSafeAreaInsets();
-  const queryClient = useQueryClient();
   const { data: dayData, isLoading, refetch } = useDayData(date || "");
   const toggleMutation = useToggleCompletion();
   const createDailyMeal = useCreateDailyMeal();

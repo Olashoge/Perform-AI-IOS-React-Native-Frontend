@@ -36,7 +36,7 @@ export default function CreateScreen() {
       icon: "restaurant" as const,
       color: Colors.accent,
       recommended: false,
-      enabled: false,
+      enabled: true,
     },
     {
       id: "workout_7day",
@@ -45,7 +45,7 @@ export default function CreateScreen() {
       icon: "fitness" as const,
       color: "#FF6B6B",
       recommended: false,
-      enabled: false,
+      enabled: true,
     },
     {
       id: "daily_meal",
