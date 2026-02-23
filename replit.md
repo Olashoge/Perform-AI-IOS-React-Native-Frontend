@@ -124,3 +124,7 @@ Toggle mutations use optimistic updates on day-data, then invalidate:
 - 2026-02-23: Built 4-step Wellness Plan Wizard (app/wellness/step1-4): goal, nutrition, training, review+submit
 - 2026-02-23: Added generating screen (polls status) and ready screen (celebration + navigation)
 - 2026-02-23: WellnessProvider context for wizard state, profile prefill, LOCATION_PRESETS for equipment
+- 2026-02-23: Built Plans Hub (app/plans.tsx) with 3-tab layout (Wellness, Meals, Workouts), plan cards with status badges, 3-dot action menu (change date, delete), empty states
+- 2026-02-23: Added plan management hooks: useWellnessPlans, useMealPlans, useWorkoutPlans, useUpdateGoalPlan, useDelete* with cache invalidation
+- 2026-02-23: Added proxy routes for GET /api/goal-plans, /api/plans, /api/workouts; PATCH/DELETE mutations
+- 2026-02-23: Added "View My Plans" link on Dashboard and Ready screen navigation to Plans Hub
