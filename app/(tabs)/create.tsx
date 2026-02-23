@@ -30,7 +30,7 @@ const PLAN_TYPES = [
     icon: "restaurant" as const,
     color: Colors.accent,
     recommended: false,
-    enabled: false,
+    enabled: true,
   },
   {
     id: "workout_7day",
@@ -39,7 +39,7 @@ const PLAN_TYPES = [
     icon: "fitness" as const,
     color: "#FF6B6B",
     recommended: false,
-    enabled: false,
+    enabled: true,
   },
   {
     id: "daily_meal",
@@ -96,6 +96,10 @@ export default function CreateTabScreen() {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 if (plan.id === "wellness") {
                   router.push("/wellness/step1");
+                } else if (plan.id === "meal_7day") {
+                  router.push("/meal/new");
+                } else if (plan.id === "workout_7day") {
+                  router.push("/workout/new");
                 }
               }}
               disabled={!plan.enabled}

@@ -1,0 +1,208 @@
+Here's a comprehensive breakdown of how the 7-day meal plan and 7-day training plan systems work, including profile auto-population, calendar blocking, and the full architecture your iOS app needs to replicate:
+
+1. Profile as the Foundation (Performance Blueprint)
+Everything starts with the profile. Both plan creation forms require a completed profile (GET /api/profile). If no profile exists, the user sees a "Profile Required" screen with a button to set one up.
+
+The profile stores these key fields that flow into plans:
+
+Profile Field	Meal Plan Form	Workout Plan Form
+primaryGoal	Auto-mapped to meal goal (weight_loss, muscle_gain, energy, maintenance, performance)	Auto-mapped to workout goal (weight_loss, muscle_gain, performance, maintenance)
+foodsToAvoid (array)	Pre-fills the "Foods to Avoid" checkboxes	N/A
+allergiesIntolerances (array)	Pre-fills the allergies text area (joined with commas)	N/A
+trainingDaysOfWeek (array, lowercase: "mon","tue"...)	Pre-fills workoutDays AND calculates workoutDaysPerWeek	Pre-fills daysOfWeek (capitalized: "Mon","Tue"...)
+spicePreference	Maps to spice level: mild→mild, medium→medium, spicy→hot	N/A
+trainingExperience	N/A	Directly sets experienceLevel
+sessionDurationMinutes	N/A	Snaps to nearest valid option: 20, 30, 45, or 60 min
+healthConstraints (array)	N/A	Pre-fills limitations text (joined with commas)
+workoutLocationDefault	N/A	Pre-fills location select (gym/home/outdoors)
+equipmentAvailable (array)	N/A	Pre-fills equipment badges. If empty but location is set, auto-selects equipment typical for that location
+Goal mapping logic (important — the profile goal names don't map 1:1):
+
+For meals: general_fitness and mobility → maintenance; endurance and strength → performance
+
+For workouts: general_fitness, energy, and mobility → maintenance; endurance → performance; strength → muscle_gain
+
+Profile summary card: Both forms display a read-only summary card at the top showing age, weight, goal, experience, training days, allergies, foods to avoid, and favorites/health constraints. This card has an "Edit" link to the profile page.
+
+2. Meal Plan Creation Form Structure
+The form has these sections in order:
+
+Your Profile (read-only summary card)
+Your Goal — 5 radio-style buttons: Weight Loss, Muscle Gain, Energy & Focus, Maintenance, Performance
+Diet & Cuisine — Multi-select cuisine badges (No Preference, Nigerian, Mediterranean, Vegetarian, Vegan, Keto, Paleo, Indian, Chinese, Mexican, Japanese, Korean, Thai, Italian, American) + custom text input. Foods to avoid checkboxes (14 common items). Allergies text area.
+Meals & Schedule — 2 or 3 meals toggle. When 2 is selected, user picks exactly 2 of breakfast/lunch/dinner.
+Cooking Preferences — Prep style (Cook Daily / Meal Prep 2-day / Meal Prep 3-4 day), Budget (Normal / Budget Friendly), Cooking Time (Quick under 30min / Normal), Spice Level (None/Mild/Medium/Hot), Recipe Style (Traditional / Weeknight Easy / Mixed). Advanced options: Household Size (1-8).
+Start Date (optional) — date picker, minimum today
+Generate button
+Submission payload:
+
+POST /api/plan
+{
+  ...preferences,
+  idempotencyKey: "random-uuid",
+  startDate: "2026-03-15" // optional
+}
+3. Workout Plan Creation Form Structure
+Your Profile (read-only summary, different fields shown: health constraints, body notes instead of food items)
+Goal & Setup — 4 radio buttons: Weight Loss, Muscle Gain, Performance, General Fitness. Location select (Gym/Home/Outdoors). Equipment badges organized by category (selecting a location auto-suggests equipment). Training mode (Strength/Cardio/Both). Experience level (Beginner/Intermediate/Advanced).
+Schedule & Duration — Day-of-week picker (Mon-Sun, multi-select). Session length (20/30/45/60/90 min).
+Focus Areas — Multi-select: Full Body, Upper Body, Lower Body, Core, Back, Chest, Arms, Shoulders, Glutes, Legs, Flexibility, Endurance
+Limitations — Free-text area for injuries/conditions
+Start Date (optional)
+Generate button
+Submission payload:
+
+POST /api/workout
+{
+  preferences: { ...workoutPreferences },
+  idempotencyKey: "random-uuid",
+  startDate: "2026-03-15" // optional
+}
+4. Async Generation Pattern
+Both plans use the same async pattern:
+
+Client sends POST → Server creates a "pending" record with status: "generating" and immediately returns it
+Server spawns background task that calls OpenAI
+Client navigates to generating screen and polls the status endpoint every 2-3 seconds:
+Meal: GET /api/plan/:id/status → { id, status, pricingStatus }
+Workout: GET /api/workout/:id/status → { status, errorMessage }
+When status === "ready" → navigate to detail view
+When status === "failed" → show error with retry option
+Idempotency protection: Each creation request includes a crypto.randomUUID() key. If a duplicate request arrives, the server returns the existing plan instead of creating a new one. If there's already a plan in "generating" state, it returns that one too.
+
+Safety checks before generation:
+
+Rate limit: 10 AI calls per user per day (429 error)
+Profile required (400 error with profileRequired: true)
+Constraint engine evaluation — checks profile against safety rules (e.g., age-appropriate exercises). If blocked, returns 400 with { blocked: true, violations: [...] }
+5. What the Backend Does During Generation
+The backend builds a rich prompt from multiple sources:
+
+User Context (from profile via context-builder.ts) — age, sex, weight, goals, training schedule, health constraints, dietary restrictions, favorite meals, equipment
+Form Preferences — the specific choices the user made on the creation form
+Wellness Context — cross-plan coupling that adjusts nutrition based on training days (more protein/carbs on workout days, recovery nutrition on rest days)
+Constraint Engine — safety spec based on age tier, plus performance coach adjustments (reduce/increase load based on nextWeekPlanBias)
+Adaptive Engine — modifiers from check-in history that adjust difficulty, volume, and complexity
+Preference Context — learned likes/dislikes from previous feedback (avoided ingredients, disliked exercises)
+After meal plan generation, grocery pricing runs automatically as a follow-up AI call to estimate costs.
+
+6. Calendar Blocking System
+How dates get blocked
+When a plan is scheduled (has a planStartDate), it occupies 7 consecutive days starting from that date.
+
+Checking for conflicts
+GET /api/calendar/occupied-dates?excludePlanId={currentPlanId}
+→ { occupiedDates: ["2026-03-15", "2026-03-16", ..., "2026-03-21"] }
+The excludePlanId parameter is critical — when rescheduling an existing plan, you don't want the plan's own dates to block it.
+
+Client-side overlap check
+When the user selects a potential start date, the client checks ALL 7 days of the proposed range against the occupied dates:
+
+func wouldOverlap(startDate: Date, occupiedDates: Set<String>) -> Bool {
+    for dayOffset in 0..<7 {
+        let day = Calendar.current.date(byAdding: .day, value: dayOffset, to: startDate)!
+        if occupiedDates.contains(formatAsYYYYMMDD(day)) {
+            return true
+        }
+    }
+    return false
+}
+Occupied dates are shown differently in the date picker (strikethrough, red-tinted) and are disabled for selection.
+
+Unified calendar view
+GET /api/calendar/all
+→ {
+    mealSlots: ["breakfast", "lunch", "dinner"],
+    days: [
+        {
+            date: "2026-03-15",
+            meals: { breakfast: {...}, lunch: {...}, dinner: {...} },
+            planIds: ["uuid-1"]
+        },
+        ...
+    ]
+}
+This merges all scheduled meal plans into one unified feed. Slot order is fixed: breakfast=1, lunch=2, dinner=3, snack=4. Workout calendar is separate: GET /api/calendar/workouts.
+
+7. Plan JSON Structure (What AI Returns)
+Meal Plan (planJson)
+{
+    title: "Mediterranean Lean Week",
+    summary: "A 7-day plan focused on...",
+    nutritionNotes: {
+        dailyMacroTargetsRange: {
+            calories: "1800-2000",
+            protein_g: "140-160",
+            carbs_g: "180-220",
+            fat_g: "60-75"
+        }
+    },
+    days: [
+        {
+            dayIndex: 1,
+            meals: {
+                breakfast: { name, cuisineTag, description, prepTime, cookTime, servings, calories, macros: { protein_g, carbs_g, fat_g, fiber_g }, ingredients: [{ item, amount }], instructions: [...], mealFingerprint },
+                lunch: { ... },
+                dinner: { ... }
+            }
+        },
+        // ... 7 days total
+    ],
+    groceryList: [{ item, quantity, estimatedPrice, owned? }],
+    adaptiveSnapshot: { ... } // if adaptive engine is active
+}
+Workout Plan (planJson)
+{
+    title: "Strength Builder",
+    summary: "...",
+    days: [
+        {
+            dayIndex: 1,
+            dayLabel: "Monday",
+            isWorkoutDay: true,
+            session: {
+                sessionTitle: "Upper Body Push",
+                focus: "Chest, Shoulders, Triceps",
+                durationMinutes: 45,
+                warmup: { ... },
+                exercises: [{ name, sets, reps, restSeconds, notes?, exerciseFingerprint }],
+                cooldown: { ... }
+            }
+        },
+        {
+            dayIndex: 2,
+            dayLabel: "Tuesday",
+            isWorkoutDay: false,
+            session: null  // rest day
+        },
+        // ... 7 days total
+    ]
+}
+The daysOfWeek selection from the form determines which days are isWorkoutDay: true (with sessions) and which are rest days (with session: null).
+
+8. URL Parameters Passed Between Screens
+The Goal Plan wizard chains meal and workout creation together using URL params:
+
+Meal creation from goal wizard:
+
+/new-plan?goal=weight_loss&startDate=2026-03-15&goalPlanId=uuid&alsoWorkout=true
+goal: Pre-selects the goal
+startDate: Pre-fills the start date
+goalPlanId: After creation, auto-links the meal plan to this goal
+alsoWorkout=true: Shows "Step 1 of 2" banner, then navigates to workout creation after
+Workout creation from meal creation:
+
+/workouts/new?goal=weight_loss&startDate=2026-03-15&goalPlanId=uuid&fromMealPlan=true
+fromMealPlan=true: Shows "Step 2 of 2" banner
+After creation, auto-links the workout plan to the goal
+9. Key Behaviors Your iOS App Must Replicate
+Profile is mandatory — Block plan creation without it. Show the profile summary at the top of creation forms.
+Prefill runs once — Use a flag to prevent re-populating form fields when profile data re-fetches.
+Idempotency — Generate a UUID per submission attempt, send it with the request.
+Poll, don't subscribe — Check status every 2-3s during generation. No WebSocket needed.
+Calendar conflict detection — Always check occupied dates before showing the date picker. Exclude the current plan's own dates when rescheduling.
+Parse dates at midnight local time — Always append T00:00:00 to date strings before parsing to avoid timezone off-by-one errors.
+Constraint violations — Handle the blocked: true error response and display violation messages to the user.
+Rate limiting — Handle the 429 response for daily AI call limits.
+Goal plan linking — When creating plans from a goal wizard, auto-link via PATCH after creation.
+Equipment preselection — When user picks a workout location, auto-suggest typical equipment for that location using getPreselectForLocation().

@@ -1,0 +1,111 @@
+MOBILE — PHASE: STANDALONE 7-DAY MEAL PLAN + 7-DAY WORKOUT PLAN
+
+Context:
+- Plans Hub + Plan Detail + Actions are implemented.
+- Wellness Plan wizard exists on mobile.
+Now implement standalone creation flows for:
+A) 7-Day Meal Plan
+B) 7-Day Workout Plan
+Do NOT add new backend endpoints. Use the same endpoints the web app uses.
+
+--------------------------------------------
+1) Create Entry Points
+--------------------------------------------
+Update app/create.tsx to make these options functional:
+- “Meal Plan (7-day)”
+- “Workout Plan (7-day)”
+They should route to:
+- /meal/new
+- /workout/new
+
+--------------------------------------------
+2) Standalone Meal Plan Wizard (7-day)
+--------------------------------------------
+Create: app/meal/new.tsx
+
+Requirements:
+- Block creation if profile is missing (route to Profile).
+- Show a “Using your profile” summary card at top with Edit Profile link.
+- Prefill all relevant fields from profile (but allow overrides; do not modify profile).
+
+Form Fields (align with web meal plan form):
+- Primary goal (default from profile goal if present)
+- Meals per day (2 or 3)
+  - If 2 meals: allow selecting which two (Breakfast/Lunch/Dinner)
+- Dietary style (multi-select if supported by backend)
+- Cuisine style (multi-select)
+- Allergies & Intolerances (prefill)
+- Foods to avoid (prefill)
+- Favorite meals (prefill)
+- Spice preference (if exists)
+- Prep style (Meal Prep, Quick, etc. if exists)
+- Pace (optional) with everyday helper text
+
+Start Date:
+- Include a start date picker on this page or as final step.
+- Conflict-aware: block dates that would overlap existing scheduled MEAL plans (same logic as web for meal plans).
+- After creation, plan should be scheduled if user selected a start date; otherwise unscheduled.
+
+Generate Flow:
+- On submit, call the existing backend endpoint to generate a standalone meal plan.
+- Show generating screen with staged progress:
+  - Building your meal plan
+  - Compiling your grocery list
+  - Estimating prices (if applicable)
+  - Finalizing
+- On success: navigate to Meal Plan detail page (existing plan detail route for meal plan).
+- Ensure plan appears in Plans Hub under Meal Plans.
+
+--------------------------------------------
+3) Standalone Workout Plan Wizard (7-day)
+--------------------------------------------
+Create: app/workout/new.tsx
+
+Requirements:
+- Block creation if profile missing (route to Profile).
+- “Using your profile” summary card with Edit Profile link.
+- Prefill from profile, allow overrides without changing profile.
+
+Form Fields (align with web workout plan form):
+- Primary goal (default from profile goal if present)
+- Training days of week (prefill)
+- Training mode (Strength, Cardio, Both)
+- Experience level (prefill)
+- Focus areas / body parts (multi-select)
+- Session duration (prefill)
+- Injuries/limitations/chronic conditions (prefill)
+- Location (Gym/Home/Outdoors) + Equipment pills (prefill) + Other equipment notes
+
+Start Date:
+- Add conflict-aware date picker.
+- Block dates that would overlap existing scheduled WORKOUT plans (same logic as web for workout plans).
+- Schedule on creation if start date chosen; otherwise unscheduled.
+
+Generate Flow:
+- Call existing backend endpoint to generate standalone workout plan.
+- Show staged loading:
+  - Designing your training plan
+  - Structuring your week
+  - Finalizing
+- On success: navigate to Workout Plan detail page.
+- Ensure plan appears in Plans Hub under Workout Plans.
+
+--------------------------------------------
+4) Query/Cache Consistency
+--------------------------------------------
+After creating a plan:
+- Invalidate:
+  - plans:meal or plans:workout
+  - week-data (calendar)
+  - weekly-summary (dashboard)
+If plan is scheduled with a start date, calendar should reflect it immediately.
+
+--------------------------------------------
+5) Deliverable Output
+--------------------------------------------
+After implementation list:
+- The exact endpoints used for meal plan create + workout plan create
+- The payload structure used (keys only, no secrets)
+- The query keys used + which are invalidated
+Do not refactor auth or existing screens.
+Proceed now.

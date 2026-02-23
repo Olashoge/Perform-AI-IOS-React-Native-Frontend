@@ -1,0 +1,283 @@
+Complete Prompt Construction Pipeline — iOS Sync Reference
+Here's exactly how this system transforms wizard inputs + profile data into AI prompts. The iOS app needs to replicate the same API call and get the same results, since all of this happens server-side.
+
+The Big Picture: 6-Layer Prompt Stack
+When a user submits the wizard, the backend constructs a prompt for OpenAI by stacking 6 distinct layers into the system and user messages. Here's the full architecture:
+
+┌──────────────────────────────────────────────┐
+│  LAYER 1: System Prompt (base AI persona)    │  ← buildSystemPrompt() / buildWorkoutSystemPrompt()
+├──────────────────────────────────────────────┤
+│  LAYER 2: Constraint Engine Safety Spec      │  ← evaluateConstraints() → buildConstraintPromptBlock()
+├──────────────────────────────────────────────┤
+│  LAYER 3: Performance Coach Adjustment       │  ← profile.nextWeekPlanBias (inside constraint block)
+├──────────────────────────────────────────────┤
+│  LAYER 4: Adaptive Modifiers                 │  ← computeAdaptiveModifiers() → buildAdaptivePromptBlock()
+├──────────────────────────────────────────────┤
+│  LAYER 5: User Context from Profile          │  ← buildUserContextForGeneration() → mealPromptBlock / workoutPromptBlock
+├──────────────────────────────────────────────┤
+│  LAYER 6: User Prompt (wizard form inputs)   │  ← buildPlanPrompt() / buildWorkoutPlanPrompt()
+│  + Preference Learning Context               │  ← buildPreferenceContextBlock()
+│  + Wellness Context (cross-plan coupling)    │  ← buildMealWellnessBlock() / buildWorkoutWellnessBlock()
+│  + Body Context                              │  ← buildBodyContextBlock()
+│  + Equipment Block (workout only)            │  ← buildEquipmentBlock()
+└──────────────────────────────────────────────┘
+Layers 2-5 are appended to the system prompt. Layer 6 is the user prompt. The final OpenAI call looks like:
+
+messages: [
+  { role: "system", content: LAYER_1 + "\n\n" + LAYER_2 + LAYER_3 + LAYER_4 + LAYER_5 },
+  { role: "user", content: LAYER_6 }
+]
+LAYER 1: System Prompt — AI Persona & Rules
+For meals (buildSystemPrompt(prefs)):
+
+Persona: "professional meal planning nutritionist"
+Core rules: JSON-only output, respect foods to avoid, realistic US grocery ingredients, household-size scaling, concise steps (6-8 max)
+Spice level rules — explicitly defined per level (none/mild/medium/hot), applied INDEPENDENTLY of cuisine
+Authenticity mode rules — traditional/weeknight/mixed
+Cuisine adherence — must strongly reflect specified cuisines, not just "add a twist"
+Minor protection — if prefs.age < 18: no diet/restrict/deficit language, focus on balanced growth
+For workouts (buildWorkoutSystemPrompt()):
+
+Persona: "certified fitness coach"
+Safety-first, proper form, warm-up/cool-down required
+Equipment constraints are strict
+Max 3 coaching cues per session
+Rest days must have session: null
+LAYER 2: Constraint Engine Safety Spec
+Entry point: evaluateConstraints(ruleContext) in server/constraints/engine.ts
+
+The constraint engine runs 5 rule categories sequentially. Each rule can produce:
+
+Violations with severity BLOCK (stop generation), WARN (log but continue), or ADJUST (modify the SafeSpec)
+SafeSpec patches that get merged into the default SafeSpec
+Default SafeSpec (starting point):
+
+ageTier: "adult"
+bannedFoods: [], bannedIngredients: []
+bannedExerciseTags: [], bannedExercisesExact: []
+allowedEquipment: [], equipmentRestriction: "any"
+nutritionBounds: { minDailyCalories: 1200, maxDailyCalories: 4000, deficitMax: 25%/700kcal }
+intensityCaps: { maxRPE: 10, warmupMin: 5min, mobilityMin: 3min }
+swapHints: {}
+Rule 1: Age Rules (evaluateAgeRules)
+
+Age	Tier	Effect
+<13	—	BLOCK — generation refused entirely
+13-15	young_teen	Bans barbells, olympic lifts, heavy lifting. RPE capped at 6. Min calories 1600. No aggressive deficit.
+16-17	older_teen	Bans olympic lifts unless experience = advanced. RPE capped at 7. Min calories 1500.
+18-59	adult	Default — no restrictions
+60+	senior	Bans high-impact, jumping exercises, olympic lifts. RPE capped at 7. Joint-friendly bias. Low-impact cardio only. Extended warmup (10 min).
+Rule 2: Injury Rules (evaluateInjuryRules)
+Matches the user's healthConstraints array against keyword mappings:
+
+Knee/ACL: Bans jumping, deep knee flexion. Swaps squats → leg press, box jumps → step-ups
+Shoulder/Rotator cuff: Bans overhead pressing, snatches. Swaps OHP → landmine press
+Lower back/Lumbar: Bans heavy deadlifts, heavy rows, spinal loading
+Wrist/Carpal tunnel: Bans heavy grip exercises, barbell bench
+Hip: Bans deep hip flexion, pistol squats
+Ankle/Achilles: Bans high-impact jumping, heavy calf raises
+Each match adds to bannedExerciseTags, bannedExercisesExact, and swapHints.
+
+Rule 3: Equipment Rules (evaluateEquipmentRules)
+
+home → Bans barbell/cable/machine exercises. Allows dumbbells, bands, kettlebells, pull-up bar, etc.
+outdoors → Bans all indoor equipment. Bodyweight only.
+gym → Full equipment access.
+Rule 4: Nutrition Rules (evaluateNutritionRules)
+
+Merges profile.allergiesIntolerances + wizard foodsToAvoid into bannedFoods
+allergiesIntolerances also becomes bannedIngredients (stricter — absolute prohibition)
+Goal-based bounds: weight_loss = deficit allowed; muscle_gain = no deficit, surplus capped at 500kcal
+Minors: smaller deficit limits, higher minimum calories, no aggressive deficit
+Rule 5: Schedule Rules (evaluateScheduleRules)
+
+Detects date overlaps with existing scheduled plans
+Issues WARN violations if dates overlap (but doesn't block)
+If any rule produces a BLOCK violation, the engine returns immediately and the API responds with 400 { blocked: true, violations }.
+
+The SafeSpec is then converted to a prompt block via buildConstraintPromptBlock():
+
+--- CONSTRAINT ENGINE SAFETY SPEC ---
+Age tier: older_teen
+BANNED exercise categories/tags: olympicLift, maxEffort
+BANNED exercises: power clean, snatch, clean and jerk
+Max RPE: 7
+No 1-rep max testing
+Minimum warmup: 6 min
+Min daily calories: 1500
+Max daily calories: 3500
+BANNED foods: Pork, Shellfish
+BANNED ingredients: Dairy, Gluten
+--- END CONSTRAINT ENGINE SAFETY SPEC ---
+LAYER 3: Performance Coach Adjustment
+Embedded inside the constraint prompt block. Based on profile.nextWeekPlanBias:
+
+"reduce_load" → reduce intensity, lighter weights, fewer sets, anti-inflammatory meals
+"increase_load" → modest progression in volume/intensity, adequate protein
+"simplify_plan" → fewer exercises, shorter workouts, simpler meals
+"nutrition_bias_training_days" → bias calories/carbs toward workout days
+"maintain" or null → no adjustment
+This bias is set by the Performance Core system after weekly check-ins.
+
+LAYER 4: Adaptive Modifiers
+Entry point: computeAdaptiveForUser(userId, pace) → calls computeAdaptiveModifiers(inputs) + buildAdaptivePromptBlock(modifiers, decisions)
+
+Inputs:
+
+User profile (goal, experience, activity level)
+The pace from the wizard (gentle / steady / aggressive)
+Last 1-2 performance summaries (weekly check-in data)
+Decision logic (all rules checked in sequence):
+
+Condition	Effect
+Workout adherence < 60%	Volume × 0.85, complexity = simple, less cardio
+Workout adherence > 85% + good energy	Volume × 1.05, complexity = advanced (if not beginner)
+Meal adherence < 60%	Simplify meals (max 8 ingredients, 20 min prep, allow repeats)
+Low energy (≤40) + decent adherence	Deload week: volume × 0.9, RPE cap 7, recovery bias higher
+Low energy + low adherence	Simplify everything, RPE cap 7
+Weight loss stalled 2+ weeks (adherent)	-150 kcal/day, increase cardio bias
+Muscle gain stalled 2+ weeks (adherent)	+150 kcal/day
+Pace modifiers (applied last, act as guardrails):
+
+gentle: clamps calorie delta to ±100, volume max 1.05
+steady: clamps calorie delta to ±200, volume max 1.10
+aggressive: clamps calorie delta to ±300, volume max 1.15
+Final volume multiplier always clamped to 0.85–1.15.
+
+Resulting prompt block:
+
+--- ADAPTIVE MODIFIERS (apply exactly) ---
+Volume multiplier: 0.85 (scale sets/reps by this factor)
+Intensity cap RPE: 7 (do not exceed this RPE)
+Cardio bias: lower
+Recovery bias: higher
+Complexity level: simple
+SIMPLIFY MEALS: Use fewer ingredients (max 8), shorter prep (max 20 min), and allow repeating meals across days.
+DELOAD WEEK: Reduce overall training volume and intensity. Focus on technique, mobility, and active recovery.
+WHY these adjustments:
+- [LOW_WORKOUT_ADHERENCE_SIMPLIFY] Workout adherence below 60%, simplifying volume and complexity.
+- [FATIGUE_RISK_DELOAD] Low energy with decent adherence — deload week triggered.
+--- END ADAPTIVE MODIFIERS ---
+LAYER 5: User Context from Profile
+Entry point: buildUserContextForGeneration(profile, overrides?)
+
+This extracts ALL profile fields into a structured GenerationContext object, then formats it as prompt text.
+
+Override mechanism: The wizard can override certain profile fields. The key override used is equipmentAvailable — if the wizard's workout form has equipment selected, it overrides the profile's equipment.
+
+Meal context block (buildMealContextBlock):
+
+--- USER CONTEXT (MUST FOLLOW STRICTLY) ---
+Age: 28
+Sex: male
+Current Weight: 180 lb
+Target Weight: 165 lb
+Goal: weight loss
+Training Days: Mon, Wed, Fri
+Activity Level: moderate
+HARD CONSTRAINT — Allergies & Intolerances: Dairy, Gluten (NEVER include these)
+HARD CONSTRAINT — Foods to Avoid: Pork, Shellfish (NEVER include these)
+Additional avoidance notes: no red dye
+Appetite Level: normal
+Spice Preference: medium
+FAVORITE MEALS (soft constraint — include at least 1 per day as a healthier version): jollof rice, grilled chicken
+If a favorite meal conflicts with allergies/foods to avoid, adjust ingredients to comply or propose a close alternative labeled as a substitution.
+Health Constraints: bad knees, lower back pain
+Sleep: ~7 hours/night
+Stress Level: moderate
+IMPORTANT USER BODY CONTEXT (high priority — tailor plan accordingly):
+I carry weight in my midsection and have trouble with digestion after heavy meals.
+--- END USER CONTEXT ---
+Workout context block (buildWorkoutContextBlock):
+
+--- USER CONTEXT (MUST FOLLOW STRICTLY) ---
+Age: 28
+Sex: male
+Current Weight: 180 lb
+Goal: weight loss
+Experience: intermediate
+Session Duration: 45 minutes
+Activity Level: moderate
+HARD CONSTRAINT — Health/Injury Constraints: bad knees, lower back pain (avoid exercises stressing these areas)
+Workout Location: gym
+HARD CONSTRAINT — Available Equipment: Dumbbells, Barbells, Cable Machine, Pull-up Bar
+Only prescribe exercises using the equipment listed above. If an exercise requires unlisted equipment, provide a bodyweight or available-equipment alternative.
+--- END USER CONTEXT ---
+LAYER 6: User Prompt — The Wizard Form Inputs
+For meals (buildPlanPrompt(prefs, prefCtx)):
+
+The user prompt contains ALL wizard meal form fields formatted as structured text, plus:
+
+Personalization block (buildPersonalizationBlock):
+
+Age, weight, target weight with workout-day fueling logic
+Workout-day carb/protein biases based on goal
+Rest-day lighter nutrition guidance
+Preference learning context (buildPreferenceContextBlock):
+
+Disliked meals from past feedback → "do NOT suggest these"
+Liked meals from past feedback → "suggest similar cuisines/proteins"
+Avoided ingredients from feedback → "never include these"
+Preferred ingredients from feedback → "use these more often"
+Wellness context (buildMealWellnessBlock):
+
+Training-day vs rest-day nutrition coupling
+Day-indexed training schedule (e.g., "Day indices 2, 4, 6 = Mon, Wed, Fri")
+Training days: +15-25% carbs, +10-15% calories, post-workout meals
+Rest days: -15-25% carbs, lower calories, vegetables/fats/protein emphasis
+Goal-specific notes (weight_loss: maintain deficit; muscle_gain: ensure surplus)
+Macro targets derived from goal type
+Body context block (buildBodyContextBlock):
+
+Free-text from profile's bodyContext field
+For workouts (buildWorkoutPlanPrompt(prefs, exerciseContext)):
+
+The user prompt contains:
+
+All workout form fields (goal, location, training mode, focus areas, days, session length, experience, limitations)
+Day assignment rules: exactly which day indices are workout vs rest days
+Training mode rules (strength-only, cardio-only, or both)
+Location/equipment rules
+Goal alignment guidelines
+Safety rules (warmup, injury avoidance, consecutive-day rest)
+Exercise preference context (avoided/disliked exercises from past feedback)
+Wellness context (buildWorkoutWellnessBlock): calorie-aware training adjustments
+Equipment block (buildEquipmentBlock): strict equipment constraint
+Post-Validation Loop
+After OpenAI returns the plan, the system runs post-validation against the SafeSpec:
+
+Meal post-validation (postValidateMealPlan):
+
+Scans every ingredient in every meal against bannedFoods and bannedIngredients
+If found: strips the banned ingredient from the meal (auto-fix)
+If too many violations: triggers full regeneration with "STRICT MODE" appended
+Workout post-validation (postValidateWorkoutPlan):
+
+Scans every exercise name against bannedExercisesExact
+If found: removes the banned exercise from the session (auto-fix)
+If too many violations: regenerates with "STRICT MODE" appended
+The STRICT MODE re-prompt adds: "Previous generation contained banned exercises/ingredients. Absolutely do NOT include any banned exercises/ingredients."
+
+OpenAI Call Configuration
+Model: gpt-4.1-mini
+Temperature: 0.7
+Max tokens: 16,000
+Error recovery: If JSON parsing fails, sends a repair prompt asking to fix the JSON, then re-validates with Zod schemas
+Rate limit: 10 AI calls per user per day
+Macro Targets by Goal Type (Wellness Context)
+Goal	Calories	Protein	Carbs	Fat
+weight_loss	1400-1800	100-140g	120-180g	45-65g
+muscle_gain	2200-2800	140-180g	250-350g	60-90g
+performance / endurance	2000-2600	120-160g	220-320g	55-80g
+strength	2200-2800	150-190g	200-300g	60-90g
+maintenance / general_fitness	1800-2200	100-140g	180-260g	50-75g
+What the iOS App Needs to Do
+The iOS app does NOT need to replicate any prompt construction. It all happens server-side. The iOS app just needs to:
+
+Collect the same wizard inputs with the same field names, types, and validation rules
+POST to POST /api/goal-plans/generate with the exact same request body structure (using JWT Bearer token auth)
+Poll GET /api/goal-plans/:id/generation-status for progress updates
+Fetch the ready plan via GET /api/goal-plans/:id, GET /api/plan/:mealPlanId, GET /api/workout/:workoutPlanId
+The backend handles all prompt construction, constraint checking, adaptive modifiers, wellness context coupling, post-validation, and error recovery identically regardless of whether the request came from the web app or the iOS app.
+
+The critical thing for iOS parity is ensuring the request payload format matches exactly — same field names, same value enums, same validation constraints, same optional/required rules as documented in the wizard reference above.

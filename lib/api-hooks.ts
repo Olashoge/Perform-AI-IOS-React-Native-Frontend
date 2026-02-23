@@ -581,6 +581,78 @@ export function useWorkoutPlan(id: string | null) {
   });
 }
 
+export function useOccupiedDates(excludePlanId?: string) {
+  const params = new URLSearchParams();
+  if (excludePlanId) params.set("excludePlanId", excludePlanId);
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  return useQuery<string[]>({
+    queryKey: ["occupied-dates", excludePlanId || "all"],
+    queryFn: async () => {
+      const response = await apiClient.get(`/api/calendar/occupied-dates${qs}`);
+      logApiCall("GET", `/api/calendar/occupied-dates${qs}`, response.status);
+      const data = response.data;
+      return data?.occupiedDates || data?.dates || [];
+    },
+    staleTime: 30000,
+  });
+}
+
+export function useCreateMealPlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: any) => {
+      const response = await apiClient.post("/api/plan", payload);
+      logApiCall("POST", "/api/plan", response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["plans:meal"] });
+      queryClient.invalidateQueries({ queryKey: ["occupied-dates"] });
+    },
+  });
+}
+
+export function useCreateWorkoutPlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: any) => {
+      const response = await apiClient.post("/api/workout", payload);
+      logApiCall("POST", "/api/workout", response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["plans:workout"] });
+      queryClient.invalidateQueries({ queryKey: ["occupied-dates"] });
+    },
+  });
+}
+
+export function useMealPlanStatus(planId: string | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ["meal-plan-status", planId],
+    queryFn: async () => {
+      const response = await apiClient.get(`/api/plan/${planId}/status`);
+      logApiCall("GET", `/api/plan/${planId}/status`, response.status);
+      return response.data;
+    },
+    enabled: !!planId && enabled,
+    refetchInterval: 2500,
+  });
+}
+
+export function useWorkoutPlanStatus(planId: string | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ["workout-plan-status", planId],
+    queryFn: async () => {
+      const response = await apiClient.get(`/api/workout/${planId}/status`);
+      logApiCall("GET", `/api/workout/${planId}/status`, response.status);
+      return response.data;
+    },
+    enabled: !!planId && enabled,
+    refetchInterval: 2500,
+  });
+}
+
 export function useWellnessPlans() {
   return useQuery({
     queryKey: ["plans:wellness"],

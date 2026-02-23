@@ -40,6 +40,20 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="meal"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
+      <Stack.Screen
+        name="workout"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
+      <Stack.Screen
         name="plans"
         options={{
           headerShown: false,
