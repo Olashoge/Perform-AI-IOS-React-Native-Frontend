@@ -167,7 +167,7 @@ export default function DashboardScreen() {
 
       <Pressable
         style={({ pressed }) => [styles.createButton, pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] }]}
-        onPress={() => router.push("/create")}
+        onPress={() => router.push("/(tabs)/create")}
       >
         <View style={styles.createButtonContent}>
           <Ionicons name="add-circle" size={24} color="#FFFFFF" />

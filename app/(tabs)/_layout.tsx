@@ -18,6 +18,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "calendar", selected: "calendar" }} />
         <Label>Calendar</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="create">
+        <Icon sf={{ default: "plus.circle", selected: "plus.circle.fill" }} />
+        <Label>Create</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="performance">
         <Icon sf={{ default: "chart.line.uptrend.xyaxis", selected: "chart.line.uptrend.xyaxis" }} />
         <Label>Performance</Label>
@@ -75,6 +79,15 @@ function ClassicTabLayout() {
           title: "Calendar",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="create"
+        options={{
+          title: "Create",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="add-circle-outline" size={size} color={color} />
           ),
         }}
       />

@@ -185,7 +185,7 @@ export default function CalendarScreen() {
       style={({ pressed }) => [styles.fab, pressed && { opacity: 0.85, transform: [{ scale: 0.92 }] }]}
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        router.push("/create");
+        router.push("/(tabs)/create");
       }}
     >
       <Ionicons name="add" size={28} color="#FFFFFF" />
