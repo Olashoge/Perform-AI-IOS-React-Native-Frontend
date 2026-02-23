@@ -278,6 +278,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/completions/toggle", proxyToExternal);
 
   app.get("/api/profile", proxyToExternal);
+  app.post("/api/profile", proxyToExternal);
+  app.put("/api/profile", proxyToExternal);
   app.patch("/api/profile", proxyToExternal);
 
   app.get("/api/meta", (_req, res) => {

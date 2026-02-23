@@ -1,0 +1,215 @@
+Profile Page — Complete Field Reference for iOS Sync
+API Endpoints
+Method	Path	Purpose
+GET	/api/profile	Fetch current profile (returns null if none exists)
+POST	/api/profile	Create profile (first time only; returns 409 if profile exists)
+PUT	/api/profile	Update existing profile (auto-creates if none exists)
+All endpoints require authentication (session cookie or JWT Bearer token). The response is a UserProfile object.
+
+Section 1: Physical Stats & Goals
+Unit System Toggle — unitSystem
+
+Type: string enum
+Values: "imperial" | "metric"
+Default: "imperial"
+Behavior: Stored as a preference. All weight/height values are always stored in metric (kg / cm) in the database regardless of which unit the user selects. The iOS app should convert on the client side.
+Conversion constants: 1 kg = 2.2046226218 lbs, 1 inch = 2.54 cm
+Age — age
+
+Type: integer
+Required: Yes
+Validation: Min 13, must be a whole number
+Default: 25
+Sex — sex
+
+Type: string nullable
+Required: No
+Values: "male" | "female" | "other"
+Default: null
+Height — heightCm
+
+Type: integer nullable
+Required: No
+Stored as: centimeters (always)
+Imperial display: Split into feet + inches (feet 0-9, inches 0-11)
+Conversion: cm = (feet * 12 + inches) * 2.54, reverse: totalInches = cm / 2.54, feet = floor(totalInches / 12), inches = round(totalInches % 12) (if inches rounds to 12, increment feet, set inches to 0)
+Weight — weightKg
+
+Type: real (float)
+Required: Yes
+Stored as: kilograms (always)
+Validation: Must be positive
+Imperial display: shown as lbs, step 0.1
+Target Weight — targetWeightKg
+
+Type: real nullable
+Required: No
+Stored as: kilograms
+Same conversion logic as weight
+Primary Goal — primaryGoal
+
+Type: string
+Required: Yes (min length 1)
+Values (exact strings):
+"weight_loss" — "Weight Loss"
+"muscle_gain" — "Muscle Gain"
+"performance" — "Performance"
+"maintenance" — "Maintenance"
+"energy" — "Energy & Focus"
+"general_fitness" — "General Fitness"
+Default: "general_fitness"
+Training Experience — trainingExperience
+
+Type: string enum
+Required: Yes
+Values: "beginner" | "intermediate" | "advanced"
+Default: "beginner"
+Body & Goals Notes — bodyContext
+
+Type: text (long string)
+Required: No
+Default: ""
+Purpose: Free-text field where users describe body goals, body type, challenges. This gets injected into AI prompts for personalization.
+Placeholder: "Share body goals, body type, challenges, or anything important for your plan."
+Section 2: Health & Medical
+Health Constraints — healthConstraints
+
+Type: string[] (JSON array)
+Required: No
+Default: []
+UI: Tag input — user types a condition and presses Enter or taps "+" to add
+Placeholder: "e.g. torn ACL, limited shoulder ROM, asthma, diabetes"
+Important submission behavior: On submit, the value of healthConstraints is copied into THREE legacy database fields: injuries, mobilityLimitations, and chronicConditions. The iOS app should do the same when submitting.
+Legacy fields (populated from healthConstraints on save):
+
+injuries — string[], default []
+mobilityLimitations — string[], default []
+chronicConditions — string[], default []
+Sleep Hours — sleepHours
+
+Type: real nullable
+Required: No
+Validation: Min 0, max 24
+Step: 0.5
+Purpose: Influences AI plan recovery recommendations
+Stress Level — stressLevel
+
+Type: string nullable
+Required: No
+Values: "low" | "moderate" | "high"
+Section 3: Training Capacity
+Activity Level — activityLevel
+
+Type: string nullable
+Required: No
+Values:
+"sedentary" — "Sedentary"
+"moderate" — "Moderately Active"
+"active" — "Very Active"
+Training Days of Week — trainingDaysOfWeek
+
+Type: string[] (JSON array)
+Required: Yes (minimum 1 day selected)
+Values: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] (lowercase, 3-letter abbreviations)
+UI: 7 toggle buttons, Mon through Sun. Selected days use filled style, unselected use outline.
+Display: Shows count like "Training Days (3/week)"
+Default: []
+Session Duration — sessionDurationMinutes
+
+Type: integer nullable
+Required: No
+Validation: Min 10, max 180
+Purpose: Tells AI how long workouts should be
+Section 4: Workout Location & Equipment
+Workout Location — workoutLocationDefault
+
+Type: string nullable
+Required: No
+Values: "gym" | "home" | "outdoors"
+Auto-preselect behavior: When the user changes location, the equipmentAvailable list is automatically populated with a preset list:
+Gym: Treadmill, Stationary bike, Rowing machine, Elliptical, Dumbbells, Barbells, EZ bar, Kettlebells, Weight plates, Bench (flat), Bench (adjustable), Squat rack, Power rack, Smith machine, Pull-up bar, Dip station, Resistance bands, Cable attachments, Cable machine / functional trainer, Leg press, Leg extension, Leg curl, Lat pulldown, Seated row, Chest press machine, Pec deck, Shoulder press machine, Calf raise machine, Yoga mat, Foam roller
+Home: Dumbbells, Resistance bands, Yoga mat, Foam roller, Jump rope, Kettlebells, Pull-up bar
+Outdoors: Track access, Hills/stairs, Field, Jump rope
+Equipment Available — equipmentAvailable
+
+Type: string[] (JSON array)
+Default: []
+UI: Accordion by category, each item is a toggle chip (badge). Categories:
+Cardio: Treadmill, Stationary bike, Spin bike, Rowing machine, Elliptical, Stair climber, Ski erg, Assault/air bike, Jump rope
+Free weights: Dumbbells, Adjustable dumbbells, Barbells, EZ bar, Kettlebells, Weight plates, Bench (flat), Bench (adjustable)
+Racks & accessories: Squat rack, Power rack, Smith machine, Pull-up bar, Dip station, Resistance bands, Cable attachments
+Machines: Cable machine / functional trainer, Leg press, Hack squat, Leg extension, Leg curl, Lat pulldown, Seated row, Chest press machine, Pec deck, Shoulder press machine, Calf raise machine, Hip thrust machine, Glute bridge machine, Ab machine
+Home / bodyweight / mobility: Yoga mat, Foam roller, Medicine ball, Slam ball, Stability ball, TRX / suspension trainer, Plyo box, Step platform
+Outdoors: Track access, Hills/stairs, Field, Pool access
+Each category header shows a count badge of selected items within that category
+Users can toggle individual items on/off after the initial preselect
+Equipment Other Notes — equipmentOtherNotes
+
+Type: text
+Default: ""
+Placeholder: "Any other equipment or notes not listed above..."
+Section 5: Nutrition & Lifestyle
+Allergies & Intolerances — allergiesIntolerances
+
+Type: string[] (JSON array)
+Default: []
+UI: Tag input (type + Enter/tap to add)
+Placeholder: "e.g. peanuts, shellfish, lactose, gluten"
+Submission behavior: The value is copied into TWO legacy fields: allergies and intolerances. The iOS app should do the same.
+Legacy fields (populated from allergiesIntolerances on save):
+
+allergies — string[], default []
+intolerances — string[], default []
+religiousRestrictions — string[], always set to [] on save
+Foods to Avoid — foodsToAvoid
+
+Type: string[] (JSON array)
+Default: []
+UI: Two parts:
+Common preset chips (toggleable badges): Pork, Shellfish, Dairy, Gluten, Soy, Eggs, Nuts, Red Meat, Fish, Mushrooms, Chicken, Beans/Legumes, Spicy Foods, Garlic/Onion
+Custom tag input below the preset chips for additional items not in the list
+Both preset selections and custom entries are merged into a single foodsToAvoid array
+Foods to Avoid Notes — foodsToAvoidNotes
+
+Type: string nullable (max 500 chars in DB)
+Required: No
+Placeholder: "e.g. allergic to tree nuts but not peanuts"
+Purpose: Clarifying notes about food restrictions
+Appetite Level — appetiteLevel
+
+Type: string nullable
+Required: No
+Values: "low" | "normal" | "high"
+Purpose: Influences portion sizes in AI-generated meal plans
+Spice Preference — spicePreference
+
+Type: string nullable
+Required: No
+Values: "mild" | "medium" | "spicy"
+Favorite Meals — favoriteMealsText
+
+Type: text
+Default: ""
+Placeholder: "e.g. chicken stir-fry, overnight oats, grilled salmon with veggies, Greek yogurt bowls"
+Helper text: "AI will include healthier versions of your favorites when possible."
+Purpose: Treated as soft constraints — AI tries to incorporate these into generated plans
+Hidden/Internal Field
+Next Week Plan Bias — nextWeekPlanBias
+
+Type: string nullable (max 30 chars)
+Not shown on the profile form
+Set programmatically by the Performance Core system based on check-in results
+Values like "increase_volume", "reduce_intensity", etc.
+Injected into AI prompts to steer the next plan generation
+Submission Logic Summary
+When the form is submitted, the iOS app should send the payload to PUT /api/profile with this field-mapping logic:
+
+submitted.allergies = allergiesIntolerances
+submitted.intolerances = allergiesIntolerances
+submitted.religiousRestrictions = []
+submitted.injuries = healthConstraints
+submitted.mobilityLimitations = healthConstraints
+submitted.chronicConditions = healthConstraints
+All weight/height values must be in metric (kg/cm) regardless of the display unit. The unitSystem field should be saved so the iOS app knows which unit to display when reloading.
+
+The profile is mandatory before any plan generation — the API returns 400 with { profileRequired: true } if a user tries to generate a meal or workout plan without one.

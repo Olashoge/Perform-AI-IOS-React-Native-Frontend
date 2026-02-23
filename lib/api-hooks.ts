@@ -364,9 +364,18 @@ export function useProfile() {
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (updates: Partial<ProfileData>) => {
-      const response = await apiClient.patch("/api/profile", updates);
-      logApiCall("PATCH", "/api/profile", response.status);
+    mutationFn: async (payload: Partial<ProfileData>) => {
+      const submitted = {
+        ...payload,
+        injuries: payload.healthConstraints ?? [],
+        mobilityLimitations: payload.healthConstraints ?? [],
+        chronicConditions: payload.healthConstraints ?? [],
+        allergies: payload.allergiesIntolerances ?? [],
+        intolerances: payload.allergiesIntolerances ?? [],
+        religiousRestrictions: [],
+      };
+      const response = await apiClient.put("/api/profile", submitted);
+      logApiCall("PUT", "/api/profile", response.status);
       return response.data;
     },
     onSuccess: () => {
