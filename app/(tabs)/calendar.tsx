@@ -13,26 +13,39 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
-import { useWeekData, DayData } from "@/lib/api-hooks";
+import { useWeekData, DayData, Meal, Workout } from "@/lib/api-hooks";
 import { getWeekStartUTC } from "@/lib/week-utils";
 import { useWeekStart } from "@/lib/week-start-context";
 
-const DAYS_MONDAY = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const DAYS_SUNDAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+const MONTHS_SHORT = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
-function DayCard({ day, isToday }: { day: DayData; isToday: boolean }) {
-  const Colors = useColors();
+const DAYS_SHORT = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+
+const MEAL_TYPE_CONFIG: Record<string, { label: string; color: string }> = {
+  breakfast: { label: "BRE", color: "#FF9F0A" },
+  lunch: { label: "LUN", color: "#30D158" },
+  dinner: { label: "DIN", color: "#0A84FF" },
+  snack: { label: "SNK", color: "#BF5AF2" },
+};
+
+function getMealTypeConfig(type: string): { label: string; color: string } {
+  const key = type.toLowerCase();
+  return MEAL_TYPE_CONFIG[key] || { label: type.slice(0, 3).toUpperCase(), color: "#8E8E93" };
+}
+
+function DayCard({ day, isToday, Colors }: { day: DayData; isToday: boolean; Colors: ThemeColors }) {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const date = new Date(day.date + "T12:00:00");
-  const dayOfWeek = DAYS_MONDAY[(date.getDay() + 6) % 7];
+  const dayOfWeek = DAYS_SHORT[date.getDay()];
   const dayNum = date.getDate();
   const mealsCompleted = day.meals.filter((m) => m.completed).length;
   const workoutsCompleted = day.workouts.filter((w) => w.completed).length;
-  const totalItems = day.meals.length + day.workouts.length;
+  const totalMeals = day.meals.length;
+  const totalWorkouts = day.workouts.length;
+  const totalItems = totalMeals + totalWorkouts;
   const completedItems = mealsCompleted + workoutsCompleted;
 
   const getScoreColor = (score: number) => {
@@ -41,57 +54,67 @@ function DayCard({ day, isToday }: { day: DayData; isToday: boolean }) {
     return Colors.scoreRed;
   };
 
+  const hasContent = totalItems > 0;
+
   return (
     <Pressable
       style={({ pressed }) => [
         styles.dayCard,
         isToday && styles.dayCardToday,
-        pressed && { opacity: 0.8, transform: [{ scale: 0.97 }] },
+        pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
       ]}
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.push({ pathname: "/daily/[date]", params: { date: day.date } });
       }}
     >
-      <View style={styles.dayCardHeader}>
-        <View style={styles.dayInfo}>
-          <Text style={[styles.dayOfWeek, isToday && styles.dayTextToday]}>{dayOfWeek}</Text>
-          <View style={[styles.dayNumBg, isToday && styles.dayNumBgToday]}>
-            <Text style={[styles.dayNum, isToday && styles.dayNumToday]}>{dayNum}</Text>
+      <View style={styles.dayCardRow}>
+        <View style={styles.dayLeftSection}>
+          <View style={[styles.dayNumCircle, isToday && styles.dayNumCircleToday]}>
+            <Text style={[styles.dayNumText, isToday && styles.dayNumTextToday]}>{dayNum}</Text>
           </View>
+          <Text style={[styles.dayOfWeekText, isToday && { color: Colors.primary }]}>{dayOfWeek}</Text>
         </View>
-        <View style={styles.dayScore}>
-          <Text style={[styles.dayScoreText, { color: getScoreColor(day.score) }]}>{day.score}%</Text>
-        </View>
-      </View>
 
-      <View style={styles.dayDetails}>
-        <View style={styles.dayDetailRow}>
-          <Ionicons name="restaurant" size={14} color={Colors.accent} />
-          <Text style={styles.dayDetailText}>
-            {mealsCompleted}/{day.meals.length} meals
-          </Text>
-        </View>
-        {day.workouts.length > 0 && (
-          <View style={styles.dayDetailRow}>
-            <Ionicons name="fitness" size={14} color={Colors.primary} />
-            <Text style={styles.dayDetailText}>
-              {workoutsCompleted}/{day.workouts.length} workouts
-            </Text>
-          </View>
-        )}
-      </View>
+        <View style={styles.dayContentSection}>
+          {day.meals.length > 0 ? (
+            day.meals.map((meal, idx) => {
+              const config = getMealTypeConfig(meal.type);
+              return (
+                <View key={meal.id || idx} style={styles.mealRow}>
+                  <View style={[styles.completionDot, { backgroundColor: meal.completed ? Colors.scoreGreen : Colors.surfaceTertiary }]} />
+                  <View style={[styles.mealTypeBadge, { backgroundColor: config.color + "20" }]}>
+                    <Text style={[styles.mealTypeBadgeText, { color: config.color }]}>{config.label}</Text>
+                  </View>
+                  <Text style={styles.mealName} numberOfLines={1}>{meal.name}</Text>
+                </View>
+              );
+            })
+          ) : null}
 
-      <View style={styles.progressBar}>
-        <View
-          style={[
-            styles.progressFill,
-            {
-              width: totalItems > 0 ? `${(completedItems / totalItems) * 100}%` : "0%",
-              backgroundColor: getScoreColor(day.score),
-            },
-          ]}
-        />
+          {day.workouts.length > 0 ? (
+            day.workouts.map((workout, idx) => (
+              <View key={workout.id || idx} style={styles.workoutRow}>
+                <View style={[styles.completionDot, { backgroundColor: workout.completed ? Colors.scoreGreen : Colors.surfaceTertiary }]} />
+                <Ionicons name="barbell-outline" size={13} color={Colors.primary} style={{ marginRight: 6 }} />
+                <Text style={styles.workoutName} numberOfLines={1}>{workout.name}</Text>
+                {workout.duration ? (
+                  <Text style={styles.workoutDuration}>{workout.duration}m</Text>
+                ) : null}
+              </View>
+            ))
+          ) : null}
+
+          {!hasContent && (
+            <Text style={styles.emptyDayText}>No plans</Text>
+          )}
+        </View>
+
+        <View style={styles.dayRightSection}>
+          {hasContent && (
+            <Text style={[styles.scoreValue, { color: getScoreColor(day.score) }]}>{day.score}%</Text>
+          )}
+        </View>
       </View>
     </Pressable>
   );
@@ -114,10 +137,41 @@ export default function CalendarScreen() {
   const weekEndDate = new Date(weekStartDate);
   weekEndDate.setDate(weekEndDate.getDate() + 6);
 
-  const monthLabel =
-    weekStartDate.getMonth() === weekEndDate.getMonth()
-      ? `${MONTHS[weekStartDate.getMonth()]} ${weekStartDate.getFullYear()}`
-      : `${MONTHS[weekStartDate.getMonth()].slice(0, 3)} - ${MONTHS[weekEndDate.getMonth()].slice(0, 3)} ${weekEndDate.getFullYear()}`;
+  const dateRangeLabel = (() => {
+    const startMonth = MONTHS_SHORT[weekStartDate.getMonth()];
+    const endMonth = MONTHS_SHORT[weekEndDate.getMonth()];
+    const startDay = weekStartDate.getDate();
+    const endDay = weekEndDate.getDate();
+    const year = weekEndDate.getFullYear();
+    if (weekStartDate.getMonth() === weekEndDate.getMonth()) {
+      return `${startMonth} ${startDay} - ${endDay}, ${year}`;
+    }
+    return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${year}`;
+  })();
+
+  const weekStats = useMemo(() => {
+    if (safeWeekData.length === 0) return { mealsTotal: 0, mealsCompleted: 0, workoutsTotal: 0, workoutsCompleted: 0, score: 0 };
+    let mealsTotal = 0, mealsCompleted = 0, workoutsTotal = 0, workoutsCompleted = 0;
+    for (const day of safeWeekData) {
+      mealsTotal += day.meals.length;
+      mealsCompleted += day.meals.filter(m => m.completed).length;
+      workoutsTotal += day.workouts.length;
+      workoutsCompleted += day.workouts.filter(w => w.completed).length;
+    }
+    const total = mealsTotal + workoutsTotal;
+    const completed = mealsCompleted + workoutsCompleted;
+    const score = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { mealsTotal, mealsCompleted, workoutsTotal, workoutsCompleted, score };
+  }, [safeWeekData]);
+
+  const mealPct = weekStats.mealsTotal > 0 ? Math.round((weekStats.mealsCompleted / weekStats.mealsTotal) * 100) : 0;
+  const workoutPct = weekStats.workoutsTotal > 0 ? Math.round((weekStats.workoutsCompleted / weekStats.workoutsTotal) * 100) : 0;
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return Colors.scoreGreen;
+    if (score >= 50) return Colors.scoreYellow;
+    return Colors.scoreRed;
+  };
 
   return (
     <>
@@ -132,72 +186,94 @@ export default function CalendarScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-      <Text style={styles.headerTitle}>Calendar</Text>
+        <Text style={styles.headerTitle}>Calendar</Text>
 
-      <View style={styles.weekNav}>
-        <Pressable
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setWeekOffset((o) => o - 1);
-          }}
-          style={({ pressed }) => [styles.navBtn, pressed && { opacity: 0.6 }]}
-        >
-          <Ionicons name="chevron-back" size={22} color={Colors.text} />
-        </Pressable>
+        <View style={styles.weekNav}>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setWeekOffset((o) => o - 1);
+            }}
+            style={({ pressed }) => [styles.navBtn, pressed && { opacity: 0.6 }]}
+          >
+            <Ionicons name="chevron-back" size={22} color={Colors.text} />
+          </Pressable>
 
-        <View style={styles.weekLabel}>
-          <Text style={styles.weekLabelText}>{monthLabel}</Text>
-          <Text style={styles.weekDates}>
-            {weekStartDate.getDate()} - {weekEndDate.getDate()}
-          </Text>
+          <View style={styles.weekLabel}>
+            <Text style={styles.weekLabelText}>{dateRangeLabel}</Text>
+          </View>
+
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setWeekOffset((o) => o + 1);
+            }}
+            style={({ pressed }) => [styles.navBtn, pressed && { opacity: 0.6 }]}
+          >
+            <Ionicons name="chevron-forward" size={22} color={Colors.text} />
+          </Pressable>
         </View>
 
-        <Pressable
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setWeekOffset((o) => o + 1);
-          }}
-          style={({ pressed }) => [styles.navBtn, pressed && { opacity: 0.6 }]}
-        >
-          <Ionicons name="chevron-forward" size={22} color={Colors.text} />
-        </Pressable>
-      </View>
+        {weekOffset !== 0 && (
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setWeekOffset(0);
+            }}
+            style={({ pressed }) => [styles.todayBtn, pressed && { opacity: 0.7 }]}
+          >
+            <Text style={styles.todayBtnText}>Go to this week</Text>
+          </Pressable>
+        )}
 
-      {weekOffset !== 0 && (
-        <Pressable
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setWeekOffset(0);
-          }}
-          style={({ pressed }) => [styles.todayBtn, pressed && { opacity: 0.7 }]}
-        >
-          <Text style={styles.todayBtnText}>Go to this week</Text>
-        </Pressable>
-      )}
+        {!isLoading && safeWeekData.length > 0 && (
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryScoreRow}>
+              <Text style={styles.summaryLabel}>Weekly Score</Text>
+              <Text style={[styles.summaryScore, { color: getScoreColor(weekStats.score) }]}>{weekStats.score}%</Text>
+            </View>
+            <View style={styles.summaryProgressBar}>
+              <View style={[styles.summaryProgressFill, { width: `${weekStats.score}%`, backgroundColor: getScoreColor(weekStats.score) }]} />
+            </View>
+            <View style={styles.adherenceRow}>
+              <View style={styles.adherenceItem}>
+                <Ionicons name="restaurant" size={14} color={Colors.accent} />
+                <Text style={styles.adherenceLabel}>Meals</Text>
+                <Text style={[styles.adherenceValue, { color: getScoreColor(mealPct) }]}>{mealPct}%</Text>
+              </View>
+              <View style={styles.adherenceDivider} />
+              <View style={styles.adherenceItem}>
+                <Ionicons name="barbell" size={14} color={Colors.primary} />
+                <Text style={styles.adherenceLabel}>Workouts</Text>
+                <Text style={[styles.adherenceValue, { color: getScoreColor(workoutPct) }]}>{workoutPct}%</Text>
+              </View>
+            </View>
+          </View>
+        )}
 
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-        </View>
-      ) : (
-        <View style={styles.daysList}>
-          {safeWeekData.map((day) => (
-            <DayCard key={day.date} day={day} isToday={day.date === today} />
-          ))}
-        </View>
-      )}
-    </ScrollView>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={Colors.primary} />
+          </View>
+        ) : (
+          <View style={styles.daysList}>
+            {safeWeekData.map((day) => (
+              <DayCard key={day.date} day={day} isToday={day.date === today} Colors={Colors} />
+            ))}
+          </View>
+        )}
+      </ScrollView>
 
-    <Pressable
-      style={({ pressed }) => [styles.fab, pressed && { opacity: 0.85, transform: [{ scale: 0.92 }] }]}
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        router.push("/(tabs)/create");
-      }}
-    >
-      <Ionicons name="add" size={28} color="#FFFFFF" />
-    </Pressable>
-  </>
+      <Pressable
+        style={({ pressed }) => [styles.fab, pressed && { opacity: 0.85, transform: [{ scale: 0.92 }] }]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          router.push("/(tabs)/create");
+        }}
+      >
+        <Ionicons name="add" size={28} color="#FFFFFF" />
+      </Pressable>
+    </>
   );
 }
 
@@ -231,17 +307,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   },
   weekLabel: {
     alignItems: "center",
+    flex: 1,
   },
   weekLabelText: {
-    fontSize: 17,
+    fontSize: 16,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
-  },
-  weekDates: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    color: Colors.textSecondary,
-    marginTop: 2,
   },
   todayBtn: {
     alignSelf: "center",
@@ -257,95 +328,182 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     color: Colors.primary,
   },
+  summaryCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  summaryScoreRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  summaryLabel: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.textSecondary,
+  },
+  summaryScore: {
+    fontSize: 22,
+    fontFamily: "Inter_700Bold",
+  },
+  summaryProgressBar: {
+    height: 6,
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: 3,
+    overflow: "hidden",
+    marginBottom: 14,
+  },
+  summaryProgressFill: {
+    height: "100%",
+    borderRadius: 3,
+  },
+  adherenceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  adherenceItem: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  adherenceDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: Colors.border,
+  },
+  adherenceLabel: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textSecondary,
+  },
+  adherenceValue: {
+    fontSize: 14,
+    fontFamily: "Inter_700Bold",
+  },
   loadingContainer: {
     paddingTop: 60,
     alignItems: "center",
   },
   daysList: {
-    gap: 12,
+    gap: 10,
     marginTop: 12,
   },
   dayCard: {
     backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 16,
-    gap: 12,
+    borderRadius: 14,
+    padding: 14,
+    borderLeftWidth: 3,
+    borderLeftColor: "transparent",
   },
   dayCardToday: {
-    borderWidth: 1,
-    borderColor: Colors.primary + "40",
+    borderLeftColor: Colors.primary,
+    backgroundColor: Colors.primary + "08",
   },
-  dayCardHeader: {
+  dayCardRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  dayLeftSection: {
     alignItems: "center",
+    width: 48,
+    marginRight: 12,
   },
-  dayInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  dayOfWeek: {
-    fontSize: 15,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.textSecondary,
-    width: 36,
-  },
-  dayTextToday: {
-    color: Colors.primary,
-  },
-  dayNumBg: {
+  dayNumCircle: {
     width: 36,
     height: 36,
-    borderRadius: 12,
+    borderRadius: 18,
     backgroundColor: Colors.surfaceElevated,
     justifyContent: "center",
     alignItems: "center",
+    marginBottom: 3,
   },
-  dayNumBgToday: {
+  dayNumCircleToday: {
     backgroundColor: Colors.primary,
   },
-  dayNum: {
+  dayNumText: {
     fontSize: 16,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
   },
-  dayNumToday: {
+  dayNumTextToday: {
     color: "#FFFFFF",
   },
-  dayScore: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: Colors.surfaceElevated,
+  dayOfWeekText: {
+    fontSize: 10,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.textSecondary,
+    letterSpacing: 0.5,
   },
-  dayScoreText: {
-    fontSize: 14,
-    fontFamily: "Inter_700Bold",
+  dayContentSection: {
+    flex: 1,
+    gap: 5,
+    paddingTop: 2,
   },
-  dayDetails: {
-    flexDirection: "row",
-    gap: 16,
-  },
-  dayDetailRow: {
+  mealRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
   },
-  dayDetailText: {
+  completionDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  mealTypeBadge: {
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  mealTypeBadgeText: {
+    fontSize: 9,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 0.3,
+  },
+  mealName: {
     fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.text,
+    flex: 1,
+  },
+  workoutRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 2,
+  },
+  workoutName: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    color: Colors.text,
+    flex: 1,
+  },
+  workoutDuration: {
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
   },
-  progressBar: {
-    height: 4,
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: 2,
-    overflow: "hidden",
+  emptyDayText: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textTertiary,
+    fontStyle: "italic",
+    paddingTop: 6,
   },
-  progressFill: {
-    height: "100%",
-    borderRadius: 2,
+  dayRightSection: {
+    alignItems: "flex-end",
+    justifyContent: "flex-start",
+    paddingTop: 6,
+    marginLeft: 8,
+  },
+  scoreValue: {
+    fontSize: 13,
+    fontFamily: "Inter_700Bold",
   },
   fab: {
     position: "absolute",

@@ -16,6 +16,18 @@ function normalizeMeal(item: any, date: string, index: number): Meal {
     calories: item.calories ?? item.cals ?? undefined,
     completed: item.completed ?? item.done ?? false,
     time: item.time ?? item.scheduledTime ?? undefined,
+    ingredients: Array.isArray(item.ingredients) ? item.ingredients : undefined,
+    steps: Array.isArray(item.steps) ? item.steps : undefined,
+    nutritionEstimateRange: item.nutritionEstimateRange ? {
+      calories: item.nutritionEstimateRange.calories ?? undefined,
+      protein: item.nutritionEstimateRange.protein ?? item.nutritionEstimateRange.protein_g ?? undefined,
+      carbs: item.nutritionEstimateRange.carbs ?? item.nutritionEstimateRange.carbs_g ?? undefined,
+      fat: item.nutritionEstimateRange.fat ?? item.nutritionEstimateRange.fat_g ?? undefined,
+    } : undefined,
+    servings: item.servings ?? undefined,
+    prepTime: item.prepTime ?? undefined,
+    note: item.note ?? undefined,
+    description: item.description ?? undefined,
   };
 }
 
@@ -28,6 +40,7 @@ function normalizeWorkout(item: any, date: string, index: number): Workout {
     duration: item.duration ?? item.durationMinutes ?? undefined,
     completed: item.completed ?? item.done ?? false,
     time: item.time ?? item.scheduledTime ?? undefined,
+    rawWorkout: item,
   };
 }
 
@@ -63,6 +76,18 @@ function normalizeDailyMeals(dailyMeal: any, date: string, completions: any[]): 
       itemKey: key,
       sourceType: completionRecord?.sourceType ?? "daily_meal",
       sourceId: completionRecord?.sourceId ?? dailyMeal.id ?? undefined,
+      ingredients: Array.isArray(m.ingredients) ? m.ingredients : undefined,
+      steps: Array.isArray(m.steps) ? m.steps : undefined,
+      nutritionEstimateRange: m.nutritionEstimateRange ? {
+        calories: m.nutritionEstimateRange.calories ?? undefined,
+        protein: m.nutritionEstimateRange.protein ?? m.nutritionEstimateRange.protein_g ?? undefined,
+        carbs: m.nutritionEstimateRange.carbs ?? m.nutritionEstimateRange.carbs_g ?? undefined,
+        fat: m.nutritionEstimateRange.fat ?? m.nutritionEstimateRange.fat_g ?? undefined,
+      } : undefined,
+      servings: m.servings ?? undefined,
+      prepTime: m.prepTime ?? undefined,
+      note: m.note ?? undefined,
+      description: m.description ?? undefined,
     };
   });
 }
@@ -91,6 +116,7 @@ function normalizeDailyWorkout(dailyWorkout: any, date: string, completions: any
     itemKey: "main",
     sourceType: completionRecord?.sourceType ?? "daily_workout",
     sourceId: completionRecord?.sourceId ?? dailyWorkout.id ?? undefined,
+    rawWorkout: session,
   }];
 }
 
@@ -121,6 +147,18 @@ function normalizeDayData(raw: any, date: string): DayData {
         itemKey: key,
         sourceType: completionRecord?.sourceType ?? "meal_plan",
         sourceId: completionRecord?.sourceId ?? planId ?? undefined,
+        ingredients: Array.isArray(m.ingredients) ? m.ingredients : undefined,
+        steps: Array.isArray(m.steps) ? m.steps : undefined,
+        nutritionEstimateRange: m.nutritionEstimateRange ? {
+          calories: m.nutritionEstimateRange.calories ?? undefined,
+          protein: m.nutritionEstimateRange.protein ?? m.nutritionEstimateRange.protein_g ?? undefined,
+          carbs: m.nutritionEstimateRange.carbs ?? m.nutritionEstimateRange.carbs_g ?? undefined,
+          fat: m.nutritionEstimateRange.fat ?? m.nutritionEstimateRange.fat_g ?? undefined,
+        } : undefined,
+        servings: m.servings ?? undefined,
+        prepTime: m.prepTime ?? undefined,
+        note: m.note ?? undefined,
+        description: m.description ?? undefined,
       };
     });
   }
@@ -152,6 +190,7 @@ function normalizeDayData(raw: any, date: string): DayData {
         itemKey: "main",
         sourceType: completionRecord?.sourceType ?? "workout_plan",
         sourceId: workoutPlanId,
+        rawWorkout: w,
       }];
     }
   }
@@ -172,6 +211,8 @@ function normalizeDayData(raw: any, date: string): DayData {
     hasDailyWorkout: raw?.hasDailyWorkout ?? (workouts.length > 0 && workouts[0]?.sourceType === "daily_workout"),
     dailyMealGenerating: raw?.dailyMealGenerating ?? false,
     dailyWorkoutGenerating: raw?.dailyWorkoutGenerating ?? false,
+    rawMeals: (raw?.meals && typeof raw.meals === "object" && !Array.isArray(raw.meals)) ? raw.meals : undefined,
+    rawWorkout: raw?.workout ?? undefined,
   };
 }
 
@@ -195,6 +236,8 @@ export interface DayData {
   hasDailyWorkout: boolean;
   dailyMealGenerating?: boolean;
   dailyWorkoutGenerating?: boolean;
+  rawMeals?: Record<string, any>;
+  rawWorkout?: any;
 }
 
 export interface Meal {
@@ -207,6 +250,13 @@ export interface Meal {
   itemKey?: string;
   sourceType?: string;
   sourceId?: string;
+  ingredients?: string[];
+  steps?: string[];
+  nutritionEstimateRange?: { calories?: string; protein?: string; carbs?: string; fat?: string };
+  servings?: number;
+  prepTime?: string;
+  note?: string;
+  description?: string;
 }
 
 export interface Workout {
@@ -219,6 +269,7 @@ export interface Workout {
   itemKey?: string;
   sourceType?: string;
   sourceId?: string;
+  rawWorkout?: any;
 }
 
 export function useWeeklySummary() {

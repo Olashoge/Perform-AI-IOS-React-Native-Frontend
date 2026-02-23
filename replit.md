@@ -165,3 +165,8 @@ Toggle mutations use optimistic updates on day-data, then invalidate:
 - 2026-02-23: Added Daily Meal + Daily Workout generation: "Plan This Day" bottom sheet in daily detail, polling for generation, daily normalization in api-hooks
 - 2026-02-23: Enabled Daily Meal / Daily Workout in Create screens with navigation to daily detail + auto-generate trigger
 - 2026-02-23: Added proxy routes for daily-meals, daily-workouts, daily-coverage endpoints
+- 2026-02-23: Expanded Meal interface to include ingredients, steps, nutritionEstimateRange, servings, prepTime, note, description
+- 2026-02-23: Expanded Workout interface to include rawWorkout (full session object with warmup, main, coolDown, coachingTips)
+- 2026-02-23: Updated all normalization functions to preserve rich meal/workout data and normalize API field names (protein_g→protein, etc.)
+- 2026-02-23: Rebuilt Calendar with inline meal names (colored BRE/LUN/DIN/SNK pills), workout descriptions, completion dots, today highlight, weekly score/adherence stats
+- 2026-02-23: Rebuilt Daily Detail with expandable meal cards (ingredients, steps, macros) and workout cards (warm-up, main exercises with sets/reps/rest, cool-down, coaching tips)
