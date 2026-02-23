@@ -15,8 +15,10 @@ import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
 import { useWeekData, DayData } from "@/lib/api-hooks";
 import { getWeekStartUTC } from "@/lib/week-utils";
+import { useWeekStart } from "@/lib/week-start-context";
 
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAYS_MONDAY = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAYS_SUNDAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
@@ -24,7 +26,7 @@ const MONTHS = [
 
 function DayCard({ day, isToday }: { day: DayData; isToday: boolean }) {
   const date = new Date(day.date + "T12:00:00");
-  const dayOfWeek = DAYS[(date.getDay() + 6) % 7];
+  const dayOfWeek = DAYS_MONDAY[(date.getDay() + 6) % 7];
   const dayNum = date.getDate();
   const mealsCompleted = day.meals.filter((m) => m.completed).length;
   const workoutsCompleted = day.workouts.filter((w) => w.completed).length;
@@ -95,8 +97,9 @@ function DayCard({ day, isToday }: { day: DayData; isToday: boolean }) {
 
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
+  const { weekStartDay } = useWeekStart();
   const [weekOffset, setWeekOffset] = useState(0);
-  const weekStart = useMemo(() => getWeekStartUTC(weekOffset), [weekOffset]);
+  const weekStart = useMemo(() => getWeekStartUTC(weekOffset, undefined, weekStartDay), [weekOffset, weekStartDay]);
   const { data: weekData, isLoading } = useWeekData(weekStart);
   const safeWeekData = Array.isArray(weekData) ? weekData : [];
   const webTopInset = Platform.OS === "web" ? 67 : 0;

@@ -20,6 +20,9 @@ Perform AI is a React Native (Expo) mobile app for meal and workout tracking. It
 - `lib/api-hooks.ts` - React Query hooks for data fetching (uses dataClient)
 - `lib/api-log.ts` - In-memory API call log (last 5 calls)
 - `lib/query-client.ts` - React Query client config
+- `lib/week-start-context.tsx` - Week start preference context (Sunday/Monday, AsyncStorage)
+- `lib/theme-context.tsx` - Theme mode context (Light/Dark/System, AsyncStorage)
+- `lib/theme.ts` - Light and dark color token definitions
 - `server/routes.ts` - Express API routes with JWT decode middleware
 - `server/schedule-service.ts` - Deterministic schedule generation + DB-backed completions
 - `server/db.ts` - Drizzle/Neon database connection
@@ -28,7 +31,8 @@ Perform AI is a React Native (Expo) mobile app for meal and workout tracking. It
 - `app/(tabs)/index.tsx` - Dashboard with weekly summary
 - `app/(tabs)/calendar.tsx` - Week view calendar
 - `app/(tabs)/performance.tsx` - Performance tab (adherence %, 4-week trend, meal/workout split, streak, AI insight banner)
-- `app/(tabs)/profile.tsx` - User profile with logout
+- `app/(tabs)/settings.tsx` - Settings tab (profile card, preferences, week start, theme, sign out)
+- `app/(tabs)/profile.tsx` - User profile editing (accessible from Settings)
 - `app/daily/[date].tsx` - Daily detail view with completion toggles
 - `app/diagnostics.tsx` - Developer diagnostics (API config, auth state, call log)
 
@@ -141,3 +145,9 @@ Toggle mutations use optimistic updates on day-data, then invalidate:
 - 2026-02-23: Built plan detail screens: meal (7-day with expandable recipes, grocery list), workout (sessions, exercises, rest days), wellness (overview with linked plan cards)
 - 2026-02-23: Made plan cards tappable in Plans Hub → navigates to detail views
 - 2026-02-23: Generating screens now navigate to plan detail view on completion (not just Plans Hub)
+- 2026-02-23: Built Settings tab replacing Profile in tab bar (profile still accessible via Edit link)
+- 2026-02-23: Settings includes: profile card, active wellness plan, food/exercise prefs, week start, theme, sign out
+- 2026-02-23: Added WeekStartProvider (Sunday/Monday, AsyncStorage) - calendar respects preference
+- 2026-02-23: Added ThemeProvider (Light/Dark/System, AsyncStorage) with light/dark color tokens
+- 2026-02-23: Built food preferences screen (favorites, foods to avoid, allergies)
+- 2026-02-23: Built exercise preferences screen (training capacity, equipment, constraints)

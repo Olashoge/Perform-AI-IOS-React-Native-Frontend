@@ -1,0 +1,122 @@
+GOAL
+Create a true native “Settings” tab/page in the iOS app (React Native / Expo Router) that mirrors the web app Settings experience and is wired to the existing backend at https://mealplanai.replit.app using the same API contracts.
+
+SCOPE (BUILD NOW)
+Build the Settings page UI + navigation + real data wiring for:
+1) Profile card (email)
+2) Active Wellness Plan card (name + “Weekly Check-in” CTA)
+3) Food Preferences row (navigates to Food Preferences screen)
+4) Exercise Preferences row (navigates to Exercise Preferences screen)
+5) Week Starts On selector (Sunday / Monday) — persists to backend and immediately updates the app’s week boundary logic everywhere
+6) Appearance selector (Light / Dark / System) — persists locally (AsyncStorage) and applies app-wide via theme provider
+7) Sign Out — clears auth and returns to Login
+
+IMPORTANT CONSTRAINTS
+- Do NOT build “7-day meal plan” or “7-day workout plan” in this task.
+- Do NOT change backend behavior. Only call existing endpoints.
+- Reuse existing components/styles (cards, rows, pills, typography) so the Settings page looks like the web app: clean, premium, minimal.
+- Every user input must be persisted and reloaded (no fake/local-only values except Appearance).
+- Avoid extra questions. If an endpoint is missing, implement a safe fallback that still renders UI and logs a clear console error.
+
+NAVIGATION
+- Add a Settings tab in app/(tabs)/_layout.tsx (or wherever tabs are defined).
+- Route: app/(tabs)/settings.tsx
+- Add additional screens:
+  - app/settings/food-preferences.tsx
+  - app/settings/exercise-preferences.tsx
+  - app/settings/week-start.tsx (optional; can be inline on settings page if simpler)
+These screens should be reachable from Settings and have native headers.
+
+DATA + API REQUIREMENTS
+1) Current user (email)
+- Use whichever existing “me” endpoint your project already uses for Profile/Dashboard.
+- If none exists, use any endpoint that returns user data in the app today (since dashboard “shows real data” already).
+- Must display user.email.
+
+2) Active Wellness Plan summary
+- Pull active wellness plan used in the app today (same source as Dashboard header “ACTIVE PLAN …”).
+- Display: plan name + goal label if available.
+- CTA “Weekly Check-in” should navigate to existing check-in screen if it exists; otherwise route to a placeholder screen that says “Weekly Check-in coming next” (do not block build).
+
+3) Food Preferences + Exercise Preferences
+- These are navigation rows now.
+- Implement screens that:
+  - Load current preferences from backend (existing endpoints)
+  - Allow user to edit + save
+  - Mirror web’s structure (liked meals, avoided ingredients; liked/disliked/avoided exercises)
+- If your backend stores them under profile fields, update via the same profile update endpoint.
+
+4) Week Starts On (critical)
+- Two-button segmented control: Sunday / Monday.
+- Save to backend profile preference field (weekStartsOn = "sunday" | "monday").
+- Must instantly affect:
+  - Dashboard weekly summary
+  - Calendar week view
+  - Any “week of” computations in the app
+- Ensure the app’s week start utility reads from this stored preference and defaults to Sunday if missing.
+
+5) Appearance (Light / Dark / System)
+- Implement theme mode persistence locally using AsyncStorage.
+- Add a ThemeProvider (if not present) that controls colors across the app.
+- “System” follows OS theme.
+- Keep design consistent with Perform AI palette (the green accent).
+
+6) Sign Out
+- Call existing logout behavior (clear tokens/cookies) and reset navigation to /login.
+- Ensure no protected data remains cached (clear react-query cache if used).
+
+UI SPEC
+- Page title: “Settings”
+- Subtitle: “Manage your profile and preferences”
+- Use card sections:
+  - Profile (email)
+  - Active Wellness Plan (title + button)
+  - Preferences (Food, Exercise)
+  - Week Starts On (segmented)
+  - Appearance (segmented)
+  - Sign Out (full-width button)
+
+IMPLEMENTATION TASK LIST (DO IN ORDER)
+A) Navigation
+- Add Settings tab + route
+- Add stack routes for preferences screens
+
+B) Theme System
+- Create lib/theme.ts (tokens)
+- Create lib/theme-context.tsx (mode: light/dark/system)
+- Wrap app root with ThemeProvider and ensure components read colors from it
+
+C) Settings Screen UI
+- Build cards + rows + segmented controls
+- Hook to data
+
+D) Data Wiring
+- Implement hooks in lib/api-hooks.ts:
+  - useMe() or reuse existing
+  - useActiveWellnessPlan()
+  - useUpdateProfile()
+  - useFoodPreferences() / useUpdateFoodPreferences()
+  - useExercisePreferences() / useUpdateExercisePreferences()
+
+E) Week Start Logic
+- Centralize week computations in one utility (lib/week.ts)
+- Ensure Dashboard/Calendar use it
+- Update week boundaries when setting changes
+
+F) Testing Checklist (must pass)
+1) Settings loads email + active plan without placeholders
+2) Toggle Week Starts On → back to Dashboard/Calendar → week boundaries change (verified by dates)
+3) Toggle Appearance → entire app changes theme immediately; persists across app restart
+4) Food Preferences: edit + save → reopen screen → value persisted
+5) Sign Out → returns to login and cannot fetch protected endpoints
+
+DELIVERABLES
+- New Settings tab and screens working end-to-end
+- No regressions on Dashboard/Calendar/Daily views
+- Clear console logs on API failures (but UI still renders)
+
+WORKFLOW
+Implement directly in the iOS (mobile) Replit project (the React Native / Expo Router one), not the backend project.
+After implementation, restart workflows and confirm on Expo Go + web preview.
+
+START NOW.

@@ -9,6 +9,8 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { queryClient } from "@/lib/query-client";
 import { AuthProvider } from "@/lib/auth-context";
 import { WellnessProvider } from "@/lib/wellness-context";
+import { WeekStartProvider } from "@/lib/week-start-context";
+import { ThemeProvider } from "@/lib/theme-context";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -68,6 +70,13 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="settings"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
+      <Stack.Screen
         name="diagnostics"
         options={{
           headerShown: false,
@@ -98,13 +107,17 @@ export default function RootLayout() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <WellnessProvider>
-            <GestureHandlerRootView>
-              <KeyboardProvider>
-                <RootLayoutNav />
-              </KeyboardProvider>
-            </GestureHandlerRootView>
-          </WellnessProvider>
+          <ThemeProvider>
+            <WeekStartProvider>
+              <WellnessProvider>
+                <GestureHandlerRootView>
+                  <KeyboardProvider>
+                    <RootLayoutNav />
+                  </KeyboardProvider>
+                </GestureHandlerRootView>
+              </WellnessProvider>
+            </WeekStartProvider>
+          </ThemeProvider>
         </AuthProvider>
       </QueryClientProvider>
     </ErrorBoundary>
