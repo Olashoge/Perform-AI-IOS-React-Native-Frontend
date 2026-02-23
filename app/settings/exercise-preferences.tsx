@@ -271,7 +271,10 @@ export default function ExercisePreferencesScreen() {
     }
   };
 
+  const [saving, setSaving] = useState(false);
+
   const handleSave = async () => {
+    setSaving(true);
     try {
       await updateProfile.mutateAsync({
         trainingExperience,
@@ -283,9 +286,12 @@ export default function ExercisePreferencesScreen() {
         equipmentAvailable,
         equipmentOtherNotes,
       });
-      Alert.alert("Saved", "Exercise preferences updated");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.back();
     } catch (err: any) {
       Alert.alert("Error", err?.message || "Failed to save preferences");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -319,7 +325,18 @@ export default function ExercisePreferencesScreen() {
             <Ionicons name="chevron-back" size={28} color={Colors.text} />
           </Pressable>
           <Text style={styles.headerTitle}>Exercise Preferences</Text>
-          <View style={{ width: 28 }} />
+          <Pressable
+            onPress={handleSave}
+            disabled={saving}
+            hitSlop={12}
+            style={styles.saveBtn}
+          >
+            {saving ? (
+              <ActivityIndicator size="small" color={Colors.primary} />
+            ) : (
+              <Ionicons name="checkmark" size={28} color={Colors.primary} />
+            )}
+          </Pressable>
         </View>
 
         <SectionHeader icon="barbell-outline" title="TRAINING CAPACITY" />
@@ -443,6 +460,9 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   backButton: {
+    padding: 4,
+  },
+  saveBtn: {
     padding: 4,
   },
   headerTitle: {

@@ -17,6 +17,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useWellnessPlans } from "@/lib/api-hooks";
 import { useWeekStart } from "@/lib/week-start-context";
 import { useTheme, ThemeMode } from "@/lib/theme-context";
+import { useQueryClient } from "@tanstack/react-query";
 
 const WEB_TOP_INSET = 67;
 
@@ -93,6 +94,7 @@ export default function SettingsScreen() {
   const topInset = Platform.OS === "web" ? WEB_TOP_INSET : insets.top;
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
   const { user, logout } = useAuth();
+  const queryClient = useQueryClient();
   const wellnessPlansQuery = useWellnessPlans();
   const { weekStartDay, setWeekStartDay } = useWeekStart();
   const { themeMode, setThemeMode } = useTheme();
@@ -102,9 +104,15 @@ export default function SettingsScreen() {
   ) || (wellnessPlansQuery.data || [])[0];
 
   const handleLogout = () => {
-    if (Platform.OS === "web") {
-      logout();
+    const doLogout = async () => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await logout();
+      queryClient.clear();
       router.replace("/login");
+    };
+
+    if (Platform.OS === "web") {
+      doLogout();
       return;
     }
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -112,11 +120,7 @@ export default function SettingsScreen() {
       {
         text: "Sign Out",
         style: "destructive",
-        onPress: () => {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          logout();
-          router.replace("/login");
-        },
+        onPress: doLogout,
       },
     ]);
   };
