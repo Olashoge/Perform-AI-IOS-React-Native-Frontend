@@ -1,0 +1,645 @@
+import React from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  Pressable,
+  Platform,
+  TextInput,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import * as Haptics from "expo-haptics";
+import Colors from "@/constants/colors";
+import { useProfile, ProfileData } from "@/lib/api-hooks";
+import { useWellness, LOCATION_PRESETS } from "@/lib/wellness-context";
+
+const LOCATION_OPTIONS: { value: string; label: string }[] = [
+  { value: "gym", label: "Gym" },
+  { value: "home", label: "Home" },
+  { value: "outdoors", label: "Outdoors" },
+];
+
+const EQUIPMENT_CATEGORIES: { title: string; items: string[] }[] = [
+  {
+    title: "Cardio",
+    items: ["Treadmill", "Stationary bike", "Spin bike", "Rowing machine", "Elliptical", "Stair climber", "Ski erg", "Assault/air bike", "Jump rope"],
+  },
+  {
+    title: "Free weights",
+    items: ["Dumbbells", "Adjustable dumbbells", "Barbells", "EZ bar", "Kettlebells", "Weight plates", "Bench (flat)", "Bench (adjustable)"],
+  },
+  {
+    title: "Racks & accessories",
+    items: ["Squat rack", "Power rack", "Smith machine", "Pull-up bar", "Dip station", "Resistance bands", "Cable attachments"],
+  },
+  {
+    title: "Machines",
+    items: ["Cable machine / functional trainer", "Leg press", "Hack squat", "Leg extension", "Leg curl", "Lat pulldown", "Seated row", "Chest press machine", "Pec deck", "Shoulder press machine", "Calf raise machine", "Hip thrust machine", "Glute bridge machine", "Ab machine"],
+  },
+  {
+    title: "Home / bodyweight / mobility",
+    items: ["Yoga mat", "Foam roller", "Medicine ball", "Slam ball", "Stability ball", "TRX / suspension trainer", "Plyo box", "Step platform"],
+  },
+  {
+    title: "Outdoors",
+    items: ["Track access", "Hills/stairs", "Field", "Pool access"],
+  },
+];
+
+const TRAINING_MODE_OPTIONS: { value: string; label: string }[] = [
+  { value: "strength", label: "Strength" },
+  { value: "cardio", label: "Cardio" },
+  { value: "both", label: "Both" },
+];
+
+const EXPERIENCE_OPTIONS: { value: string; label: string }[] = [
+  { value: "beginner", label: "Beginner" },
+  { value: "intermediate", label: "Intermediate" },
+  { value: "advanced", label: "Advanced" },
+];
+
+const FOCUS_AREAS_BY_MODE: Record<string, string[]> = {
+  strength: ["Full Body", "Upper Body", "Lower Body", "Core", "Back", "Chest", "Arms", "Shoulders", "Glutes", "Legs"],
+  cardio: ["Full Body", "Core", "Endurance", "Conditioning", "Mobility", "Lower Body"],
+  both: ["Full Body", "Upper Body", "Lower Body", "Core", "Back", "Chest", "Arms", "Shoulders", "Glutes", "Legs", "Flexibility", "Endurance", "Conditioning", "Mobility"],
+};
+
+const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const SESSION_LENGTH_OPTIONS: { value: number; label: string }[] = [
+  { value: 20, label: "20 min" },
+  { value: 30, label: "30 min" },
+  { value: 45, label: "45 min" },
+  { value: 60, label: "60 min" },
+];
+
+function kgToLbs(kg: number): number {
+  return Math.round(kg * 2.20462);
+}
+
+function formatLabel(value: string): string {
+  return value
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+function getStepCount(planType: string): number {
+  return planType === "both" ? 4 : 3;
+}
+
+function getCurrentDotIndex(planType: string): number {
+  return planType === "both" ? 2 : 1;
+}
+
+function ProfileSummaryCard({ profile }: { profile: ProfileData }) {
+  const isImperial = profile.unitSystem === "imperial";
+  const weightDisplay =
+    profile.weightKg != null
+      ? isImperial
+        ? `${kgToLbs(profile.weightKg)} lbs`
+        : `${profile.weightKg} kg`
+      : null;
+
+  const items: { label: string; value: string }[] = [];
+  if (profile.age != null) items.push({ label: "Age", value: String(profile.age) });
+  if (weightDisplay) items.push({ label: "Weight", value: weightDisplay });
+  if (profile.primaryGoal) items.push({ label: "Goal", value: formatLabel(profile.primaryGoal) });
+  if (profile.trainingExperience) items.push({ label: "Experience", value: formatLabel(profile.trainingExperience) });
+  if (profile.trainingDaysOfWeek?.length)
+    items.push({ label: "Training days", value: profile.trainingDaysOfWeek.map((d) => d.charAt(0).toUpperCase() + d.slice(1)).join(", ") });
+  if (profile.allergiesIntolerances?.length)
+    items.push({ label: "Allergies", value: profile.allergiesIntolerances.join(", ") });
+  if (profile.foodsToAvoid?.length)
+    items.push({ label: "Foods to avoid", value: profile.foodsToAvoid.join(", ") });
+  if (profile.healthConstraints?.length)
+    items.push({ label: "Health constraints", value: profile.healthConstraints.join(", ") });
+  if (profile.favoriteMealsText)
+    items.push({ label: "Favorite meals", value: profile.favoriteMealsText });
+  if (profile.bodyContext)
+    items.push({ label: "Body notes", value: profile.bodyContext });
+
+  if (items.length === 0) return null;
+
+  return (
+    <View style={styles.profileCard}>
+      <View style={styles.profileCardHeader}>
+        <Text style={styles.profileCardTitle}>Your Profile</Text>
+        <Pressable onPress={() => router.push("/(tabs)/profile")}>
+          <Text style={styles.profileEditLink}>Edit</Text>
+        </Pressable>
+      </View>
+      <View style={styles.profileCardGrid}>
+        {items.map((item) => (
+          <View key={item.label} style={styles.profileCardItem}>
+            <Text style={styles.profileCardLabel}>{item.label}</Text>
+            <Text style={styles.profileCardValue} numberOfLines={2}>
+              {item.value}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+export default function Step3Screen() {
+  const insets = useSafeAreaInsets();
+  const webTopInset = Platform.OS === "web" ? 67 : 0;
+  const { data: profile } = useProfile();
+  const { state, updateWorkoutForm } = useWellness();
+  const { workoutForm } = state;
+
+  const stepCount = getStepCount(state.planType);
+  const currentDot = getCurrentDotIndex(state.planType);
+
+  const handleLocationChange = (value: string) => {
+    Haptics.selectionAsync();
+    updateWorkoutForm({
+      location: value,
+      equipmentAvailable: LOCATION_PRESETS[value] ?? [],
+    });
+  };
+
+  const handleEquipmentToggle = (item: string) => {
+    Haptics.selectionAsync();
+    const current = workoutForm.equipmentAvailable;
+    if (current.includes(item)) {
+      updateWorkoutForm({ equipmentAvailable: current.filter((e) => e !== item) });
+    } else {
+      updateWorkoutForm({ equipmentAvailable: [...current, item] });
+    }
+  };
+
+  const handleTrainingModeChange = (mode: string) => {
+    Haptics.selectionAsync();
+    const validAreas = FOCUS_AREAS_BY_MODE[mode] ?? FOCUS_AREAS_BY_MODE.both;
+    const filtered = workoutForm.focusAreas.filter((a) => validAreas.includes(a));
+    updateWorkoutForm({
+      trainingMode: mode,
+      focusAreas: filtered.length > 0 ? filtered : ["Full Body"],
+    });
+  };
+
+  const handleFocusAreaToggle = (area: string) => {
+    Haptics.selectionAsync();
+    const current = workoutForm.focusAreas;
+    if (current.includes(area)) {
+      const next = current.filter((a) => a !== area);
+      updateWorkoutForm({ focusAreas: next.length === 0 ? ["Full Body"] : next });
+    } else {
+      updateWorkoutForm({ focusAreas: [...current, area] });
+    }
+  };
+
+  const handleDayToggle = (day: string) => {
+    Haptics.selectionAsync();
+    const current = workoutForm.daysOfWeek;
+    if (current.includes(day)) {
+      updateWorkoutForm({ daysOfWeek: current.filter((d) => d !== day) });
+    } else {
+      updateWorkoutForm({ daysOfWeek: [...current, day] });
+    }
+  };
+
+  const handleNext = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push("/wellness/step4");
+  };
+
+  const availableFocusAreas = FOCUS_AREAS_BY_MODE[workoutForm.trainingMode] ?? FOCUS_AREAS_BY_MODE.both;
+
+  return (
+    <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: insets.top + 16 + webTopInset,
+            paddingBottom: insets.bottom + 100,
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.headerRow}>
+          <Pressable
+            onPress={() => router.back()}
+            style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
+          >
+            <Ionicons name="chevron-back" size={22} color={Colors.text} />
+          </Pressable>
+          <View style={styles.dotsRow}>
+            {Array.from({ length: stepCount }).map((_, i) => (
+              <View
+                key={i}
+                style={[styles.dot, i === currentDot && styles.dotActive]}
+              />
+            ))}
+          </View>
+          <View style={{ width: 44 }} />
+        </View>
+
+        <Text style={styles.headerTitle}>Training Setup</Text>
+        <Text style={styles.headerSubtitle}>
+          Configure your workout preferences
+        </Text>
+
+        {profile && <ProfileSummaryCard profile={profile} />}
+
+        <Text style={styles.sectionLabel}>Workout Location</Text>
+        <View style={styles.toggleRow}>
+          {LOCATION_OPTIONS.map((opt) => {
+            const selected = workoutForm.location === opt.value;
+            return (
+              <Pressable
+                key={opt.value}
+                style={[styles.toggleBtn, selected && styles.toggleBtnActive]}
+                onPress={() => handleLocationChange(opt.value)}
+              >
+                <Text style={[styles.toggleBtnText, selected && styles.toggleBtnTextActive]}>
+                  {opt.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <Text style={styles.sectionLabel}>Equipment Available</Text>
+        {EQUIPMENT_CATEGORIES.map((cat) => (
+          <View key={cat.title} style={styles.equipmentCategory}>
+            <Text style={styles.equipmentCategoryTitle}>{cat.title}</Text>
+            <View style={styles.pillGrid}>
+              {cat.items.map((item) => {
+                const selected = workoutForm.equipmentAvailable.includes(item);
+                return (
+                  <Pressable
+                    key={item}
+                    style={[styles.pill, selected && styles.pillActive]}
+                    onPress={() => handleEquipmentToggle(item)}
+                  >
+                    <Text style={[styles.pillText, selected && styles.pillTextActive]}>
+                      {item}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        ))}
+
+        <Text style={styles.sectionLabel}>Training Mode</Text>
+        <View style={styles.toggleRow}>
+          {TRAINING_MODE_OPTIONS.map((opt) => {
+            const selected = workoutForm.trainingMode === opt.value;
+            return (
+              <Pressable
+                key={opt.value}
+                style={[styles.toggleBtn, selected && styles.toggleBtnActive]}
+                onPress={() => handleTrainingModeChange(opt.value)}
+              >
+                <Text style={[styles.toggleBtnText, selected && styles.toggleBtnTextActive]}>
+                  {opt.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <Text style={styles.sectionLabel}>Experience Level</Text>
+        <View style={styles.toggleRow}>
+          {EXPERIENCE_OPTIONS.map((opt) => {
+            const selected = workoutForm.experienceLevel === opt.value;
+            return (
+              <Pressable
+                key={opt.value}
+                style={[styles.toggleBtn, selected && styles.toggleBtnActive]}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  updateWorkoutForm({ experienceLevel: opt.value });
+                }}
+              >
+                <Text style={[styles.toggleBtnText, selected && styles.toggleBtnTextActive]}>
+                  {opt.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <Text style={styles.sectionLabel}>Focus Areas</Text>
+        <View style={styles.pillGrid}>
+          {availableFocusAreas.map((area) => {
+            const selected = workoutForm.focusAreas.includes(area);
+            return (
+              <Pressable
+                key={area}
+                style={[styles.pill, selected && styles.pillActive]}
+                onPress={() => handleFocusAreaToggle(area)}
+              >
+                <Text style={[styles.pillText, selected && styles.pillTextActive]}>
+                  {area}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <Text style={styles.sectionLabel}>Workout Days</Text>
+        <View style={styles.daysRow}>
+          {DAYS_OF_WEEK.map((day) => {
+            const selected = workoutForm.daysOfWeek.includes(day);
+            return (
+              <Pressable
+                key={day}
+                style={[styles.dayBtn, selected && styles.dayBtnActive]}
+                onPress={() => handleDayToggle(day)}
+              >
+                <Text style={[styles.dayBtnText, selected && styles.dayBtnTextActive]}>
+                  {day}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <Text style={styles.sectionLabel}>Session Length</Text>
+        <View style={styles.toggleRow}>
+          {SESSION_LENGTH_OPTIONS.map((opt) => {
+            const selected = workoutForm.sessionLength === opt.value;
+            return (
+              <Pressable
+                key={opt.value}
+                style={[styles.toggleBtn, selected && styles.toggleBtnActive]}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  updateWorkoutForm({ sessionLength: opt.value });
+                }}
+              >
+                <Text style={[styles.toggleBtnText, selected && styles.toggleBtnTextActive]}>
+                  {opt.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <Text style={styles.sectionLabel}>Limitations</Text>
+        <TextInput
+          style={styles.textInput}
+          value={workoutForm.limitations}
+          onChangeText={(t) => updateWorkoutForm({ limitations: t })}
+          placeholder="e.g. bad knees, lower back pain, recovering from shoulder surgery..."
+          placeholderTextColor={Colors.textTertiary}
+          multiline={false}
+        />
+      </ScrollView>
+
+      <View
+        style={[
+          styles.bottomBar,
+          { paddingBottom: Math.max(insets.bottom, 16) + (Platform.OS === "web" ? 34 : 0) },
+        ]}
+      >
+        <Pressable
+          style={({ pressed }) => [styles.nextBtn, pressed && { opacity: 0.85 }]}
+          onPress={handleNext}
+        >
+          <Text style={styles.nextBtnText}>Next</Text>
+          <Ionicons name="arrow-forward" size={18} color="#fff" />
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  backBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: Colors.surface,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  dotsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.surfaceTertiary,
+  },
+  dotActive: {
+    backgroundColor: Colors.primary,
+    width: 24,
+    borderRadius: 4,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontFamily: "Inter_700Bold",
+    color: Colors.text,
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 15,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textSecondary,
+    marginBottom: 20,
+  },
+  sectionLabel: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.textSecondary,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginTop: 24,
+    marginBottom: 10,
+  },
+  toggleRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  toggleBtn: {
+    flex: 1,
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    paddingVertical: 14,
+    borderWidth: 1.5,
+    borderColor: "transparent",
+    alignItems: "center",
+  },
+  toggleBtnActive: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primary + "18",
+  },
+  toggleBtnText: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    color: Colors.textSecondary,
+  },
+  toggleBtnTextActive: {
+    color: Colors.primary,
+    fontFamily: "Inter_600SemiBold",
+  },
+  pillGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  pill: {
+    backgroundColor: Colors.surface,
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 1.5,
+    borderColor: "transparent",
+  },
+  pillActive: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primary + "18",
+  },
+  pillText: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    color: Colors.textSecondary,
+  },
+  pillTextActive: {
+    color: Colors.primary,
+    fontFamily: "Inter_600SemiBold",
+  },
+  equipmentCategory: {
+    marginBottom: 16,
+  },
+  equipmentCategoryTitle: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: Colors.textTertiary,
+    marginBottom: 8,
+  },
+  daysRow: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  dayBtn: {
+    flex: 1,
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    paddingVertical: 12,
+    borderWidth: 1.5,
+    borderColor: "transparent",
+    alignItems: "center",
+  },
+  dayBtnActive: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primary + "18",
+  },
+  dayBtnText: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: Colors.textSecondary,
+  },
+  dayBtnTextActive: {
+    color: Colors.primary,
+    fontFamily: "Inter_600SemiBold",
+  },
+  textInput: {
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    fontFamily: "Inter_400Regular",
+    color: Colors.text,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  bottomBar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    backgroundColor: Colors.background,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  nextBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: 14,
+    paddingVertical: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  nextBtnText: {
+    fontSize: 16,
+    fontFamily: "Inter_600SemiBold",
+    color: "#fff",
+  },
+  profileCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 4,
+  },
+  profileCardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  profileCardTitle: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.textSecondary,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  profileEditLink: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    color: Colors.primary,
+  },
+  profileCardGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  profileCardItem: {
+    width: "48%" as any,
+    flexBasis: "47%",
+  },
+  profileCardLabel: {
+    fontSize: 11,
+    fontFamily: "Inter_500Medium",
+    color: Colors.textTertiary,
+    marginBottom: 2,
+  },
+  profileCardValue: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.text,
+  },
+});

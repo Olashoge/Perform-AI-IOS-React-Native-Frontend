@@ -1,0 +1,14 @@
+import { Stack } from "expo-router";
+
+export default function WellnessLayout() {
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="step1" />
+      <Stack.Screen name="step2" />
+      <Stack.Screen name="step3" />
+      <Stack.Screen name="step4" />
+      <Stack.Screen name="generating" />
+      <Stack.Screen name="ready" />
+    </Stack>
+  );
+}

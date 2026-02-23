@@ -166,6 +166,16 @@ export default function DashboardScreen() {
       </View>
 
       <Pressable
+        style={({ pressed }) => [styles.createButton, pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] }]}
+        onPress={() => router.push("/create")}
+      >
+        <View style={styles.createButtonContent}>
+          <Ionicons name="add-circle" size={24} color="#FFFFFF" />
+          <Text style={styles.createButtonText}>Create Plan</Text>
+        </View>
+      </Pressable>
+
+      <Pressable
         style={({ pressed }) => [styles.todayCard, pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] }]}
         onPress={() => {
           const today = new Date().toISOString().split("T")[0];
@@ -278,6 +288,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
+  },
+  createButton: {
+    backgroundColor: Colors.primary,
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 12,
+  },
+  createButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+  createButtonText: {
+    fontSize: 17,
+    fontFamily: "Inter_600SemiBold",
+    color: "#FFFFFF",
   },
   todayCard: {
     backgroundColor: Colors.surface,

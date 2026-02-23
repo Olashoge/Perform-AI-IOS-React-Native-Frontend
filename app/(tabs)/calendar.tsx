@@ -113,6 +113,7 @@ export default function CalendarScreen() {
       : `${MONTHS[weekStartDate.getMonth()].slice(0, 3)} - ${MONTHS[weekEndDate.getMonth()].slice(0, 3)} ${weekEndDate.getFullYear()}`;
 
   return (
+  <>
     <ScrollView
       style={styles.container}
       contentContainerStyle={[
@@ -179,6 +180,17 @@ export default function CalendarScreen() {
         </View>
       )}
     </ScrollView>
+
+    <Pressable
+      style={({ pressed }) => [styles.fab, pressed && { opacity: 0.85, transform: [{ scale: 0.92 }] }]}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        router.push("/create");
+      }}
+    >
+      <Ionicons name="add" size={28} color="#FFFFFF" />
+    </Pressable>
+  </>
   );
 }
 
@@ -327,5 +339,21 @@ const styles = StyleSheet.create({
   progressFill: {
     height: "100%",
     borderRadius: 2,
+  },
+  fab: {
+    position: "absolute",
+    bottom: Platform.OS === "web" ? 100 : 90,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });
