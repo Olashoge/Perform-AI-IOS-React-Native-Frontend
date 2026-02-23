@@ -27,6 +27,7 @@ Perform AI is a React Native (Expo) mobile app for meal and workout tracking. It
 - `app/login.tsx` - Login screen
 - `app/(tabs)/index.tsx` - Dashboard with weekly summary
 - `app/(tabs)/calendar.tsx` - Week view calendar
+- `app/(tabs)/performance.tsx` - Performance tab (adherence %, 4-week trend, meal/workout split, streak, AI insight banner)
 - `app/(tabs)/profile.tsx` - User profile with logout
 - `app/daily/[date].tsx` - Daily detail view with completion toggles
 - `app/diagnostics.tsx` - Developer diagnostics (API config, auth state, call log)
@@ -115,3 +116,5 @@ Toggle mutations use optimistic updates on day-data, then invalidate:
 - 2026-02-22: Implemented local completion storage (PostgreSQL) - PATCH no longer proxied to external backend
 - 2026-02-22: GET routes now merge local completion state with external backend data
 - 2026-02-22: Added server/db.ts for Drizzle/PostgreSQL connection
+- 2026-02-23: Added Performance tab with adherence %, 4-week trend chart, meal/workout split, streak, AI insight banner
+- 2026-02-23: Web proxy preserves external API format (object meals, singular workout) for client-side normalization
