@@ -118,4 +118,5 @@ Toggle mutations use optimistic updates on day-data, then invalidate:
 - 2026-02-22: Added server/db.ts for Drizzle/PostgreSQL connection
 - 2026-02-23: Added Performance tab with adherence %, 4-week trend chart, meal/workout split, streak, AI insight banner
 - 2026-02-23: Web proxy preserves external API format (object meals, singular workout) for client-side normalization
-- 2026-02-23: Rebuilt Profile tab as full editable form (5 sections, pill selectors, GET/PATCH /api/profile)
+- 2026-02-23: Rebuilt Profile tab as full editable form (5 sections, pill selectors, GET/PUT /api/profile)
+- 2026-02-23: Synced Profile with web spec: correct enums (primaryGoal, activityLevel, spicePreference, workoutLocation), feet/inches height input, categorized equipment accordion with auto-preselect, tag inputs for healthConstraints and allergiesIntolerances, legacy field copying on submission
