@@ -120,3 +120,7 @@ Toggle mutations use optimistic updates on day-data, then invalidate:
 - 2026-02-23: Web proxy preserves external API format (object meals, singular workout) for client-side normalization
 - 2026-02-23: Rebuilt Profile tab as full editable form (5 sections, pill selectors, GET/PUT /api/profile)
 - 2026-02-23: Synced Profile with web spec: correct enums (primaryGoal, activityLevel, spicePreference, workoutLocation), feet/inches height input, categorized equipment accordion with auto-preselect, tag inputs for healthConstraints and allergiesIntolerances, legacy field copying on submission
+- 2026-02-23: Added plan creation flow: Create CTA on Dashboard, floating FAB on Calendar, /create plan type picker
+- 2026-02-23: Built 4-step Wellness Plan Wizard (app/wellness/step1-4): goal, nutrition, training, review+submit
+- 2026-02-23: Added generating screen (polls status) and ready screen (celebration + navigation)
+- 2026-02-23: WellnessProvider context for wizard state, profile prefill, LOCATION_PRESETS for equipment
