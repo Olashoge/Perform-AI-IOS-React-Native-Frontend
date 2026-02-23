@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import Colors from "@/constants/colors";
+import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useMealPlan } from "@/lib/api-hooks";
 
 const WEB_TOP_INSET = 67;
@@ -55,6 +55,8 @@ interface GroceryItem {
 
 function MealCard({ mealType, meal }: { mealType: string; meal: MealData }) {
   const [expanded, setExpanded] = useState(false);
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
 
   const mealTypeLabel = mealType.charAt(0).toUpperCase() + mealType.slice(1);
 
@@ -164,6 +166,8 @@ function MealCard({ mealType, meal }: { mealType: string; meal: MealData }) {
 }
 
 function MacroPill({ label, value, color }: { label: string; value?: string | number; color: string }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   if (!value) return null;
   return (
     <View style={[styles.macroPill, { borderColor: color + "40" }]}>
@@ -175,6 +179,8 @@ function MacroPill({ label, value, color }: { label: string; value?: string | nu
 }
 
 export default function MealPlanDetailScreen() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? WEB_TOP_INSET : insets.top;
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
@@ -363,7 +369,7 @@ export default function MealPlanDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,

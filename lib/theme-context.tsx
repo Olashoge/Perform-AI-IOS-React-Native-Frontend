@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ThemeColors, getThemeColors } from './theme';
+import { ThemeColors, darkColors, lightColors } from './theme';
 
 const STORAGE_KEY = 'perform_theme_mode';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
+export type { ThemeColors } from './theme';
 
 interface ThemeContextValue {
   themeMode: ThemeMode;
@@ -34,7 +35,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   };
 
   const isDark = themeMode === 'system' ? systemScheme !== 'light' : themeMode === 'dark';
-  const colors = getThemeColors(isDark);
+  const colors = isDark ? darkColors : lightColors;
 
   const value = useMemo(
     () => ({ themeMode, setThemeMode, isDark, colors }),
@@ -50,4 +51,8 @@ export function useTheme() {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
+}
+
+export function useColors(): ThemeColors {
+  return useTheme().colors;
 }

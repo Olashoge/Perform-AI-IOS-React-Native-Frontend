@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
-import Colors from "@/constants/colors";
+import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useProfile, useUpdateProfile, ProfileData } from "@/lib/api-hooks";
 
 const EQUIPMENT_CATEGORIES: { name: string; items: string[] }[] = [
@@ -59,6 +59,9 @@ function formatLabel(value: string): string {
 }
 
 function SectionHeader({ icon, title }: { icon: keyof typeof Ionicons.glyphMap; title: string }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+
   return (
     <View style={styles.sectionHeader}>
       <Ionicons name={icon} size={18} color={Colors.primary} />
@@ -68,6 +71,9 @@ function SectionHeader({ icon, title }: { icon: keyof typeof Ionicons.glyphMap; 
 }
 
 function FormField({ label, children, helperText }: { label: string; children: React.ReactNode; helperText?: string }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+
   return (
     <View style={styles.formField}>
       <Text style={styles.formLabel}>{label}</Text>
@@ -90,6 +96,9 @@ function PillSelector({
   onSelect: (val: string | string[]) => void;
   multi?: boolean;
 }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+
   const handlePress = (opt: string) => {
     Haptics.selectionAsync();
     if (multi) {
@@ -129,6 +138,8 @@ function PillSelector({
 }
 
 function TagInput({ tags, onChangeTags, placeholder }: { tags: string[]; onChangeTags: (tags: string[]) => void; placeholder?: string }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const [inputValue, setInputValue] = useState("");
 
   const addTag = () => {
@@ -171,6 +182,8 @@ function TagInput({ tags, onChangeTags, placeholder }: { tags: string[]; onChang
 }
 
 function EquipmentAccordion({ selected, onToggle }: { selected: string[]; onToggle: (item: string) => void }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
 
   const toggleCategory = (name: string) => {
@@ -226,6 +239,9 @@ function EquipmentAccordion({ selected, onToggle }: { selected: string[]; onTogg
 }
 
 export default function ExercisePreferencesScreen() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+
   const insets = useSafeAreaInsets();
   const webTopInset = Platform.OS === "web" ? 67 : 0;
   const profile = useProfile();
@@ -441,7 +457,7 @@ export default function ExercisePreferencesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,

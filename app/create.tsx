@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -11,59 +11,61 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
-import Colors from "@/constants/colors";
-
-const PLAN_TYPES = [
-  {
-    id: "wellness",
-    title: "Wellness Plan",
-    subtitle: "Complete meal + workout plan tailored to your goals",
-    icon: "sparkles" as const,
-    color: Colors.primary,
-    recommended: true,
-    enabled: true,
-  },
-  {
-    id: "meal_7day",
-    title: "Meal Plan (7-day)",
-    subtitle: "A full week of personalized meals",
-    icon: "restaurant" as const,
-    color: Colors.accent,
-    recommended: false,
-    enabled: false,
-  },
-  {
-    id: "workout_7day",
-    title: "Workout Plan (7-day)",
-    subtitle: "A full week of structured workouts",
-    icon: "fitness" as const,
-    color: "#FF6B6B",
-    recommended: false,
-    enabled: false,
-  },
-  {
-    id: "daily_meal",
-    title: "Daily Meal",
-    subtitle: "Generate a single day's meals",
-    icon: "nutrition" as const,
-    color: "#FFB347",
-    recommended: false,
-    enabled: false,
-  },
-  {
-    id: "daily_workout",
-    title: "Daily Workout",
-    subtitle: "Generate a single workout session",
-    icon: "barbell" as const,
-    color: "#9B59B6",
-    recommended: false,
-    enabled: false,
-  },
-];
+import { useColors, ThemeColors } from "@/lib/theme-context";
 
 export default function CreateScreen() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
   const webTopInset = Platform.OS === "web" ? 67 : 0;
+
+  const PLAN_TYPES = useMemo(() => [
+    {
+      id: "wellness",
+      title: "Wellness Plan",
+      subtitle: "Complete meal + workout plan tailored to your goals",
+      icon: "sparkles" as const,
+      color: Colors.primary,
+      recommended: true,
+      enabled: true,
+    },
+    {
+      id: "meal_7day",
+      title: "Meal Plan (7-day)",
+      subtitle: "A full week of personalized meals",
+      icon: "restaurant" as const,
+      color: Colors.accent,
+      recommended: false,
+      enabled: false,
+    },
+    {
+      id: "workout_7day",
+      title: "Workout Plan (7-day)",
+      subtitle: "A full week of structured workouts",
+      icon: "fitness" as const,
+      color: "#FF6B6B",
+      recommended: false,
+      enabled: false,
+    },
+    {
+      id: "daily_meal",
+      title: "Daily Meal",
+      subtitle: "Generate a single day's meals",
+      icon: "nutrition" as const,
+      color: "#FFB347",
+      recommended: false,
+      enabled: false,
+    },
+    {
+      id: "daily_workout",
+      title: "Daily Workout",
+      subtitle: "Generate a single workout session",
+      icon: "barbell" as const,
+      color: "#9B59B6",
+      recommended: false,
+      enabled: false,
+    },
+  ], [Colors]);
 
   return (
     <View style={styles.container}>
@@ -141,7 +143,7 @@ export default function CreateScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,

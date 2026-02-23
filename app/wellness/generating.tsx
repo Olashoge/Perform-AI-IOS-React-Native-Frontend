@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
-import Colors from "@/constants/colors";
+import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useGenerationStatus } from "@/lib/api-hooks";
 import { useWellness } from "@/lib/wellness-context";
 
@@ -31,7 +31,7 @@ type GenerationStages = {
   FINALIZING: string;
 };
 
-function getStageIcon(status: string): {
+function getStageIcon(status: string, Colors: ThemeColors): {
   name: keyof typeof Ionicons.glyphMap;
   color: string;
 } {
@@ -49,6 +49,8 @@ function getStageLabel(status: string): string {
 }
 
 export default function GeneratingScreen() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
   const { goalPlanId } = useLocalSearchParams<{ goalPlanId: string }>();
   const { resetWizard } = useWellness();
@@ -116,7 +118,7 @@ export default function GeneratingScreen() {
           <View style={styles.stagesContainer}>
             {STAGES.map((stage) => {
               const status = stageStatuses?.[stage.key] ?? "pending";
-              const icon = getStageIcon(status);
+              const icon = getStageIcon(status, Colors);
               const label = getStageLabel(status);
               return (
                 <View key={stage.key} style={styles.stageRow}>
@@ -141,7 +143,7 @@ export default function GeneratingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,

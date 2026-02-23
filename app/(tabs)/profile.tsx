@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
-import Colors from "@/constants/colors";
+import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useAuth } from "@/lib/auth-context";
 import { useProfile, useUpdateProfile, ProfileData } from "@/lib/api-hooks";
 
@@ -33,6 +33,9 @@ function SectionHeader({
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
 }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+
   return (
     <View style={styles.sectionHeader}>
       <Ionicons name={icon} size={18} color={Colors.primary} />
@@ -50,6 +53,9 @@ function FormField({
   children: React.ReactNode;
   helperText?: string;
 }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+
   return (
     <View style={styles.formField}>
       <Text style={styles.formLabel}>{label}</Text>
@@ -72,6 +78,9 @@ function SegmentedControl({
   selected: string;
   onSelect: (val: string) => void;
 }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+
   return (
     <View style={styles.segmentedRow}>
       {options.map((opt, i) => {
@@ -113,6 +122,9 @@ function PillSelector({
   onSelect: (val: string | string[]) => void;
   multi?: boolean;
 }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+
   const handlePress = (opt: string) => {
     Haptics.selectionAsync();
     if (multi) {
@@ -162,6 +174,8 @@ function TagInput({
   onChangeTags: (tags: string[]) => void;
   placeholder?: string;
 }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const [inputValue, setInputValue] = useState("");
 
   const addTag = () => {
@@ -249,6 +263,8 @@ function EquipmentAccordion({
   selected: string[];
   onToggle: (item: string) => void;
 }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
 
   const toggleCategory = (name: string) => {
@@ -370,6 +386,8 @@ export default function ProfileScreen() {
   const webTopInset = Platform.OS === "web" ? 67 : 0;
   const profile = useProfile();
   const updateProfile = useUpdateProfile();
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
 
   const [formData, setFormData] = useState<ProfileData>({ ...defaultFormData });
   const [loaded, setLoaded] = useState(false);
@@ -904,7 +922,7 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,

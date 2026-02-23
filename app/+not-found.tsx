@@ -1,8 +1,12 @@
+import React, { useMemo } from "react";
 import { Link, Stack } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
-import Colors from "@/constants/colors";
+import { useColors, ThemeColors } from "@/lib/theme-context";
 
 export default function NotFoundScreen() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+
   return (
     <>
       <Stack.Screen options={{ title: "Not Found" }} />
@@ -16,7 +20,7 @@ export default function NotFoundScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",

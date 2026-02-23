@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import { useLocalSearchParams, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import Colors from "@/constants/colors";
+import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useDayData, useToggleCompletion, Meal, Workout } from "@/lib/api-hooks";
 
 const MONTHS = [
@@ -22,6 +22,9 @@ const MONTHS = [
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 function MealItem({ meal, onToggle }: { meal: Meal; onToggle: () => void }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+
   return (
     <Pressable
       style={({ pressed }) => [styles.itemCard, pressed && { opacity: 0.85 }]}
@@ -58,6 +61,9 @@ function MealItem({ meal, onToggle }: { meal: Meal; onToggle: () => void }) {
 }
 
 function WorkoutItem({ workout, onToggle }: { workout: Workout; onToggle: () => void }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+
   return (
     <Pressable
       style={({ pressed }) => [styles.itemCard, pressed && { opacity: 0.85 }]}
@@ -94,6 +100,9 @@ function WorkoutItem({ workout, onToggle }: { workout: Workout; onToggle: () => 
 }
 
 export default function DailyDetailScreen() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+
   const { date } = useLocalSearchParams<{ date: string }>();
   const insets = useSafeAreaInsets();
   const { data: dayData, isLoading, refetch } = useDayData(date || "");
@@ -142,6 +151,12 @@ export default function DailyDetailScreen() {
   const totalItems = meals.length + workouts.length;
   const completedItems = [...meals, ...workouts].filter((i) => i.completed).length;
   const score = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+
+  function getScoreColor(s: number) {
+    if (s >= 80) return Colors.scoreGreen;
+    if (s >= 50) return Colors.scoreYellow;
+    return Colors.scoreRed;
+  }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + webTopInset }]}>
@@ -248,13 +263,7 @@ export default function DailyDetailScreen() {
   );
 }
 
-function getScoreColor(score: number) {
-  if (score >= 80) return Colors.scoreGreen;
-  if (score >= 50) return Colors.scoreYellow;
-  return Colors.scoreRed;
-}
-
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,

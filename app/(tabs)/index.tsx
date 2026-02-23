@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -18,11 +18,13 @@ import Animated, {
 } from "react-native-reanimated";
 import { useEffect } from "react";
 import { router } from "expo-router";
-import Colors from "@/constants/colors";
+import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useWeeklySummary } from "@/lib/api-hooks";
 import { useAuth } from "@/lib/auth-context";
 
 function ScoreRing({ score, size = 160 }: { score: number; size?: number }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const progress = useSharedValue(0);
   const strokeWidth = 12;
   const radius = (size - strokeWidth) / 2;
@@ -88,6 +90,8 @@ function StatCard({
   value: string;
   color: string;
 }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   return (
     <View style={styles.statCard}>
       <View style={[styles.statIconBg, { backgroundColor: color + "1A" }]}>
@@ -100,6 +104,8 @@ function StatCard({
 }
 
 export default function DashboardScreen() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
   const { data: summary, isLoading, refetch } = useWeeklySummary();
   const { user } = useAuth();
@@ -215,7 +221,7 @@ function getGreeting() {
   return "Good evening";
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,

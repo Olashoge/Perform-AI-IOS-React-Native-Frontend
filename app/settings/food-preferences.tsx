@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
-import Colors from "@/constants/colors";
+import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useProfile, useUpdateProfile, ProfileData } from "@/lib/api-hooks";
 
 const FOODS_TO_AVOID_PRESETS = [
@@ -44,6 +44,8 @@ function TagInput({
   onChangeTags: (tags: string[]) => void;
   placeholder?: string;
 }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const [inputValue, setInputValue] = useState("");
 
   const addTag = () => {
@@ -86,6 +88,9 @@ function TagInput({
 }
 
 export default function FoodPreferencesScreen() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+
   const insets = useSafeAreaInsets();
   const webTopInset = Platform.OS === "web" ? 67 : 0;
   const profile = useProfile();
@@ -276,7 +281,7 @@ export default function FoodPreferencesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,

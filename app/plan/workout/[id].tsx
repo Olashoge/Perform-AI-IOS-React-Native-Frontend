@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -12,13 +12,15 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import Colors from "@/constants/colors";
+import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useWorkoutPlan } from "@/lib/api-hooks";
 
 const WEB_TOP_INSET = 67;
 const WORKOUT_ACCENT = "#FF6B6B";
 
 export default function WorkoutPlanDetailScreen() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? WEB_TOP_INSET : insets.top;
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
@@ -36,7 +38,7 @@ export default function WorkoutPlanDetailScreen() {
   if (isLoading) {
     return (
       <View style={[styles.container, { paddingTop: topInset }]}>
-        <Header topInset={topInset} />
+        <Header />
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={WORKOUT_ACCENT} />
           <Text style={styles.loadingText}>Loading workout plan...</Text>
@@ -48,7 +50,7 @@ export default function WorkoutPlanDetailScreen() {
   if (error) {
     return (
       <View style={[styles.container, { paddingTop: topInset }]}>
-        <Header topInset={topInset} />
+        <Header />
         <View style={styles.centerContent}>
           <Ionicons name="alert-circle" size={48} color={Colors.error} />
           <Text style={styles.errorText}>Failed to load plan</Text>
@@ -64,7 +66,7 @@ export default function WorkoutPlanDetailScreen() {
   if (status === "generating") {
     return (
       <View style={[styles.container, { paddingTop: topInset }]}>
-        <Header topInset={topInset} />
+        <Header />
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={WORKOUT_ACCENT} />
           <Text style={styles.loadingText}>Plan is still generating...</Text>
@@ -84,7 +86,7 @@ export default function WorkoutPlanDetailScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: topInset }]}>
-      <Header topInset={topInset} />
+      <Header />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={{ paddingBottom: bottomInset + 24 }}
@@ -134,7 +136,9 @@ export default function WorkoutPlanDetailScreen() {
   );
 }
 
-function Header({ topInset }: { topInset: number }) {
+function Header() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   return (
     <View style={styles.header}>
       <Pressable onPress={() => router.back()} hitSlop={12}>
@@ -147,6 +151,8 @@ function Header({ topInset }: { topInset: number }) {
 }
 
 function StatBadge({ icon, label, value }: { icon: string; label: string; value: string }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   return (
     <View style={styles.statBadge}>
       <Ionicons name={icon as any} size={18} color={WORKOUT_ACCENT} />
@@ -167,6 +173,8 @@ function DayCard({
   expanded: boolean;
   onToggle: () => void;
 }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const isWorkout = day.isWorkoutDay;
   const session = day.session;
   const dayLabel = day.dayLabel ?? `Day ${day.dayIndex ?? dayIndex + 1}`;
@@ -279,6 +287,8 @@ function SessionSection({
   iconColor: string;
   content: any;
 }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const text =
     typeof content === "string"
       ? content
@@ -298,6 +308,8 @@ function SessionSection({
 }
 
 function ExerciseCard({ exercise, index }: { exercise: any; index: number }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   return (
     <View style={styles.exerciseCard}>
       <View style={styles.exerciseHeaderRow}>
@@ -333,7 +345,7 @@ function ExerciseCard({ exercise, index }: { exercise: any; index: number }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,

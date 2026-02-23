@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
-import Colors from "@/constants/colors";
+import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useWellness, mapGoalForMeal, mapGoalForWorkout } from "@/lib/wellness-context";
 import { useGenerateGoalPlan, useProfile } from "@/lib/api-hooks";
 
@@ -46,6 +46,9 @@ function getStepCount(planType: string): number {
 }
 
 function ReviewRow({ label, value }: { label: string; value: string }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+
   return (
     <View style={styles.reviewRow}>
       <Text style={styles.reviewLabel}>{label}</Text>
@@ -57,6 +60,8 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
 }
 
 export default function Step4Screen() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
   const webTopInset = Platform.OS === "web" ? 67 : 0;
   const { state } = useWellness();
@@ -278,7 +283,7 @@ export default function Step4Screen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,

@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
-import Colors from "@/constants/colors";
+import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useWeekData, DayData } from "@/lib/api-hooks";
 import { getWeekStartUTC } from "@/lib/week-utils";
 import { useWeekStart } from "@/lib/week-start-context";
@@ -25,6 +25,8 @@ const MONTHS = [
 ];
 
 function DayCard({ day, isToday }: { day: DayData; isToday: boolean }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const date = new Date(day.date + "T12:00:00");
   const dayOfWeek = DAYS_MONDAY[(date.getDay() + 6) % 7];
   const dayNum = date.getDate();
@@ -96,6 +98,8 @@ function DayCard({ day, isToday }: { day: DayData; isToday: boolean }) {
 }
 
 export default function CalendarScreen() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
   const { weekStartDay } = useWeekStart();
   const [weekOffset, setWeekOffset] = useState(0);
@@ -197,7 +201,7 @@ export default function CalendarScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,

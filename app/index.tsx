@@ -1,9 +1,12 @@
+import React, { useMemo } from "react";
 import { Redirect } from "expo-router";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { useAuth } from "@/lib/auth-context";
-import Colors from "@/constants/colors";
+import { useColors, ThemeColors } from "@/lib/theme-context";
 
 export default function Index() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -21,7 +24,7 @@ export default function Index() {
   return <Redirect href="/(tabs)" />;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   loading: {
     flex: 1,
     justifyContent: "center",

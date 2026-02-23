@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -9,10 +9,12 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import Colors from "@/constants/colors";
+import { useColors, ThemeColors } from "@/lib/theme-context";
 import { usePerformanceData, WeekScore } from "@/lib/api-hooks";
 
 function TrendChart({ weekScores }: { weekScores: WeekScore[] }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const maxScore = 100;
   const chartHeight = 120;
   const barWidth = 40;
@@ -51,6 +53,8 @@ function TrendChart({ weekScores }: { weekScores: WeekScore[] }) {
 }
 
 function AdherenceSplit({ mealPct, workoutPct }: { mealPct: number; workoutPct: number }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   return (
     <View style={styles.splitCard}>
       <Text style={styles.sectionTitle}>Adherence Split</Text>
@@ -92,6 +96,8 @@ function AdherenceSplit({ mealPct, workoutPct }: { mealPct: number; workoutPct: 
 }
 
 function IntelligenceBanner({ score }: { score: number }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   let message: string;
   let icon: keyof typeof Ionicons.glyphMap;
   let color: string;
@@ -124,6 +130,8 @@ function IntelligenceBanner({ score }: { score: number }) {
 }
 
 export default function PerformanceScreen() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
   const { data, isLoading } = usePerformanceData();
   const webTopInset = Platform.OS === "web" ? 67 : 0;
@@ -205,7 +213,7 @@ export default function PerformanceScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,

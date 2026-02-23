@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
-import Colors from "@/constants/colors";
+import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useGoalPlan } from "@/lib/api-hooks";
 
 const WEB_TOP_INSET = 67;
@@ -33,6 +33,8 @@ function formatDate(dateStr: string | undefined): string {
 }
 
 function StatusIndicator({ status }: { status: string }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const color =
     status === "ready" || status === "active"
       ? Colors.accent
@@ -63,6 +65,8 @@ function LinkedPlanCard({
   available: boolean;
   onPress: () => void;
 }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   return (
     <Pressable
       style={[styles.linkedCard, !available && styles.linkedCardDisabled]}
@@ -101,6 +105,8 @@ function LinkedPlanCard({
 }
 
 export default function WellnessPlanDetailScreen() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? WEB_TOP_INSET : insets.top;
@@ -273,7 +279,7 @@ export default function WellnessPlanDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,

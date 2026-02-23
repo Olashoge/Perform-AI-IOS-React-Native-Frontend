@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import * as Crypto from "expo-crypto";
-import Colors from "@/constants/colors";
+import { useColors, ThemeColors } from "@/lib/theme-context";
 import {
   useProfile,
   useOccupiedDates,
@@ -149,6 +149,8 @@ function snapToNearest(val: number): number {
 }
 
 function ProfileSummaryCard({ profile }: { profile: ProfileData }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const isImperial = profile.unitSystem === "imperial";
   const weightDisplay = profile.weightKg != null
     ? isImperial ? `${kgToLbs(profile.weightKg)} lbs` : `${profile.weightKg} kg`
@@ -187,6 +189,8 @@ function ProfileSummaryCard({ profile }: { profile: ProfileData }) {
 }
 
 export default function NewWorkoutPlanScreen() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? WEB_TOP_INSET : insets.top;
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
@@ -562,7 +566,7 @@ export default function NewWorkoutPlanScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   header: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",

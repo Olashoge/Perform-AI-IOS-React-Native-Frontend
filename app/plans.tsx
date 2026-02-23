@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
-import Colors from "@/constants/colors";
+import { useColors, ThemeColors } from "@/lib/theme-context";
 import {
   useWellnessPlans,
   useMealPlans,
@@ -45,6 +45,7 @@ function formatDate(dateStr: string | undefined): string {
 }
 
 function StatusBadge({ status }: { status: string }) {
+  const Colors = useColors();
   const color =
     status === "ready" || status === "active"
       ? Colors.accent
@@ -52,14 +53,34 @@ function StatusBadge({ status }: { status: string }) {
         ? Colors.warning
         : Colors.textSecondary;
   return (
-    <View style={[styles.statusBadge, { backgroundColor: color + "20" }]}>
-      <View style={[styles.statusDot, { backgroundColor: color }]} />
-      <Text style={[styles.statusText, { color }]}>
+    <View style={[statusBadgeStyles.statusBadge, { backgroundColor: color + "20" }]}>
+      <View style={[statusBadgeStyles.statusDot, { backgroundColor: color }]} />
+      <Text style={[statusBadgeStyles.statusText, { color }]}>
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </Text>
     </View>
   );
 }
+
+const statusBadgeStyles = StyleSheet.create({
+  statusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+  },
+});
 
 function PlanCard({
   plan,
@@ -74,6 +95,8 @@ function PlanCard({
   onMoveDate?: () => void;
   onPress: () => void;
 }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const [showActions, setShowActions] = useState(false);
   const icon: any =
     type === "wellness"
@@ -207,6 +230,8 @@ function PlanCard({
 }
 
 export default function PlansHubScreen() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? WEB_TOP_INSET : insets.top;
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
@@ -433,7 +458,7 @@ export default function PlansHubScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -570,23 +595,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     marginBottom: 8,
-  },
-  statusBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  statusText: {
-    fontSize: 12,
-    fontFamily: "Inter_500Medium",
   },
   dateRow: {
     flexDirection: "row",

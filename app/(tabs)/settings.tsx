@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
-import Colors from "@/constants/colors";
+import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useAuth } from "@/lib/auth-context";
 import { useWellnessPlans } from "@/lib/api-hooks";
 import { useWeekStart } from "@/lib/week-start-context";
@@ -30,6 +30,9 @@ function SegmentedControl({
   value: string;
   onChange: (val: string) => void;
 }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+
   return (
     <View style={styles.segmented}>
       {options.map((opt) => {
@@ -73,6 +76,9 @@ function SettingsRow({
   onPress: () => void;
   showChevron?: boolean;
 }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+
   return (
     <Pressable style={styles.row} onPress={onPress}>
       <View style={[styles.rowIconBg, { backgroundColor: iconColor + "1A" }]}>
@@ -98,6 +104,8 @@ export default function SettingsScreen() {
   const wellnessPlansQuery = useWellnessPlans();
   const { weekStartDay, setWeekStartDay } = useWeekStart();
   const { themeMode, setThemeMode } = useTheme();
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
 
   const activePlan = (wellnessPlansQuery.data || []).find(
     (p: any) => p.status === "active" || p.status === "ready"
@@ -276,7 +284,7 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,

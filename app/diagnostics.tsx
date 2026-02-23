@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import Colors from "@/constants/colors";
+import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useAuth } from "@/lib/auth-context";
 import { getAccessToken, getRefreshToken, API_BASE_URL } from "@/lib/api-client";
 import { getApiCallLog, ApiCallEntry } from "@/lib/api-log";
@@ -27,6 +27,8 @@ interface MetaInfo {
 }
 
 function Row({ label, value }: { label: string; value: string }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
@@ -36,6 +38,8 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 function CallLogItem({ entry }: { entry: ApiCallEntry }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const time = new Date(entry.timestamp).toLocaleTimeString();
   const isError = typeof entry.status === "string" || (typeof entry.status === "number" && entry.status >= 400);
   return (
@@ -55,6 +59,8 @@ function CallLogItem({ entry }: { entry: ApiCallEntry }) {
 }
 
 export default function DiagnosticsScreen() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const webTopInset = Platform.OS === "web" ? 67 : 0;
@@ -208,7 +214,7 @@ export default function DiagnosticsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,

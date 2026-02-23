@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
-import Colors from "@/constants/colors";
+import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useProfile, ProfileData } from "@/lib/api-hooks";
 import { useWellness } from "@/lib/wellness-context";
 
@@ -98,6 +98,9 @@ function getStepCount(planType: string): number {
 }
 
 function ProfileSummaryCard({ profile }: { profile: ProfileData }) {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+
   const isImperial = profile.unitSystem === "imperial";
   const weightDisplay =
     profile.weightKg != null
@@ -149,6 +152,8 @@ function ProfileSummaryCard({ profile }: { profile: ProfileData }) {
 }
 
 export default function Step2Screen() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
   const webTopInset = Platform.OS === "web" ? 67 : 0;
   const { data: profile } = useProfile();
@@ -523,7 +528,7 @@ export default function Step2Screen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,

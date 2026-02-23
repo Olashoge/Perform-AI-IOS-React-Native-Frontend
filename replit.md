@@ -68,7 +68,14 @@ Toggle mutations use optimistic updates on day-data, then invalidate:
 - `completions` - id (item id like "meal-2026-02-22-0"), userId, itemType, completed
 
 ## Theme
-- Dark mode with electric blue (#0A84FF) primary color
+- Dynamic theming: Light, Dark, and System modes via ThemeProvider
+- All screens use `useColors()` hook from `lib/theme-context.tsx` for reactive colors
+- Color tokens defined in `lib/theme.ts` (darkColors, lightColors)
+- No screen imports static `Colors` from `constants/colors.ts` — all use dynamic hook
+- StyleSheet pattern: `const createStyles = (Colors: ThemeColors) => StyleSheet.create({...})` with `useMemo`
+- Sub-components call `useColors()` directly (no prop drilling)
+- Dark: electric blue (#0A84FF) primary, black background
+- Light: system blue (#007AFF) primary, light gray (#F2F2F7) background
 - Font: Inter (Google Fonts)
 - iOS 26 liquid glass tab bar support
 
@@ -151,3 +158,4 @@ Toggle mutations use optimistic updates on day-data, then invalidate:
 - 2026-02-23: Added ThemeProvider (Light/Dark/System, AsyncStorage) with light/dark color tokens
 - 2026-02-23: Built food preferences screen (favorites, foods to avoid, allergies)
 - 2026-02-23: Built exercise preferences screen (training capacity, equipment, constraints)
+- 2026-02-23: Implemented dynamic theming - all 30 screens converted from static Colors to useColors() hook, Light/Dark/System modes now fully functional

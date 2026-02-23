@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
-import Colors from "@/constants/colors";
+import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useWorkoutPlanStatus } from "@/lib/api-hooks";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -30,6 +30,8 @@ function getSimulatedStage(elapsed: number): number {
 }
 
 export default function WorkoutGeneratingScreen() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? WEB_TOP_INSET : insets.top;
   const { planId } = useLocalSearchParams<{ planId: string }>();
@@ -123,7 +125,7 @@ export default function WorkoutGeneratingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background, paddingHorizontal: 24 },
   centerContent: { flex: 1, justifyContent: "center", alignItems: "center" },
   indicator: { marginBottom: 32, transform: [{ scale: 1.5 }] },
