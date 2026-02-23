@@ -31,11 +31,59 @@ function normalizeWorkout(item: any, date: string, index: number): Workout {
   };
 }
 
+function extractCompletionStatus(raw: any, itemType: string, itemKey: string): boolean | undefined {
+  const completions = Array.isArray(raw?.completions) ? raw.completions : [];
+  const match = completions.find((c: any) => c.itemType === itemType && c.itemKey === itemKey);
+  return match ? !!match.completed : undefined;
+}
+
 function normalizeDayData(raw: any, date: string): DayData {
-  const rawMeals = Array.isArray(raw?.meals) ? raw.meals : [];
-  const rawWorkouts = Array.isArray(raw?.workouts) ? raw.workouts : [];
-  const meals = rawMeals.map((m: any, i: number) => normalizeMeal(m, date, i));
-  const workouts = rawWorkouts.map((w: any, i: number) => normalizeWorkout(w, date, i));
+  let meals: Meal[] = [];
+  let workouts: Workout[] = [];
+
+  if (Array.isArray(raw?.meals)) {
+    meals = raw.meals.map((m: any, i: number) => normalizeMeal(m, date, i));
+  } else if (raw?.meals && typeof raw.meals === "object") {
+    const mealOrder = ["breakfast", "lunch", "dinner", "snack"];
+    const mealKeys = Object.keys(raw.meals).sort(
+      (a, b) => (mealOrder.indexOf(a) === -1 ? 99 : mealOrder.indexOf(a)) - (mealOrder.indexOf(b) === -1 ? 99 : mealOrder.indexOf(b))
+    );
+    meals = mealKeys.map((key, i) => {
+      const m = raw.meals[key];
+      const completed = extractCompletionStatus(raw, "meal", key) ?? m.completed ?? false;
+      return {
+        id: m.id || `meal-${date}-${i}`,
+        name: m.name ?? m.title ?? key,
+        type: key,
+        calories: m.nutritionEstimateRange?.calories ? parseInt(m.nutritionEstimateRange.calories) : (m.calories ?? undefined),
+        completed,
+        time: m.time ?? undefined,
+      };
+    });
+  }
+
+  if (Array.isArray(raw?.workouts)) {
+    workouts = raw.workouts.map((w: any, i: number) => normalizeWorkout(w, date, i));
+  } else if (raw?.workout && typeof raw.workout === "object") {
+    const w = raw.workout;
+    const exerciseCount = (Array.isArray(w.main) ? w.main.length : 0) +
+      (Array.isArray(w.warmup) ? w.warmup.length : 0) +
+      (Array.isArray(w.coolDown) ? w.coolDown.length : 0);
+    if (exerciseCount > 0) {
+      const workoutName = w.name ?? w.title ?? (Array.isArray(w.main) && w.main[0]?.type ? `${w.main[0].type} workout` : "Workout");
+      const totalTime = w.estimatedDuration ?? w.duration ?? undefined;
+      const completed = extractCompletionStatus(raw, "workout", "main") ?? w.completed ?? false;
+      workouts = [{
+        id: w.id || `workout-${date}-0`,
+        name: workoutName,
+        type: Array.isArray(w.main) && w.main[0]?.type ? w.main[0].type : "strength",
+        duration: totalTime,
+        completed,
+        time: w.time ?? undefined,
+      }];
+    }
+  }
+
   const totalItems = meals.length + workouts.length;
   const completedItems = [...meals, ...workouts].filter((i) => i.completed).length;
   const score = raw?.score ?? (totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0);
