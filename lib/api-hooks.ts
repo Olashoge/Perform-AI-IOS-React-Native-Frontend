@@ -317,6 +317,108 @@ export function useToggleCompletion() {
   });
 }
 
+export interface WeekScore {
+  weekStart: string;
+  label: string;
+  score: number;
+  mealPct: number;
+  workoutPct: number;
+}
+
+export interface PerformanceData {
+  currentScore: number;
+  weekScores: WeekScore[];
+  mealPct: number;
+  workoutPct: number;
+  streak: number;
+  trend: "up" | "down" | "flat";
+  trendDelta: number;
+}
+
+function computeWeekScore(days: DayData[]): { score: number; mealPct: number; workoutPct: number } {
+  let mealsTotal = 0, mealsCompleted = 0, workoutsTotal = 0, workoutsCompleted = 0;
+  for (const day of days) {
+    mealsTotal += day.meals.length;
+    mealsCompleted += day.meals.filter(m => m.completed).length;
+    workoutsTotal += day.workouts.length;
+    workoutsCompleted += day.workouts.filter(w => w.completed).length;
+  }
+  const total = mealsTotal + workoutsTotal;
+  const completed = mealsCompleted + workoutsCompleted;
+  return {
+    score: total > 0 ? Math.round((completed / total) * 100) : 0,
+    mealPct: mealsTotal > 0 ? Math.round((mealsCompleted / mealsTotal) * 100) : 0,
+    workoutPct: workoutsTotal > 0 ? Math.round((workoutsCompleted / workoutsTotal) * 100) : 0,
+  };
+}
+
+function computeStreak(allDays: DayData[]): number {
+  const sorted = [...allDays]
+    .filter(d => new Date(d.date) <= new Date())
+    .sort((a, b) => b.date.localeCompare(a.date));
+  let streak = 0;
+  for (const day of sorted) {
+    const allItems = [...day.meals, ...day.workouts];
+    if (allItems.length === 0) continue;
+    const hasCompletion = allItems.some(i => i.completed);
+    if (hasCompletion) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+function getWeekLabel(weekStart: string): string {
+  const d = new Date(weekStart + "T12:00:00Z");
+  const month = d.toLocaleString("en-US", { month: "short", timeZone: "UTC" });
+  const day = d.getUTCDate();
+  return `${month} ${day}`;
+}
+
+export function usePerformanceData() {
+  const currentWeekStart = getWeekStartUTC(0);
+  const week0 = useWeekData(getWeekStartUTC(-3));
+  const week1 = useWeekData(getWeekStartUTC(-2));
+  const week2 = useWeekData(getWeekStartUTC(-1));
+  const week3 = useWeekData(currentWeekStart);
+
+  const isLoading = week0.isLoading || week1.isLoading || week2.isLoading || week3.isLoading;
+
+  const data: PerformanceData | undefined = (!isLoading && week0.data && week1.data && week2.data && week3.data) ? (() => {
+    const weeks = [
+      { start: getWeekStartUTC(-3), days: week0.data! },
+      { start: getWeekStartUTC(-2), days: week1.data! },
+      { start: getWeekStartUTC(-1), days: week2.data! },
+      { start: currentWeekStart, days: week3.data! },
+    ];
+
+    const weekScores: WeekScore[] = weeks.map(w => {
+      const { score, mealPct, workoutPct } = computeWeekScore(w.days);
+      return { weekStart: w.start, label: getWeekLabel(w.start), score, mealPct, workoutPct };
+    });
+
+    const currentStats = computeWeekScore(week3.data!);
+    const prevStats = computeWeekScore(week2.data!);
+    const allDays = [...(week0.data ?? []), ...(week1.data ?? []), ...(week2.data ?? []), ...(week3.data ?? [])];
+    const streak = computeStreak(allDays);
+    const trendDelta = currentStats.score - prevStats.score;
+
+    return {
+      currentScore: currentStats.score,
+      weekScores,
+      mealPct: currentStats.mealPct,
+      workoutPct: currentStats.workoutPct,
+      streak,
+      trend: trendDelta > 3 ? "up" as const : trendDelta < -3 ? "down" as const : "flat" as const,
+      trendDelta,
+    };
+  })() : undefined;
+
+  return { data, isLoading };
+}
+
 function generateMockWeekData(weekStart: string): DayData[] {
   const start = new Date(weekStart + "T12:00:00Z");
   const days: DayData[] = [];
