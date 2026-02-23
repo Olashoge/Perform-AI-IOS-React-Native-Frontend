@@ -13,23 +13,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/lib/auth-context";
-import { getAccessToken, getRefreshToken } from "@/lib/api-client";
+import { getAccessToken, getRefreshToken, API_BASE_URL } from "@/lib/api-client";
 import { getApiCallLog, ApiCallEntry } from "@/lib/api-log";
 import { getWeekStartUTC, getWeekEndUTC } from "@/lib/week-utils";
 import axios from "axios";
-
-function getLocalServerBase(): string {
-  if (Platform.OS === "web") {
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
-    if (origin.includes("localhost") || origin.includes("127.0.0.1")) {
-      return origin.replace(/:8081/, ":5000");
-    }
-    return origin;
-  }
-  const domain = (globalThis as any).__expo_public_domain;
-  if (domain) return `https://${domain}`;
-  return "http://localhost:5000";
-}
 
 interface MetaInfo {
   environmentName: string;
@@ -83,24 +70,21 @@ export default function DiagnosticsScreen() {
   const weekStart = getWeekStartUTC();
   const weekEnd = getWeekEndUTC(weekStart);
 
-  const apiBaseURL = "https://mealplanai.replit.app";
-  const weeklySummaryURL = `${apiBaseURL}/api/weekly-summary`;
-  const weekDataURL = `${apiBaseURL}/api/week-data?weekStart=${weekStart}`;
-
-  const localServerBase = getLocalServerBase();
+  const weeklySummaryURL = `${API_BASE_URL}/api/weekly-summary`;
+  const weekDataURL = `${API_BASE_URL}/api/week-data?weekStart=${weekStart}`;
 
   const fetchMeta = useCallback(async () => {
     setMetaLoading(true);
     setMetaError(null);
     try {
-      const response = await axios.get(`${localServerBase}/api/meta`);
+      const response = await axios.get(`${API_BASE_URL}/api/meta`);
       setMeta(response.data);
     } catch (err: any) {
       setMetaError(err.message || "Failed to fetch /api/meta");
     } finally {
       setMetaLoading(false);
     }
-  }, [localServerBase]);
+  }, []);
 
   const refresh = useCallback(async () => {
     const at = await getAccessToken();
@@ -140,8 +124,7 @@ export default function DiagnosticsScreen() {
       >
         <Text style={styles.sectionTitle}>Configuration</Text>
         <View style={styles.card}>
-          <Row label="API Base URL" value={apiBaseURL} />
-          <Row label="Local Server" value={localServerBase} />
+          <Row label="API Base URL" value={API_BASE_URL} />
           <Row label="Auth Mode" value="JWT / Bearer Token" />
           <Row label="withCredentials" value="false (disabled)" />
         </View>
