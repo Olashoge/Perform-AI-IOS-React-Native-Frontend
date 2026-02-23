@@ -48,9 +48,11 @@ function normalizeDayData(raw: any, date: string): DayData {
     const mealKeys = Object.keys(raw.meals).sort(
       (a, b) => (mealOrder.indexOf(a) === -1 ? 99 : mealOrder.indexOf(a)) - (mealOrder.indexOf(b) === -1 ? 99 : mealOrder.indexOf(b))
     );
+    const planId = Array.isArray(raw?.planIds) ? raw.planIds[0] : null;
     meals = mealKeys.map((key, i) => {
       const m = raw.meals[key];
-      const completed = extractCompletionStatus(raw, "meal", key) ?? m.completed ?? false;
+      const completionRecord = Array.isArray(raw?.completions) ? raw.completions.find((c: any) => c.itemType === "meal" && c.itemKey === key) : null;
+      const completed = completionRecord ? !!completionRecord.completed : (m.completed ?? false);
       return {
         id: m.id || `meal-${date}-${i}`,
         name: m.name ?? m.title ?? key,
@@ -58,6 +60,9 @@ function normalizeDayData(raw: any, date: string): DayData {
         calories: m.nutritionEstimateRange?.calories ? parseInt(m.nutritionEstimateRange.calories) : (m.calories ?? undefined),
         completed,
         time: m.time ?? undefined,
+        itemKey: key,
+        sourceType: completionRecord?.sourceType ?? "meal_plan",
+        sourceId: completionRecord?.sourceId ?? planId ?? undefined,
       };
     });
   }
@@ -72,7 +77,9 @@ function normalizeDayData(raw: any, date: string): DayData {
     if (exerciseCount > 0) {
       const workoutName = w.name ?? w.title ?? (Array.isArray(w.main) && w.main[0]?.type ? `${w.main[0].type} workout` : "Workout");
       const totalTime = w.estimatedDuration ?? w.duration ?? undefined;
-      const completed = extractCompletionStatus(raw, "workout", "main") ?? w.completed ?? false;
+      const completionRecord = Array.isArray(raw?.completions) ? raw.completions.find((c: any) => c.itemType === "workout") : null;
+      const completed = completionRecord ? !!completionRecord.completed : (w.completed ?? false);
+      const workoutPlanId = raw?.workoutPlanId ?? completionRecord?.sourceId ?? undefined;
       workouts = [{
         id: w.id || `workout-${date}-0`,
         name: workoutName,
@@ -80,6 +87,9 @@ function normalizeDayData(raw: any, date: string): DayData {
         duration: totalTime,
         completed,
         time: w.time ?? undefined,
+        itemKey: "main",
+        sourceType: completionRecord?.sourceType ?? "workout_plan",
+        sourceId: workoutPlanId,
       }];
     }
   }
@@ -115,6 +125,9 @@ export interface Meal {
   calories?: number;
   completed: boolean;
   time?: string;
+  itemKey?: string;
+  sourceType?: string;
+  sourceId?: string;
 }
 
 export interface Workout {
@@ -124,6 +137,9 @@ export interface Workout {
   duration?: number;
   completed: boolean;
   time?: string;
+  itemKey?: string;
+  sourceType?: string;
+  sourceId?: string;
 }
 
 export function useWeeklySummary() {
@@ -223,14 +239,31 @@ export function useToggleCompletion() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ type, id, completed, date }: { type: "meal" | "workout"; id: string; completed: boolean; date: string }) => {
+    mutationFn: async ({ type, id, completed, date, itemKey, sourceType, sourceId }: {
+      type: "meal" | "workout";
+      id: string;
+      completed: boolean;
+      date: string;
+      itemKey?: string;
+      sourceType?: string;
+      sourceId?: string;
+    }) => {
       if (!id || id === "undefined" || id === "null") {
         console.warn("Missing id for patch:", { type, id, date });
         throw new Error(`Missing id for ${type} toggle`);
       }
-      const url = `/api/${type}s/${id}`;
-      const response = await apiClient.patch(url, { completed });
-      logApiCall("PATCH", url, response.status);
+      const url = `/api/completions/toggle`;
+      const body = {
+        date,
+        itemType: type,
+        itemKey: itemKey || id,
+        sourceType: sourceType || (type === "meal" ? "meal_plan" : "workout_plan"),
+        sourceId: sourceId || id,
+        completed,
+      };
+      console.log("[Toggle] POST", url, body);
+      const response = await apiClient.post(url, body);
+      logApiCall("POST", url, response.status);
       return { ...response.data, _date: date, _type: type, _id: id, _completed: completed };
     },
     onMutate: async ({ type, id, completed, date }) => {

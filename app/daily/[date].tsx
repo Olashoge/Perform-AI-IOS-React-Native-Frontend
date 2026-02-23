@@ -110,11 +110,19 @@ export default function DailyDetailScreen() {
   const today = new Date().toISOString().split("T")[0];
   const isToday = date === today;
 
-  function handleToggle(type: "meal" | "workout", id: string, currentCompleted: boolean) {
+  function handleToggle(type: "meal" | "workout", item: Meal | Workout, currentCompleted: boolean) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const newCompleted = !(localToggles[id] !== undefined ? localToggles[id] : currentCompleted);
-    setLocalToggles((prev) => ({ ...prev, [id]: newCompleted }));
-    toggleMutation.mutate({ type, id, completed: newCompleted, date: date || "" });
+    const newCompleted = !(localToggles[item.id] !== undefined ? localToggles[item.id] : currentCompleted);
+    setLocalToggles((prev) => ({ ...prev, [item.id]: newCompleted }));
+    toggleMutation.mutate({
+      type,
+      id: item.id,
+      completed: newCompleted,
+      date: date || "",
+      itemKey: item.itemKey,
+      sourceType: item.sourceType,
+      sourceId: item.sourceId,
+    });
   }
 
   function getItemCompleted(id: string, originalCompleted: boolean): boolean {
@@ -200,7 +208,7 @@ export default function DailyDetailScreen() {
                   <MealItem
                     key={meal.id}
                     meal={meal}
-                    onToggle={() => handleToggle("meal", meal.id, meal.completed)}
+                    onToggle={() => handleToggle("meal", meal, meal.completed)}
                   />
                 ))}
               </View>
@@ -221,7 +229,7 @@ export default function DailyDetailScreen() {
                   <WorkoutItem
                     key={workout.id}
                     workout={workout}
-                    onToggle={() => handleToggle("workout", workout.id, workout.completed)}
+                    onToggle={() => handleToggle("workout", workout, workout.completed)}
                   />
                 ))}
               </View>
