@@ -113,18 +113,18 @@ export default function CalendarScreen() {
       : `${MONTHS[weekStartDate.getMonth()].slice(0, 3)} - ${MONTHS[weekEndDate.getMonth()].slice(0, 3)} ${weekEndDate.getFullYear()}`;
 
   return (
-  <>
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[
-        styles.scrollContent,
-        {
-          paddingTop: insets.top + 16 + webTopInset,
-          paddingBottom: 100,
-        },
-      ]}
-      showsVerticalScrollIndicator={false}
-    >
+    <>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: insets.top + 16 + webTopInset,
+            paddingBottom: 100,
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
       <Text style={styles.headerTitle}>Calendar</Text>
 
       <View style={styles.weekNav}>
