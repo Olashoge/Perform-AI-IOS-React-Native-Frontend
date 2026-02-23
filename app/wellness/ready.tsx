@@ -105,10 +105,19 @@ export default function ReadyScreen() {
             style={styles.secondaryButton}
             onPress={() => {
               Haptics.impactAsync();
+              router.replace("/plans");
+            }}
+          >
+            <Text style={styles.secondaryButtonText}>View My Plans</Text>
+          </Pressable>
+          <Pressable
+            style={styles.tertiaryButton}
+            onPress={() => {
+              Haptics.impactAsync();
               router.replace("/(tabs)");
             }}
           >
-            <Text style={styles.secondaryButtonText}>Go to Dashboard</Text>
+            <Text style={styles.tertiaryButtonText}>Go to Dashboard</Text>
           </Pressable>
         </View>
       </View>
@@ -212,5 +221,15 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
+  },
+  tertiaryButton: {
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  tertiaryButtonText: {
+    fontSize: 15,
+    fontFamily: "Inter_500Medium",
+    color: Colors.textSecondary,
   },
 });

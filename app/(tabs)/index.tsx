@@ -176,6 +176,15 @@ export default function DashboardScreen() {
       </Pressable>
 
       <Pressable
+        style={({ pressed }) => [styles.viewPlansLink, pressed && { opacity: 0.7 }]}
+        onPress={() => router.push("/plans")}
+      >
+        <Ionicons name="documents-outline" size={18} color={Colors.primary} />
+        <Text style={styles.viewPlansText}>View My Plans</Text>
+        <Ionicons name="chevron-forward" size={16} color={Colors.primary} />
+      </Pressable>
+
+      <Pressable
         style={({ pressed }) => [styles.todayCard, pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] }]}
         onPress={() => {
           const today = new Date().toISOString().split("T")[0];
@@ -305,6 +314,19 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontFamily: "Inter_600SemiBold",
     color: "#FFFFFF",
+  },
+  viewPlansLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginBottom: 16,
+    paddingVertical: 8,
+  },
+  viewPlansText: {
+    fontSize: 14,
+    fontFamily: "Inter_500Medium",
+    color: Colors.primary,
   },
   todayCard: {
     backgroundColor: Colors.surface,
