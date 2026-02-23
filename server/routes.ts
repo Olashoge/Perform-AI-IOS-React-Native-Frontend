@@ -285,9 +285,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/availability", proxyToExternal);
   app.post("/api/goal-plans/generate", proxyToExternal);
   app.get("/api/goal-plans/:id/generation-status", proxyToExternal);
+  app.get("/api/goal-plans", proxyToExternal);
   app.get("/api/goal-plans/:id", proxyToExternal);
+  app.patch("/api/goal-plans/:id", proxyToExternal);
+  app.delete("/api/goal-plans/:id", proxyToExternal);
+  app.get("/api/plans", proxyToExternal);
   app.get("/api/plan/:id", proxyToExternal);
+  app.delete("/api/plans/:id", proxyToExternal);
+  app.get("/api/workouts", proxyToExternal);
   app.get("/api/workout/:id", proxyToExternal);
+  app.delete("/api/workouts/:id", proxyToExternal);
 
   app.get("/api/meta", (_req, res) => {
     const commitHash = getGitCommitHash();

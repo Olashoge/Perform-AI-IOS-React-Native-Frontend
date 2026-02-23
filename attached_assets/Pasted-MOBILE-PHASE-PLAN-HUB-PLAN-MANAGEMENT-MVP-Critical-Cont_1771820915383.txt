@@ -1,0 +1,116 @@
+MOBILE — PHASE: PLAN HUB + PLAN MANAGEMENT (MVP-Critical)
+
+Context:
+- Wellness Plan creation is working.
+- Users now need to view, manage, and control their plans from mobile.
+- Do NOT add new backend endpoints. Use the same endpoints already used by the web app.
+- Keep design premium-minimal. Use existing mobile theme.
+
+--------------------------------------------
+1) Plans Hub Screen
+--------------------------------------------
+Create: app/plans.tsx
+
+Navigation:
+- Add "View Plans" button on Dashboard (secondary CTA).
+- Add "View Plans" button on the “Plan Ready” success screen.
+- Route both to /plans.
+
+UI:
+- 3 sections (tabs or segmented control):
+  A) Wellness Plans
+  B) Meal Plans
+  C) Workout Plans
+
+Each section shows a list of plan cards (non-deleted only).
+Each card must show:
+- Plan title
+- Scheduled range:
+   - If startDate exists: show "MMM d – MMM d" (start → start+6)
+   - If startDate null: show "Not scheduled"
+- Created date (small)
+- Status badge: Scheduled / Unscheduled
+
+Data:
+- Use existing backend list endpoints per plan type (same as web).
+- Use React Query with stable query keys:
+  - plans:wellness
+  - plans:meal
+  - plans:workout
+
+Empty state:
+- “No plans yet” with a button “Create”.
+
+--------------------------------------------
+2) Plan Detail Screens
+--------------------------------------------
+Create routes:
+- app/plan/wellness/[id].tsx
+- app/plan/meal/[id].tsx
+- app/plan/workout/[id].tsx
+
+Each detail page must:
+- Fetch plan by id from existing endpoint.
+- Render content with correct ordering rules:
+  - Meals always Breakfast -> Lunch -> Dinner
+  - Week view layout (compact) showing all 7 days if possible
+- Show Grocery List immediately.
+- If pricing exists and loads separately, show price placeholders under grocery until loaded.
+
+Also show:
+- Start date (if scheduled) and end date computed (start+6)
+- “Not scheduled” if null.
+
+--------------------------------------------
+3) Plan Actions via 3-dot Menu
+--------------------------------------------
+On each Plan Detail page, add a top-right 3-dot menu with actions:
+
+A) Move start date
+- Opens a date picker.
+- Use conflict-aware blocking just like web:
+  - Disable dates that would overlap any other scheduled plans (same rules as web).
+- On save: update plan startDate via existing endpoint.
+
+B) Remove from calendar
+- Sets startDate = null via existing endpoint.
+- After success, calendar should no longer show this plan.
+
+C) Delete plan
+- Soft delete via existing endpoint (web already does this).
+- After success:
+  - remove from plan lists
+  - remove from calendar
+  - navigate back to /plans with success toast.
+
+Important:
+- Keep UX clean: no extra buttons on page body, only the 3-dot menu.
+
+--------------------------------------------
+4) React Query Cache Consistency
+--------------------------------------------
+After any Plan Action mutation success:
+Invalidate:
+- plans:wellness / plans:meal / plans:workout (relevant type)
+- week-data (calendar week queries)
+- weekly-summary (dashboard)
+- day-data (if applicable)
+
+If query keys include params, invalidate using predicate matching to cover all relevant cached weeks.
+
+--------------------------------------------
+5) Deliverable
+--------------------------------------------
+After implementing, output:
+- The exact endpoints used for:
+  - listing plans
+  - fetching plan by id
+  - updating startDate
+  - removing from calendar
+  - deleting plan
+- The React Query keys used and which are invalidated.
+
+Do not refactor auth.
+Do not change backend.
+Do not add new endpoints.
+Proceed now.

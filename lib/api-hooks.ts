@@ -581,6 +581,119 @@ export function useWorkoutPlan(id: string | null) {
   });
 }
 
+export function useWellnessPlans() {
+  return useQuery({
+    queryKey: ["plans:wellness"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/goal-plans");
+      logApiCall("GET", "/api/goal-plans", response.status);
+      const plans = Array.isArray(response.data) ? response.data : response.data?.goalPlans || response.data?.plans || [];
+      return plans.filter((p: any) => !p.deleted && !p.isDeleted);
+    },
+    staleTime: 30000,
+  });
+}
+
+export function useMealPlans() {
+  return useQuery({
+    queryKey: ["plans:meal"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/plans");
+      logApiCall("GET", "/api/plans", response.status);
+      const plans = Array.isArray(response.data) ? response.data : response.data?.plans || [];
+      return plans.filter((p: any) => !p.deleted && !p.isDeleted);
+    },
+    staleTime: 30000,
+  });
+}
+
+export function useWorkoutPlans() {
+  return useQuery({
+    queryKey: ["plans:workout"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/workouts");
+      logApiCall("GET", "/api/workouts", response.status);
+      const plans = Array.isArray(response.data) ? response.data : response.data?.workouts || response.data?.plans || [];
+      return plans.filter((p: any) => !p.deleted && !p.isDeleted);
+    },
+    staleTime: 30000,
+  });
+}
+
+export function useUpdateGoalPlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const response = await apiClient.patch(`/api/goal-plans/${id}`, data);
+      logApiCall("PATCH", `/api/goal-plans/${id}`, response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["plans:wellness"] });
+      queryClient.invalidateQueries({ queryKey: ["plans:meal"] });
+      queryClient.invalidateQueries({ queryKey: ["plans:workout"] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
+      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
+    },
+  });
+}
+
+export function useDeleteGoalPlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiClient.delete(`/api/goal-plans/${id}`);
+      logApiCall("DELETE", `/api/goal-plans/${id}`, response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["plans:wellness"] });
+      queryClient.invalidateQueries({ queryKey: ["plans:meal"] });
+      queryClient.invalidateQueries({ queryKey: ["plans:workout"] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
+      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
+    },
+  });
+}
+
+export function useDeleteMealPlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiClient.delete(`/api/plans/${id}`);
+      logApiCall("DELETE", `/api/plans/${id}`, response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["plans:meal"] });
+      queryClient.invalidateQueries({ queryKey: ["plans:wellness"] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
+      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
+    },
+  });
+}
+
+export function useDeleteWorkoutPlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiClient.delete(`/api/workouts/${id}`);
+      logApiCall("DELETE", `/api/workouts/${id}`, response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["plans:workout"] });
+      queryClient.invalidateQueries({ queryKey: ["plans:wellness"] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
+      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
+    },
+  });
+}
+
 function generateMockWeekData(weekStart: string): DayData[] {
   const start = new Date(weekStart + "T12:00:00Z");
   const days: DayData[] = [];
