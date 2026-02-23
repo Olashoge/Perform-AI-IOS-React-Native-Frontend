@@ -44,14 +44,19 @@ function SectionHeader({
 function FormField({
   label,
   children,
+  helperText,
 }: {
   label: string;
   children: React.ReactNode;
+  helperText?: string;
 }) {
   return (
     <View style={styles.formField}>
       <Text style={styles.formLabel}>{label}</Text>
       {children}
+      {helperText ? (
+        <Text style={styles.helperText}>{helperText}</Text>
+      ) : null}
     </View>
   );
 }
@@ -148,6 +153,161 @@ function PillSelector({
   );
 }
 
+function TagInput({
+  tags,
+  onChangeTags,
+  placeholder,
+}: {
+  tags: string[];
+  onChangeTags: (tags: string[]) => void;
+  placeholder?: string;
+}) {
+  const [inputValue, setInputValue] = useState("");
+
+  const addTag = () => {
+    const trimmed = inputValue.trim();
+    if (trimmed && !tags.includes(trimmed)) {
+      onChangeTags([...tags, trimmed]);
+    }
+    setInputValue("");
+  };
+
+  const removeTag = (tag: string) => {
+    onChangeTags(tags.filter((t) => t !== tag));
+  };
+
+  return (
+    <View>
+      {tags.length > 0 && (
+        <View style={styles.tagWrap}>
+          {tags.map((tag) => (
+            <View key={tag} style={styles.tag}>
+              <Text style={styles.tagText}>{tag}</Text>
+              <Pressable onPress={() => removeTag(tag)} hitSlop={6}>
+                <Ionicons name="close" size={14} color={Colors.text} />
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      )}
+      <TextInput
+        style={styles.textInput}
+        value={inputValue}
+        onChangeText={setInputValue}
+        onSubmitEditing={addTag}
+        returnKeyType="done"
+        placeholderTextColor={Colors.textTertiary}
+        placeholder={placeholder || "Type and press Enter to add"}
+      />
+    </View>
+  );
+}
+
+const EQUIPMENT_CATEGORIES: { name: string; items: string[] }[] = [
+  {
+    name: "Cardio",
+    items: ["Treadmill", "Stationary bike", "Spin bike", "Rowing machine", "Elliptical", "Stair climber", "Ski erg", "Assault/air bike", "Jump rope"],
+  },
+  {
+    name: "Free weights",
+    items: ["Dumbbells", "Adjustable dumbbells", "Barbells", "EZ bar", "Kettlebells", "Weight plates", "Bench (flat)", "Bench (adjustable)"],
+  },
+  {
+    name: "Racks & accessories",
+    items: ["Squat rack", "Power rack", "Smith machine", "Pull-up bar", "Dip station", "Resistance bands", "Cable attachments"],
+  },
+  {
+    name: "Machines",
+    items: ["Cable machine / functional trainer", "Leg press", "Hack squat", "Leg extension", "Leg curl", "Lat pulldown", "Seated row", "Chest press machine", "Pec deck", "Shoulder press machine", "Calf raise machine", "Hip thrust machine", "Glute bridge machine", "Ab machine"],
+  },
+  {
+    name: "Home / bodyweight / mobility",
+    items: ["Yoga mat", "Foam roller", "Medicine ball", "Slam ball", "Stability ball", "TRX / suspension trainer", "Plyo box", "Step platform"],
+  },
+  {
+    name: "Outdoors",
+    items: ["Track access", "Hills/stairs", "Field", "Pool access"],
+  },
+];
+
+const LOCATION_EQUIPMENT_PRESETS: Record<string, string[]> = {
+  gym: ["Treadmill", "Stationary bike", "Rowing machine", "Elliptical", "Dumbbells", "Barbells", "EZ bar", "Kettlebells", "Weight plates", "Bench (flat)", "Bench (adjustable)", "Squat rack", "Power rack", "Smith machine", "Pull-up bar", "Dip station", "Resistance bands", "Cable attachments", "Cable machine / functional trainer", "Leg press", "Leg extension", "Leg curl", "Lat pulldown", "Seated row", "Chest press machine", "Pec deck", "Shoulder press machine", "Calf raise machine", "Yoga mat", "Foam roller"],
+  home: ["Dumbbells", "Resistance bands", "Yoga mat", "Foam roller", "Jump rope", "Kettlebells", "Pull-up bar"],
+  outdoors: ["Track access", "Hills/stairs", "Field", "Jump rope"],
+};
+
+const FOODS_TO_AVOID_PRESETS = [
+  "Pork", "Shellfish", "Dairy", "Gluten", "Soy", "Eggs", "Nuts",
+  "Red Meat", "Fish", "Mushrooms", "Chicken", "Beans/Legumes",
+  "Spicy Foods", "Garlic/Onion",
+];
+
+function EquipmentAccordion({
+  selected,
+  onToggle,
+}: {
+  selected: string[];
+  onToggle: (item: string) => void;
+}) {
+  const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
+
+  const toggleCategory = (name: string) => {
+    setOpenCategories((prev) => ({ ...prev, [name]: !prev[name] }));
+  };
+
+  return (
+    <View>
+      {EQUIPMENT_CATEGORIES.map((cat) => {
+        const isOpen = !!openCategories[cat.name];
+        const count = cat.items.filter((item) => selected.includes(item)).length;
+        return (
+          <View key={cat.name} style={styles.accordionSection}>
+            <Pressable
+              style={styles.accordionHeader}
+              onPress={() => toggleCategory(cat.name)}
+            >
+              <View style={styles.accordionHeaderLeft}>
+                <Ionicons
+                  name={isOpen ? "chevron-down" : "chevron-forward"}
+                  size={16}
+                  color={Colors.textSecondary}
+                />
+                <Text style={styles.accordionHeaderText}>{cat.name}</Text>
+              </View>
+              {count > 0 && (
+                <View style={styles.accordionBadge}>
+                  <Text style={styles.accordionBadgeText}>{count}</Text>
+                </View>
+              )}
+            </Pressable>
+            {isOpen && (
+              <View style={styles.pillWrap}>
+                {cat.items.map((item) => {
+                  const active = selected.includes(item);
+                  return (
+                    <Pressable
+                      key={item}
+                      style={[styles.pill, active && styles.pillActive]}
+                      onPress={() => {
+                        Haptics.selectionAsync();
+                        onToggle(item);
+                      }}
+                    >
+                      <Text style={[styles.pillText, active && styles.pillTextActive]}>
+                        {item}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 const defaultFormData: ProfileData = {
   unitSystem: "imperial",
   age: null,
@@ -181,12 +341,19 @@ const defaultFormData: ProfileData = {
   equipmentOtherNotes: "",
 };
 
-function cmToInches(cm: number): number {
-  return Math.round(cm / 2.54 * 10) / 10;
+function cmToFeetInches(cm: number): { feet: number; inches: number } {
+  const totalInches = cm / 2.54;
+  let feet = Math.floor(totalInches / 12);
+  let inches = Math.round(totalInches % 12);
+  if (inches === 12) {
+    feet += 1;
+    inches = 0;
+  }
+  return { feet, inches };
 }
 
-function inchesToCm(inches: number): number {
-  return Math.round(inches * 2.54 * 10) / 10;
+function feetInchesToCm(feet: number, inches: number): number {
+  return Math.round((feet * 12 + inches) * 2.54 * 10) / 10;
 }
 
 function kgToLbs(kg: number): number {
@@ -194,7 +361,7 @@ function kgToLbs(kg: number): number {
 }
 
 function lbsToKg(lbs: number): number {
-  return Math.round(lbs / 2.20462 * 10) / 10;
+  return Math.round((lbs / 2.20462) * 10) / 10;
 }
 
 export default function ProfileScreen() {
@@ -223,25 +390,9 @@ export default function ProfileScreen() {
 
   const isImperial = formData.unitSystem === "imperial";
 
-  const displayHeight = (): string => {
-    if (formData.heightCm == null) return "";
-    return isImperial
-      ? String(cmToInches(formData.heightCm))
-      : String(formData.heightCm);
-  };
-
   const displayWeight = (val: number | null): string => {
     if (val == null) return "";
     return isImperial ? String(kgToLbs(val)) : String(val);
-  };
-
-  const handleHeightChange = (text: string) => {
-    const num = parseFloat(text);
-    if (text === "" || isNaN(num)) {
-      updateField("heightCm", null);
-      return;
-    }
-    updateField("heightCm", isImperial ? inchesToCm(num) : num);
   };
 
   const handleWeightChange = (
@@ -256,15 +407,62 @@ export default function ProfileScreen() {
     updateField(key, isImperial ? lbsToKg(num) : num);
   };
 
-  const handleArrayFieldChange = (
-    key: keyof ProfileData,
-    text: string
-  ) => {
-    const arr = text
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0);
-    updateField(key, arr as any);
+  const handleLocationChange = (location: string) => {
+    updateField("workoutLocationDefault", location as any);
+    const preset = LOCATION_EQUIPMENT_PRESETS[location];
+    if (preset) {
+      updateField("equipmentAvailable", preset as any);
+    }
+  };
+
+  const handleEquipmentToggle = (item: string) => {
+    const arr = formData.equipmentAvailable;
+    if (arr.includes(item)) {
+      updateField("equipmentAvailable", arr.filter((v) => v !== item) as any);
+    } else {
+      updateField("equipmentAvailable", [...arr, item] as any);
+    }
+  };
+
+  const currentFeetInches = formData.heightCm != null
+    ? cmToFeetInches(formData.heightCm)
+    : { feet: 0, inches: 0 };
+
+  const handleFeetChange = (text: string) => {
+    const feet = parseInt(text) || 0;
+    const cm = feetInchesToCm(feet, currentFeetInches.inches);
+    updateField("heightCm", cm);
+  };
+
+  const handleInchesChange = (text: string) => {
+    const inches = parseInt(text) || 0;
+    const cm = feetInchesToCm(currentFeetInches.feet, inches);
+    updateField("heightCm", cm);
+  };
+
+  const handleCmChange = (text: string) => {
+    const num = parseFloat(text);
+    if (text === "" || isNaN(num)) {
+      updateField("heightCm", null);
+      return;
+    }
+    updateField("heightCm", num);
+  };
+
+  const foodsToAvoidPresetSelected = formData.foodsToAvoid.filter((f) =>
+    FOODS_TO_AVOID_PRESETS.includes(f)
+  );
+  const foodsToAvoidCustom = formData.foodsToAvoid.filter(
+    (f) => !FOODS_TO_AVOID_PRESETS.includes(f)
+  );
+
+  const handleFoodsToAvoidPresetToggle = (val: string | string[]) => {
+    const presetArr = Array.isArray(val) ? val : [val];
+    updateField("foodsToAvoid", [...presetArr, ...foodsToAvoidCustom] as any);
+  };
+
+  const handleFoodsToAvoidCustomChange = (customTags: string[]) => {
+    updateField("foodsToAvoid", [...foodsToAvoidPresetSelected, ...customTags] as any);
   };
 
   const handleSave = async () => {
@@ -360,23 +558,52 @@ export default function ProfileScreen() {
 
           <FormField label="Sex">
             <SegmentedControl
-              options={["male", "female"]}
-              labels={["Male", "Female"]}
+              options={["male", "female", "other"]}
+              labels={["Male", "Female", "Other"]}
               selected={formData.sex}
               onSelect={(v) => updateField("sex", v)}
             />
           </FormField>
 
-          <FormField label={isImperial ? "Height (inches)" : "Height (cm)"}>
-            <TextInput
-              style={styles.textInput}
-              value={displayHeight()}
-              onChangeText={handleHeightChange}
-              keyboardType="numeric"
-              placeholderTextColor={Colors.textTertiary}
-              placeholder={isImperial ? "e.g. 70.9" : "e.g. 180"}
-            />
-          </FormField>
+          {isImperial ? (
+            <FormField label="Height (ft / in)">
+              <View style={styles.heightRow}>
+                <View style={styles.heightInputWrap}>
+                  <TextInput
+                    style={[styles.textInput, styles.heightTextInput]}
+                    value={formData.heightCm != null ? String(currentFeetInches.feet) : ""}
+                    onChangeText={handleFeetChange}
+                    keyboardType="numeric"
+                    placeholderTextColor={Colors.textTertiary}
+                    placeholder="ft"
+                  />
+                  <Text style={styles.heightUnit}>ft</Text>
+                </View>
+                <View style={styles.heightInputWrap}>
+                  <TextInput
+                    style={[styles.textInput, styles.heightTextInput]}
+                    value={formData.heightCm != null ? String(currentFeetInches.inches) : ""}
+                    onChangeText={handleInchesChange}
+                    keyboardType="numeric"
+                    placeholderTextColor={Colors.textTertiary}
+                    placeholder="in"
+                  />
+                  <Text style={styles.heightUnit}>in</Text>
+                </View>
+              </View>
+            </FormField>
+          ) : (
+            <FormField label="Height (cm)">
+              <TextInput
+                style={styles.textInput}
+                value={formData.heightCm != null ? String(formData.heightCm) : ""}
+                onChangeText={handleCmChange}
+                keyboardType="numeric"
+                placeholderTextColor={Colors.textTertiary}
+                placeholder="e.g. 180"
+              />
+            </FormField>
+          )}
 
           <FormField
             label={isImperial ? "Current Weight (lbs)" : "Current Weight (kg)"}
@@ -407,36 +634,23 @@ export default function ProfileScreen() {
           <FormField label="Primary Goal">
             <PillSelector
               options={[
+                "weight_loss",
                 "muscle_gain",
-                "fat_loss",
+                "performance",
                 "maintenance",
-                "recomposition",
-                "general_health",
+                "energy",
+                "general_fitness",
               ]}
               labels={[
+                "Weight Loss",
                 "Muscle Gain",
-                "Fat Loss",
+                "Performance",
                 "Maintenance",
-                "Recomposition",
-                "General Health",
+                "Energy & Focus",
+                "General Fitness",
               ]}
               selected={formData.primaryGoal}
               onSelect={(v) => updateField("primaryGoal", v as string)}
-            />
-          </FormField>
-
-          <FormField label="Activity Level">
-            <PillSelector
-              options={[
-                "sedentary",
-                "light",
-                "moderate",
-                "active",
-                "very_active",
-              ]}
-              labels={["Sedentary", "Light", "Moderate", "Active", "Very Active"]}
-              selected={formData.activityLevel}
-              onSelect={(v) => updateField("activityLevel", v as string)}
             />
           </FormField>
 
@@ -447,7 +661,7 @@ export default function ProfileScreen() {
               onChangeText={(t) => updateField("bodyContext", t)}
               multiline
               placeholderTextColor={Colors.textTertiary}
-              placeholder="Describe your body goals or notes for AI..."
+              placeholder="Share body goals, body type, challenges, or anything important for your plan."
             />
           </FormField>
         </View>
@@ -481,49 +695,11 @@ export default function ProfileScreen() {
             />
           </FormField>
 
-          <FormField label="Injuries">
-            <TextInput
-              style={styles.textInput}
-              value={formData.injuries.join(", ")}
-              onChangeText={(t) => handleArrayFieldChange("injuries", t)}
-              placeholderTextColor={Colors.textTertiary}
-              placeholder="Comma-separated, e.g. knee, shoulder"
-            />
-          </FormField>
-
-          <FormField label="Mobility Limitations">
-            <TextInput
-              style={styles.textInput}
-              value={formData.mobilityLimitations.join(", ")}
-              onChangeText={(t) =>
-                handleArrayFieldChange("mobilityLimitations", t)
-              }
-              placeholderTextColor={Colors.textTertiary}
-              placeholder="Comma-separated"
-            />
-          </FormField>
-
-          <FormField label="Chronic Conditions">
-            <TextInput
-              style={styles.textInput}
-              value={formData.chronicConditions.join(", ")}
-              onChangeText={(t) =>
-                handleArrayFieldChange("chronicConditions", t)
-              }
-              placeholderTextColor={Colors.textTertiary}
-              placeholder="Comma-separated"
-            />
-          </FormField>
-
           <FormField label="Health Constraints">
-            <TextInput
-              style={styles.textInput}
-              value={formData.healthConstraints.join(", ")}
-              onChangeText={(t) =>
-                handleArrayFieldChange("healthConstraints", t)
-              }
-              placeholderTextColor={Colors.textTertiary}
-              placeholder="Comma-separated"
+            <TagInput
+              tags={formData.healthConstraints}
+              onChangeTags={(tags) => updateField("healthConstraints", tags as any)}
+              placeholder="e.g. torn ACL, limited shoulder ROM, asthma, diabetes"
             />
           </FormField>
         </View>
@@ -536,6 +712,15 @@ export default function ProfileScreen() {
               labels={["Beginner", "Intermediate", "Advanced"]}
               selected={formData.trainingExperience}
               onSelect={(v) => updateField("trainingExperience", v as string)}
+            />
+          </FormField>
+
+          <FormField label="Activity Level">
+            <PillSelector
+              options={["sedentary", "moderate", "active"]}
+              labels={["Sedentary", "Moderately Active", "Very Active"]}
+              selected={formData.activityLevel}
+              onSelect={(v) => updateField("activityLevel", v as string)}
             />
           </FormField>
 
@@ -579,44 +764,17 @@ export default function ProfileScreen() {
         <View style={styles.sectionCard}>
           <FormField label="Workout Location">
             <PillSelector
-              options={["gym", "home", "outdoor", "mixed"]}
-              labels={["Gym", "Home", "Outdoor", "Mixed"]}
+              options={["gym", "home", "outdoors"]}
+              labels={["Gym", "Home", "Outdoors"]}
               selected={formData.workoutLocationDefault}
-              onSelect={(v) =>
-                updateField("workoutLocationDefault", v as string)
-              }
+              onSelect={(v) => handleLocationChange(v as string)}
             />
           </FormField>
 
           <FormField label="Equipment Available">
-            <PillSelector
-              options={[
-                "dumbbells",
-                "barbell",
-                "cables",
-                "machines",
-                "kettlebells",
-                "bands",
-                "pull_up_bar",
-                "bench",
-                "squat_rack",
-              ]}
-              labels={[
-                "Dumbbells",
-                "Barbell",
-                "Cables",
-                "Machines",
-                "Kettlebells",
-                "Bands",
-                "Pull Up Bar",
-                "Bench",
-                "Squat Rack",
-              ]}
+            <EquipmentAccordion
               selected={formData.equipmentAvailable}
-              onSelect={(v) =>
-                updateField("equipmentAvailable", v as string[])
-              }
-              multi
+              onToggle={handleEquipmentToggle}
             />
           </FormField>
 
@@ -627,7 +785,7 @@ export default function ProfileScreen() {
               onChangeText={(t) => updateField("equipmentOtherNotes", t)}
               multiline
               placeholderTextColor={Colors.textTertiary}
-              placeholder="Any additional equipment notes..."
+              placeholder="Any other equipment or notes not listed above..."
             />
           </FormField>
         </View>
@@ -645,31 +803,35 @@ export default function ProfileScreen() {
 
           <FormField label="Spice Preference">
             <PillSelector
-              options={["none", "mild", "medium", "spicy", "extra_spicy"]}
-              labels={["None", "Mild", "Medium", "Spicy", "Extra Spicy"]}
+              options={["mild", "medium", "spicy"]}
+              labels={["Mild", "Medium", "Spicy"]}
               selected={formData.spicePreference}
               onSelect={(v) => updateField("spicePreference", v as string)}
             />
           </FormField>
 
+          <FormField label="Allergies & Intolerances">
+            <TagInput
+              tags={formData.allergiesIntolerances}
+              onChangeTags={(tags) => updateField("allergiesIntolerances", tags as any)}
+              placeholder="e.g. peanuts, shellfish, lactose, gluten"
+            />
+          </FormField>
+
           <FormField label="Foods to Avoid">
             <PillSelector
-              options={[
-                "Pork",
-                "Red Meat",
-                "Chicken",
-                "Shellfish",
-                "Dairy",
-                "Gluten",
-                "Soy",
-                "Eggs",
-                "Nuts",
-                "Fish",
-              ]}
-              selected={formData.foodsToAvoid}
-              onSelect={(v) => updateField("foodsToAvoid", v as string[])}
+              options={FOODS_TO_AVOID_PRESETS}
+              selected={foodsToAvoidPresetSelected}
+              onSelect={handleFoodsToAvoidPresetToggle}
               multi
             />
+            <View style={{ marginTop: 10 }}>
+              <TagInput
+                tags={foodsToAvoidCustom}
+                onChangeTags={handleFoodsToAvoidCustomChange}
+                placeholder="Add custom items..."
+              />
+            </View>
           </FormField>
 
           <FormField label="Foods to Avoid Notes">
@@ -679,18 +841,21 @@ export default function ProfileScreen() {
               onChangeText={(t) => updateField("foodsToAvoidNotes", t)}
               multiline
               placeholderTextColor={Colors.textTertiary}
-              placeholder="Additional notes about foods to avoid..."
+              placeholder="e.g. allergic to tree nuts but not peanuts"
             />
           </FormField>
 
-          <FormField label="Favorite Meals">
+          <FormField
+            label="Favorite Meals"
+            helperText="AI will include healthier versions of your favorites when possible."
+          >
             <TextInput
               style={[styles.textInput, styles.multilineInput]}
               value={formData.favoriteMealsText}
               onChangeText={(t) => updateField("favoriteMealsText", t)}
               multiline
               placeholderTextColor={Colors.textTertiary}
-              placeholder="Describe your favorite meals..."
+              placeholder="e.g. chicken stir-fry, overnight oats, grilled salmon with veggies, Greek yogurt bowls"
             />
           </FormField>
         </View>
@@ -811,6 +976,12 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginBottom: 8,
   },
+  helperText: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textTertiary,
+    marginTop: 6,
+  },
   textInput: {
     backgroundColor: Colors.surfaceElevated,
     borderRadius: 12,
@@ -877,6 +1048,78 @@ const styles = StyleSheet.create({
   pillTextActive: {
     color: Colors.text,
     fontFamily: "Inter_600SemiBold",
+  },
+  heightRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  heightInputWrap: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  heightTextInput: {
+    flex: 1,
+  },
+  heightUnit: {
+    fontSize: 14,
+    fontFamily: "Inter_500Medium",
+    color: Colors.textSecondary,
+  },
+  tagWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 8,
+  },
+  tag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: Colors.primary,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  tagText: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    color: Colors.text,
+  },
+  accordionSection: {
+    marginBottom: 8,
+  },
+  accordionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+  },
+  accordionHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  accordionHeaderText: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.text,
+  },
+  accordionBadge: {
+    backgroundColor: Colors.primary,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 6,
+  },
+  accordionBadgeText: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.text,
   },
   saveButton: {
     backgroundColor: Colors.primary,
