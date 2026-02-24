@@ -52,55 +52,64 @@ function formatDateRange(start: string | undefined, end: string | undefined): st
   }
 }
 
-function getWeekRange(): { weekStart: string; weekEnd: string } {
+function getTodayUTC(): string {
   const now = new Date();
-  const day = now.getUTCDay();
-  const diff = day === 0 ? 6 : day - 1;
-  const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - diff));
-  const sunday = new Date(monday);
-  sunday.setUTCDate(monday.getUTCDate() + 6);
-  const fmt = (d: Date) => d.toISOString().split("T")[0];
-  return { weekStart: fmt(monday), weekEnd: fmt(sunday) };
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString().split("T")[0];
 }
 
-function computePlanStatus(startDate?: string, endDate?: string, backendStatus?: string): "active" | "scheduled" | "unscheduled" | "generating" {
+function computePlanLifecycle(startDate?: string, backendStatus?: string): "active" | "scheduled" | "draft" | "completed" | "generating" | "failed" {
   if (backendStatus === "generating" || backendStatus === "pending") return "generating";
-  if (!startDate) return "unscheduled";
-  const { weekStart, weekEnd } = getWeekRange();
-  const planEnd = endDate || startDate;
-  if (startDate <= weekEnd && planEnd >= weekStart) return "active";
-  if (startDate > weekEnd) return "scheduled";
-  return "active";
+  if (backendStatus === "failed") return "failed";
+  if (backendStatus && backendStatus !== "ready") return "generating";
+  if (!startDate) return "draft";
+  const today = getTodayUTC();
+  const start = startDate;
+  const endDate = new Date(startDate + "T12:00:00Z");
+  endDate.setUTCDate(endDate.getUTCDate() + 6);
+  const end = endDate.toISOString().split("T")[0];
+  if (today < start) return "scheduled";
+  if (today >= start && today <= end) return "active";
+  return "completed";
 }
 
-function StatusBadge({ startDate, endDate, backendStatus, Colors }: { startDate?: string; endDate?: string; backendStatus?: string; Colors: ThemeColors }) {
-  const computed = computePlanStatus(startDate, endDate, backendStatus);
+function StatusBadge({ startDate, backendStatus, Colors }: { startDate?: string; backendStatus?: string; Colors: ThemeColors }) {
+  const lifecycle = computePlanLifecycle(startDate, backendStatus);
 
   let label: string;
   let bgColor: string;
   let textColor: string;
   let icon: keyof typeof Ionicons.glyphMap;
 
-  if (computed === "active") {
+  if (lifecycle === "active") {
     label = "Active";
     bgColor = "#30D15820";
     textColor = "#30D158";
     icon = "sparkles";
-  } else if (computed === "scheduled") {
+  } else if (lifecycle === "scheduled") {
     label = "Scheduled";
     bgColor = Colors.primary + "18";
     textColor = Colors.primary;
     icon = "calendar-outline";
-  } else if (computed === "generating") {
+  } else if (lifecycle === "completed") {
+    label = "Completed";
+    bgColor = "#8E8E9318";
+    textColor = "#8E8E93";
+    icon = "checkmark-circle-outline";
+  } else if (lifecycle === "generating") {
     label = "Generating";
     bgColor = Colors.primary + "18";
     textColor = Colors.primary;
     icon = "hourglass-outline";
+  } else if (lifecycle === "failed") {
+    label = "Failed";
+    bgColor = "#FF453A18";
+    textColor = "#FF453A";
+    icon = "alert-circle-outline";
   } else {
-    label = "Unscheduled";
+    label = "Draft";
     bgColor = Colors.surfaceElevated;
     textColor = Colors.textSecondary;
-    icon = "time-outline";
+    icon = "document-outline";
   }
 
   return (
@@ -178,7 +187,7 @@ function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const name = plan.name || plan.title || "Wellness Plan";
   const status = plan.status || plan.generationStatus || "active";
-  const startDate = plan.startDate || plan.start_date;
+  const startDate = plan.startDate || plan.start_date || plan.planStartDate;
   const endDate = plan.endDate || plan.end_date;
   const goal = plan.goalType || plan.primaryGoal || "";
   const linkedMeal = mealPlans.find((mp: any) => mp.id === plan.mealPlanId);
@@ -197,7 +206,7 @@ function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: {
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
             <Text style={styles.wellnessCardTitle} numberOfLines={1}>{name}</Text>
             {goal ? <GoalBadge goal={goal} Colors={Colors} /> : null}
-            <StatusBadge startDate={startDate} endDate={endDate} backendStatus={status} Colors={Colors} />
+            <StatusBadge startDate={startDate} backendStatus={status} Colors={Colors} />
           </View>
           {startDate && (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
@@ -282,7 +291,7 @@ function MealPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () => v
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const name = plan.name || plan.title || "Meal Plan";
   const status = plan.status || plan.generationStatus || "active";
-  const startDate = plan.startDate || plan.start_date;
+  const startDate = plan.startDate || plan.start_date || plan.planStartDate;
   const endDate = plan.endDate || plan.end_date;
   const id = plan._id || plan.id;
 
@@ -300,7 +309,7 @@ function MealPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () => v
       <View style={{ flex: 1, gap: 4 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
           <Text style={styles.simplePlanName} numberOfLines={2}>{name}</Text>
-          <StatusBadge startDate={startDate} endDate={endDate} backendStatus={status} Colors={Colors} />
+          <StatusBadge startDate={startDate} backendStatus={status} Colors={Colors} />
         </View>
         {startDate && (
           <Text style={styles.simplePlanDate}>{formatDateRange(startDate, endDate)}</Text>
@@ -326,7 +335,7 @@ function WorkoutPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () =
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const name = plan.name || plan.title || "Workout Plan";
   const status = plan.status || plan.generationStatus || "active";
-  const startDate = plan.startDate || plan.start_date;
+  const startDate = plan.startDate || plan.start_date || plan.planStartDate;
   const endDate = plan.endDate || plan.end_date;
   const planType = plan.planType || plan.type || "";
   const id = plan._id || plan.id;
@@ -345,7 +354,7 @@ function WorkoutPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () =
       <View style={{ flex: 1, gap: 4 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
           <Text style={styles.simplePlanName} numberOfLines={2}>{name}</Text>
-          <StatusBadge startDate={startDate} endDate={endDate} backendStatus={status} Colors={Colors} />
+          <StatusBadge startDate={startDate} backendStatus={status} Colors={Colors} />
         </View>
         {startDate && (
           <Text style={styles.simplePlanDate}>
