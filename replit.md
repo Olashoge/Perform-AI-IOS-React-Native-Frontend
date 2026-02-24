@@ -174,3 +174,6 @@ Toggle mutations use optimistic updates on day-data, then invalidate:
 - 2026-02-24: Rebuilt Exercise Preferences screen (app/settings/exercise-preferences.tsx) with 3-tab layout (Liked/Disliked/Avoided), fetches from GET /api/preferences/exercise, shows exercise cards with delete
 - 2026-02-24: Added API hooks: useMealPreferences, useExercisePreferences, useDeleteMealPreference, useDeleteIngredientPreference, useDeleteExercisePreference
 - 2026-02-24: Added proxy routes for GET /api/preferences, GET /api/preferences/exercise, DELETE /api/preferences/meal/:id, DELETE /api/preferences/ingredient/:id, DELETE /api/preferences/exercise/:id
+- 2026-02-24: Rebuilt Plans Hub (app/plans.tsx) with 3 redesigned tabs matching web app: Wellness Plans (plan cards with linked Meal/Workout sub-cards, goal badges, Weekly Check-ins), Nutrition (Today's Budget card, Active Plans with meal cards), Training (Today's Budget card, Active Plans with workout cards)
+- 2026-02-24: Added budget API hook (useBudget) and proxy route GET /api/budget for Today's Budget card (Meal Swaps, Day Regens, Plan Regens)
+- 2026-02-24: Active Plan banner shows at top of Plans Hub when an active wellness plan exists
