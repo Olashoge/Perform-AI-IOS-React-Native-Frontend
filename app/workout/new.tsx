@@ -22,6 +22,7 @@ import {
   useCreateWorkoutPlan,
   ProfileData,
 } from "@/lib/api-hooks";
+import CalendarPickerField from "@/components/CalendarPickerField";
 
 const WEB_TOP_INSET = 67;
 
@@ -114,28 +115,6 @@ function wouldOverlap(startDate: string, occupiedDates: string[]): boolean {
   return false;
 }
 
-function getDateOptions(): { value: string; label: string }[] {
-  const options: { value: string; label: string }[] = [];
-  const today = new Date();
-  for (let i = 0; i < 28; i++) {
-    const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + i));
-    if (d.getUTCDay() === 1) {
-      const dateStr = d.toISOString().split("T")[0];
-      const label = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
-      options.push({ value: dateStr, label: `Mon, ${label.split(", ").slice(1).join(", ")}` });
-    }
-  }
-  if (options.length === 0) {
-    const d = new Date();
-    const diff = d.getUTCDay() === 0 ? 1 : 8 - d.getUTCDay();
-    const nextMon = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + diff));
-    options.push({
-      value: nextMon.toISOString().split("T")[0],
-      label: nextMon.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" }),
-    });
-  }
-  return options;
-}
 
 function snapToNearest(val: number): number {
   const snaps = [20, 30, 45, 60, 90];
@@ -271,7 +250,6 @@ export default function NewWorkoutPlanScreen() {
     );
   }
 
-  const dateOptions = getDateOptions();
   const selectedDateConflict = startDate && occupiedDates ? wouldOverlap(startDate, occupiedDates) : false;
 
   const handleFocusToggle = (area: string) => {
@@ -504,46 +482,14 @@ export default function NewWorkoutPlanScreen() {
         )}
 
         <Text style={styles.sectionTitle}>Start Date</Text>
-        <Text style={styles.sectionHint}>Optional — leave blank to create without scheduling</Text>
-        <View style={styles.pillGrid}>
-          <Pressable
-            style={[styles.pill, !startDate && styles.pillActive]}
-            onPress={() => { Haptics.selectionAsync(); setStartDate(""); }}
-          >
-            <Text style={[styles.pillText, !startDate && styles.pillTextActive]}>No date</Text>
-          </Pressable>
-          {dateOptions.map((opt) => {
-            const isConflict = occupiedDates ? wouldOverlap(opt.value, occupiedDates) : false;
-            return (
-              <Pressable
-                key={opt.value}
-                style={[
-                  styles.pill,
-                  startDate === opt.value && styles.pillActive,
-                  isConflict && styles.pillConflict,
-                ]}
-                onPress={() => {
-                  if (isConflict) {
-                    Alert.alert("Date Unavailable", "This week overlaps with an existing scheduled workout plan.");
-                    return;
-                  }
-                  Haptics.selectionAsync();
-                  setStartDate(opt.value);
-                }}
-              >
-                <Text
-                  style={[
-                    styles.pillText,
-                    startDate === opt.value && styles.pillTextActive,
-                    isConflict && styles.pillTextConflict,
-                  ]}
-                >
-                  {opt.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <Text style={styles.sectionHint}>Optional — only Mondays can be selected</Text>
+        <CalendarPickerField
+          value={startDate}
+          onChange={setStartDate}
+          Colors={Colors}
+          mondaysOnly
+          conflictDates={occupiedDates}
+        />
       </ScrollView>
 
       <View style={[styles.bottomBar, { paddingBottom: bottomInset + 12 }]}>
