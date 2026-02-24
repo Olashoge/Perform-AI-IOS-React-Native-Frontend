@@ -398,10 +398,10 @@ function ActivePlansSection({ Colors }: { Colors: ThemeColors }) {
 function QuickActionsGrid({ Colors }: { Colors: ThemeColors }) {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const actions = [
-    { icon: "calendar" as const, label: "View Week", sub: "See your schedule", color: Colors.primary, onPress: () => router.push("/(tabs)/calendar") },
+    { icon: "heart-outline" as const, label: "Wellness", sub: "Your health journey", color: "#FF6B6B", onPress: () => router.push({ pathname: "/plans", params: { tab: "wellness" } }) },
     { icon: "restaurant" as const, label: "Meal Plans", sub: "Adjust nutrition", color: Colors.warning, onPress: () => router.push({ pathname: "/plans", params: { tab: "meals" } }) },
     { icon: "barbell" as const, label: "Workouts", sub: "View training", color: Colors.scoreGreen, onPress: () => router.push({ pathname: "/plans", params: { tab: "workouts" } }) },
-    { icon: "heart-outline" as const, label: "Wellness", sub: "Your health journey", color: "#FF6B6B", onPress: () => router.push({ pathname: "/plans", params: { tab: "wellness" } }) },
+    { icon: "calendar" as const, label: "View Week", sub: "See your schedule", color: Colors.primary, onPress: () => router.push("/(tabs)/calendar") },
   ];
 
   return (
