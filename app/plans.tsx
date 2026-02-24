@@ -274,15 +274,6 @@ function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: {
         </Pressable>
       </View>
 
-      <Pressable
-        style={styles.checkInsButton}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          router.push(`/plan/wellness/${id}` as any);
-        }}
-      >
-        <Text style={styles.checkInsText}>Weekly Check-ins</Text>
-      </Pressable>
     </View>
   );
 }
@@ -842,19 +833,6 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     fontSize: 11,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
-  },
-  checkInsButton: {
-    alignSelf: "flex-start",
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-  },
-  checkInsText: {
-    fontSize: 11,
-    fontFamily: "Inter_500Medium",
-    color: Colors.text,
   },
   simplePlanCard: {
     backgroundColor: Colors.surface,
