@@ -509,7 +509,7 @@ export default function DashboardScreen() {
           style={({ pressed }) => [styles.activePlanBanner, pressed && { opacity: 0.8 }]}
           onPress={() => router.push({ pathname: "/plan/wellness/[id]", params: { id: activeWellness.id } })}
         >
-          <Ionicons name="settings-outline" size={16} color={Colors.textSecondary} />
+          <Ionicons name="nutrition-outline" size={16} color={Colors.textSecondary} />
           <Text style={styles.activePlanLabel}>ACTIVE PLAN</Text>
           <Text style={styles.activePlanName} numberOfLines={1}>{activeWellness.title || activeWellness.name || "General Fitness"}</Text>
           <View style={{ flex: 1 }} />
