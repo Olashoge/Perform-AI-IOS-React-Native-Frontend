@@ -6,6 +6,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Pressable,
+  TouchableOpacity,
   Platform,
   RefreshControl,
   Alert,
@@ -335,37 +336,39 @@ function LikeDislikeButtons({ exerciseName }: { exerciseName: string }) {
 
   return (
     <>
-      <View style={{ flexDirection: "row", gap: 2 }}>
-        <Pressable
-          onPress={(e) => { e.stopPropagation(); handleLike(); }}
+      <View style={{ flexDirection: "row" }}>
+        <TouchableOpacity
+          onPress={handleLike}
           disabled={loading}
-          style={({ pressed }) => ({
-            opacity: loading ? 0.4 : pressed ? 0.6 : 1,
-            paddingHorizontal: 8,
-            paddingVertical: 8,
-          })}
+          activeOpacity={0.5}
+          style={{
+            opacity: loading ? 0.4 : 1,
+            paddingHorizontal: 10,
+            paddingVertical: 10,
+          }}
         >
           <Ionicons
             name={state === "liked" ? "thumbs-up" : "thumbs-up-outline"}
             size={18}
             color={state === "liked" ? "#30D158" : Colors.textTertiary}
           />
-        </Pressable>
-        <Pressable
-          onPress={(e) => { e.stopPropagation(); handleDislike(); }}
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleDislike}
           disabled={loading}
-          style={({ pressed }) => ({
-            opacity: loading ? 0.4 : pressed ? 0.6 : 1,
-            paddingHorizontal: 8,
-            paddingVertical: 8,
-          })}
+          activeOpacity={0.5}
+          style={{
+            opacity: loading ? 0.4 : 1,
+            paddingHorizontal: 10,
+            paddingVertical: 10,
+          }}
         >
           <Ionicons
             name={state === "disliked" ? "thumbs-down" : "thumbs-down-outline"}
             size={18}
             color={state === "disliked" ? WORKOUT_ACCENT : Colors.textTertiary}
           />
-        </Pressable>
+        </TouchableOpacity>
       </View>
       <ExerciseAvoidModal
         visible={showAvoidModal}

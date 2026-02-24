@@ -6,6 +6,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Pressable,
+  TouchableOpacity,
   Platform,
   RefreshControl,
   Alert,
@@ -146,49 +147,62 @@ function MealActionButtons({ mealName, cuisineTag, ingredients }: { mealName: st
     }
   };
 
+  const handleLikePress = useCallback(() => {
+    handlePress("like");
+  }, [state, feedbackMutation.isPending]);
+
+  const handleDislikePress = useCallback(() => {
+    handlePress("dislike");
+  }, [state, feedbackMutation.isPending]);
+
+  const handleRegenPress = useCallback(() => {
+  }, []);
+
   return (
     <>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
-        <Pressable
-          onPress={(e) => { e.stopPropagation(); handlePress("like"); }}
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <TouchableOpacity
+          onPress={handleLikePress}
           disabled={feedbackMutation.isPending}
-          style={({ pressed }) => ({
-            opacity: feedbackMutation.isPending ? 0.4 : pressed ? 0.6 : 1,
-            paddingHorizontal: 8,
-            paddingVertical: 8,
-          })}
+          activeOpacity={0.5}
+          style={{
+            opacity: feedbackMutation.isPending ? 0.4 : 1,
+            paddingHorizontal: 10,
+            paddingVertical: 10,
+          }}
         >
           <Ionicons
             name={state === "liked" ? "thumbs-up" : "thumbs-up-outline"}
             size={18}
             color={state === "liked" ? "#30D158" : Colors.textTertiary}
           />
-        </Pressable>
-        <Pressable
-          onPress={(e) => { e.stopPropagation(); handlePress("dislike"); }}
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleDislikePress}
           disabled={feedbackMutation.isPending}
-          style={({ pressed }) => ({
-            opacity: feedbackMutation.isPending ? 0.4 : pressed ? 0.6 : 1,
-            paddingHorizontal: 8,
-            paddingVertical: 8,
-          })}
+          activeOpacity={0.5}
+          style={{
+            opacity: feedbackMutation.isPending ? 0.4 : 1,
+            paddingHorizontal: 10,
+            paddingVertical: 10,
+          }}
         >
           <Ionicons
             name={state === "disliked" ? "thumbs-down" : "thumbs-down-outline"}
             size={18}
             color={state === "disliked" ? "#FF6B6B" : Colors.textTertiary}
           />
-        </Pressable>
-        <Pressable
-          onPress={(e) => { e.stopPropagation(); }}
-          style={({ pressed }) => ({
-            opacity: pressed ? 0.6 : 1,
-            paddingHorizontal: 8,
-            paddingVertical: 8,
-          })}
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleRegenPress}
+          activeOpacity={0.5}
+          style={{
+            paddingHorizontal: 10,
+            paddingVertical: 10,
+          }}
         >
           <Ionicons name="refresh-outline" size={18} color={Colors.textTertiary} />
-        </Pressable>
+        </TouchableOpacity>
       </View>
       <IngredientProposalModal
         visible={proposalModal.visible}
@@ -311,17 +325,17 @@ function MealCard({ mealType, meal, completed }: { mealType: string; meal: MealD
         </View>
         <View style={styles.mealTopRight}>
           <MealActionButtons mealName={meal.name} cuisineTag={meal.cuisineTag} ingredients={meal.ingredients} />
-          <Pressable
+          <TouchableOpacity
             onPress={() => setExpanded(!expanded)}
-            hitSlop={8}
-            style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1, padding: 4 })}
+            activeOpacity={0.5}
+            style={{ paddingHorizontal: 6, paddingVertical: 8 }}
           >
             <Ionicons
               name={expanded ? "chevron-up" : "chevron-down"}
               size={20}
               color={Colors.textSecondary}
             />
-          </Pressable>
+          </TouchableOpacity>
         </View>
       </View>
 
