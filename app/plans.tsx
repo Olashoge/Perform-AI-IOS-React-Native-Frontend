@@ -387,6 +387,8 @@ function WellnessPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
         />
       }
     >
+      <Text style={styles.pageSubtitle}>Holistic plans for your health journey</Text>
+
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
         <Pressable style={{ padding: 8 }} onPress={() => {}}>
           <Ionicons name="swap-vertical" size={18} color={Colors.textSecondary} />
