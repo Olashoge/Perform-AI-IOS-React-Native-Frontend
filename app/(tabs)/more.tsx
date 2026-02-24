@@ -131,7 +131,7 @@ export default function MoreScreen() {
         {
           icon: "nutrition-outline",
           iconColor: "#FF9F0A",
-          label: "Food Preferences",
+          label: "Meal Preferences",
           onPress: () => router.push("/settings/food-preferences"),
         },
         {
