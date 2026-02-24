@@ -848,6 +848,20 @@ export function useBudget() {
   });
 }
 
+function normalizePlanRecord(p: any): any {
+  const pj = p.planJson ? (typeof p.planJson === "string" ? JSON.parse(p.planJson) : p.planJson) : null;
+  const name = p.name || p.title || pj?.title || pj?.planName || "Plan";
+  const startDate = p.startDate || p.planStartDate || pj?.startDate || null;
+  const numDays = pj?.days ? (Array.isArray(pj.days) ? pj.days.length : 7) : 7;
+  let endDate = p.endDate || null;
+  if (!endDate && startDate && numDays > 0) {
+    const sd = new Date(startDate + "T12:00:00Z");
+    sd.setUTCDate(sd.getUTCDate() + numDays - 1);
+    endDate = sd.toISOString().slice(0, 10);
+  }
+  return { ...p, name, startDate, endDate };
+}
+
 export function useWellnessPlans() {
   return useQuery({
     queryKey: ["plans:wellness"],
@@ -855,7 +869,10 @@ export function useWellnessPlans() {
       const response = await apiClient.get("/api/goal-plans");
       logApiCall("GET", "/api/goal-plans", response.status);
       const plans = Array.isArray(response.data) ? response.data : response.data?.goalPlans || response.data?.plans || [];
-      return plans.filter((p: any) => !p.deleted && !p.isDeleted);
+      return plans.filter((p: any) => !p.deleted && !p.isDeleted && !p.deletedAt).map((p: any) => ({
+        ...p,
+        name: p.title || p.name || "Wellness Plan",
+      }));
     },
     staleTime: 30000,
   });
@@ -868,7 +885,7 @@ export function useMealPlans() {
       const response = await apiClient.get("/api/plans");
       logApiCall("GET", "/api/plans", response.status);
       const plans = Array.isArray(response.data) ? response.data : response.data?.plans || [];
-      return plans.filter((p: any) => !p.deleted && !p.isDeleted);
+      return plans.filter((p: any) => !p.deleted && !p.isDeleted && !p.deletedAt).map(normalizePlanRecord);
     },
     staleTime: 30000,
   });
@@ -881,7 +898,7 @@ export function useWorkoutPlans() {
       const response = await apiClient.get("/api/workouts");
       logApiCall("GET", "/api/workouts", response.status);
       const plans = Array.isArray(response.data) ? response.data : response.data?.workouts || response.data?.plans || [];
-      return plans.filter((p: any) => !p.deleted && !p.isDeleted);
+      return plans.filter((p: any) => !p.deleted && !p.isDeleted && !p.deletedAt).map(normalizePlanRecord);
     },
     staleTime: 30000,
   });

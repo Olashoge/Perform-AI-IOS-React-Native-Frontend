@@ -127,19 +127,19 @@ function BudgetCard({ Colors }: { Colors: ThemeColors }) {
   );
 }
 
-function WellnessPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () => void; Colors: ThemeColors }) {
+function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: { plan: any; onDelete: () => void; Colors: ThemeColors; mealPlans: any[]; workoutPlans: any[] }) {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const name = plan.name || plan.title || "Wellness Plan";
   const status = plan.status || plan.generationStatus || "active";
   const startDate = plan.startDate || plan.start_date;
   const endDate = plan.endDate || plan.end_date;
-  const goal = plan.primaryGoal || "";
+  const goal = plan.goalType || plan.primaryGoal || "";
   const planType = plan.planType || "both";
-  const mealPlanName = plan.mealPlan?.name || plan.mealPlanName || "";
-  const workoutPlanName = plan.workoutPlan?.name || plan.workoutPlanName || "";
+  const linkedMeal = mealPlans.find((mp: any) => mp.id === plan.mealPlanId);
+  const linkedWorkout = workoutPlans.find((wp: any) => wp.id === plan.workoutPlanId);
+  const mealPlanName = linkedMeal?.name || plan.mealPlan?.name || plan.mealPlanName || "";
+  const workoutPlanName = linkedWorkout?.name || plan.workoutPlan?.name || plan.workoutPlanName || "";
   const id = plan._id || plan.id;
-  const shortDate = formatShortDate(startDate);
-  const headerLabel = shortDate ? `${name.split(" ").slice(0, 3).join(" ")} · ${shortDate}` : name;
 
   return (
     <View style={styles.wellnessCard}>
@@ -148,7 +148,7 @@ function WellnessPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () 
           <Ionicons name="sync-circle" size={28} color={Colors.primary} />
         </View>
         <View style={{ flex: 1, gap: 4 }}>
-          <Text style={styles.wellnessCardTitle} numberOfLines={1}>{headerLabel}</Text>
+          <Text style={styles.wellnessCardTitle} numberOfLines={2}>{name}</Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
             {goal ? <GoalBadge goal={goal} Colors={Colors} /> : null}
             <StatusBadge status={status} Colors={Colors} />
@@ -488,6 +488,8 @@ export default function PlansHubScreen() {
                   plan={plan}
                   onDelete={() => confirmDelete(plan._id || plan.id, "wellness")}
                   Colors={Colors}
+                  mealPlans={mealQuery.data || []}
+                  workoutPlans={workoutQuery.data || []}
                 />
               ))}
 
