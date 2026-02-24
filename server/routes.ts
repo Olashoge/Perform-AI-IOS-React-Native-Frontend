@@ -358,6 +358,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/daily-workout/:date", proxyToExternal);
   app.get("/api/daily-coverage", proxyToExternal);
 
+  app.get("/api/plan/:id/grocery", proxyToExternal);
+  app.post("/api/plan/:id/grocery/owned", proxyToExternal);
+  app.post("/api/plan/:id/grocery/regenerate", proxyToExternal);
+
   app.get("/api/meta", (_req, res) => {
     const commitHash = getGitCommitHash();
     const dbHash = getDbIdentifierHash();

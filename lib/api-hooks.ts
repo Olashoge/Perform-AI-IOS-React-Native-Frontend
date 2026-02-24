@@ -1226,3 +1226,119 @@ function generateMockDayData(date: string): DayData {
 
   return { date, meals, workouts, score, hasDailyMeal: false, hasDailyWorkout: false };
 }
+
+export interface GrocerySectionItem {
+  item: string;
+  quantity: string;
+}
+
+export interface GrocerySection {
+  name: string;
+  items: GrocerySectionItem[];
+}
+
+export interface GroceryPricingItem {
+  itemKey: string;
+  displayName: string;
+  unitHint: string;
+  confidence: string;
+  estimatedRange: { min: number; max: number };
+}
+
+export interface GroceryTotals {
+  totalMin: number;
+  totalMax: number;
+  ownedAdjustedMin: number;
+  ownedAdjustedMax: number;
+}
+
+export interface GroceryListData {
+  groceryList: { sections: GrocerySection[] };
+  pricing?: { items: GroceryPricingItem[]; currency: string; assumptions?: any } | null;
+  ownedItems: Record<string, boolean>;
+  totals?: GroceryTotals | null;
+}
+
+export function useGroceryList(mealPlanId: string | null) {
+  return useQuery<GroceryListData>({
+    queryKey: ["/api/plan", mealPlanId, "grocery"],
+    queryFn: async () => {
+      const response = await apiClient.get(`/api/plan/${mealPlanId}/grocery`);
+      logApiCall("GET", `/api/plan/${mealPlanId}/grocery`, response.status);
+      return response.data;
+    },
+    enabled: !!mealPlanId,
+    refetchInterval: (query) => {
+      // Poll every 4 seconds if pricing is null
+      return !query.state.data?.pricing ? 4000 : false;
+    },
+  });
+}
+
+export function useToggleGroceryOwned(mealPlanId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ itemKey, isOwned }: { itemKey: string; isOwned: boolean }) => {
+      const response = await apiClient.post(`/api/plan/${mealPlanId}/grocery/owned`, {
+        itemKey,
+        isOwned,
+      });
+      logApiCall("POST", `/api/plan/${mealPlanId}/grocery/owned`, response.status);
+      return response.data;
+    },
+    onMutate: async ({ itemKey, isOwned }) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/plan", mealPlanId, "grocery"] });
+      const previousData = queryClient.getQueryData<GroceryListData>(["/api/plan", mealPlanId, "grocery"]);
+
+      if (previousData) {
+        const newOwned = { ...previousData.ownedItems };
+        if (isOwned) {
+          newOwned[itemKey] = true;
+        } else {
+          delete newOwned[itemKey];
+        }
+
+        let newTotals = previousData.totals;
+        if (previousData.totals && previousData.pricing?.items) {
+          let adjMin = 0, adjMax = 0;
+          for (const p of previousData.pricing.items) {
+            if (!newOwned[p.itemKey]) {
+              adjMin += p.estimatedRange.min;
+              adjMax += p.estimatedRange.max;
+            }
+          }
+          newTotals = { ...previousData.totals, ownedAdjustedMin: adjMin, ownedAdjustedMax: adjMax };
+        }
+
+        queryClient.setQueryData<GroceryListData>(
+          ["/api/plan", mealPlanId, "grocery"],
+          { ...previousData, ownedItems: newOwned, totals: newTotals }
+        );
+      }
+
+      return { previousData };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/plan", mealPlanId, "grocery"] });
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(["/api/plan", mealPlanId, "grocery"], context.previousData);
+      }
+    },
+  });
+}
+
+export function useRegenerateGroceryList(mealPlanId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const response = await apiClient.post(`/api/plan/${mealPlanId}/grocery/regenerate`);
+      logApiCall("POST", `/api/plan/${mealPlanId}/grocery/regenerate`, response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/plan", mealPlanId, "grocery"] });
+    },
+  });
+}

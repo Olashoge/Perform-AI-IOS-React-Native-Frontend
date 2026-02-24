@@ -17,7 +17,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
-import { useMealPlan, useMealFeedback, useResolveIngredientProposal, computeMealFingerprint, useMealPreferences } from "@/lib/api-hooks";
+import { useMealPlan, useMealFeedback, useResolveIngredientProposal, computeMealFingerprint, useMealPreferences, useGroceryList, useToggleGroceryOwned, useRegenerateGroceryList, GrocerySection, GroceryPricingItem } from "@/lib/api-hooks";
 
 function IngredientProposalModal({
   visible,
@@ -280,16 +280,6 @@ interface DayPlanData {
   meals: Record<string, MealData>;
 }
 
-interface GroceryItem {
-  item: string;
-  quantity: string;
-  estimatedPrice?: number | string;
-}
-
-interface GroceryCategory {
-  category: string;
-  items: GroceryItem[];
-}
 
 function MealCard({ mealType, meal, completed }: { mealType: string; meal: MealData; completed?: boolean }) {
   const [expanded, setExpanded] = useState(false);
@@ -483,14 +473,17 @@ export default function MealPlanDetailScreen() {
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: plan, isLoading, error, refetch } = useMealPlan(id ?? null);
+  const { data: groceryData, isLoading: groceryLoading, refetch: refetchGrocery } = useGroceryList(id ?? null);
+  const toggleOwnedMutation = useToggleGroceryOwned(id ?? null);
+  const regenerateMutation = useRegenerateGroceryList(id ?? null);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"meals" | "grocery">("meals");
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refetch();
+    await Promise.all([refetch(), refetchGrocery()]);
     setRefreshing(false);
-  }, [refetch]);
+  }, [refetch, refetchGrocery]);
 
   if (isLoading) {
     return (
@@ -542,20 +535,35 @@ export default function MealPlanDetailScreen() {
   const days: DayPlanData[] = planJson.days ?? [];
   const startDate = plan.startDate || planJson.startDate;
 
-  let groceryList: GroceryItem[] = [];
-  let groceryCategories: GroceryCategory[] = [];
-  if (Array.isArray(planJson.groceryList)) {
-    if (planJson.groceryList.length > 0 && planJson.groceryList[0].category) {
-      groceryCategories = planJson.groceryList as GroceryCategory[];
-      groceryCategories.forEach((cat: GroceryCategory) => {
-        if (Array.isArray(cat.items)) {
-          groceryList.push(...cat.items);
-        }
-      });
-    } else {
-      groceryList = planJson.groceryList as GroceryItem[];
+  const pricingMap = useMemo(() => {
+    const map = new Map<string, { min: number; max: number }>();
+    if (groceryData?.pricing?.items) {
+      for (const p of groceryData.pricing.items) {
+        map.set(p.itemKey, p.estimatedRange);
+      }
     }
-  }
+    return map;
+  }, [groceryData?.pricing]);
+
+  const generateItemKey = useCallback((itemName: string) => {
+    return itemName.toLowerCase().replace(/[^a-z0-9]/g, "");
+  }, []);
+
+  const handleToggleOwned = useCallback((itemName: string) => {
+    const key = generateItemKey(itemName);
+    const currentlyOwned = !!groceryData?.ownedItems?.[key];
+    toggleOwnedMutation.mutate({ itemKey: key, isOwned: !currentlyOwned });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, [groceryData?.ownedItems, toggleOwnedMutation, generateItemKey]);
+
+  const handleRegenerateGrocery = useCallback(async () => {
+    try {
+      await regenerateMutation.mutateAsync();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      Alert.alert("Error", "Could not rebuild grocery list");
+    }
+  }, [regenerateMutation]);
 
   const macroTargets = nutritionNotes?.dailyMacroTargetsRange;
   const dailyTargetStr = macroTargets ? [
@@ -662,55 +670,98 @@ export default function MealPlanDetailScreen() {
           </>
         ) : (
           <View style={styles.grocerySection}>
-            {groceryCategories.length > 0 ? (
-              groceryCategories.map((cat, catIdx) => (
-                <View key={catIdx} style={styles.groceryCategoryBlock}>
-                  <Text style={styles.groceryCategoryTitle}>{cat.category}</Text>
+            {groceryData?.totals && (
+              <View style={styles.totalsCard}>
+                <View style={styles.totalsRow}>
+                  <Text style={styles.totalsLabel}>Estimated Total</Text>
+                  <Text style={styles.totalsValue}>
+                    ${groceryData.totals.totalMin.toFixed(2)} – ${groceryData.totals.totalMax.toFixed(2)}
+                  </Text>
+                </View>
+                <View style={[styles.totalsRow, { marginTop: 6 }]}>
+                  <Text style={styles.totalsLabel}>After Owned Items</Text>
+                  <Text style={[styles.totalsValue, { color: Colors.primary }]}>
+                    ${groceryData.totals.ownedAdjustedMin.toFixed(2)} – ${groceryData.totals.ownedAdjustedMax.toFixed(2)}
+                  </Text>
+                </View>
+                <Text style={styles.totalsDisclaimer}>
+                  Estimates vary by brand, store, and region
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.grocerySectionHeader}>
+              <Text style={styles.grocerySectionTitle}>Items</Text>
+              <Pressable
+                style={({ pressed }) => [styles.rebuildBtn, pressed && { opacity: 0.7 }]}
+                onPress={handleRegenerateGrocery}
+                disabled={regenerateMutation.isPending}
+              >
+                {regenerateMutation.isPending ? (
+                  <ActivityIndicator size={14} color={Colors.primary} />
+                ) : (
+                  <Ionicons name="refresh-outline" size={14} color={Colors.primary} />
+                )}
+                <Text style={styles.rebuildBtnText}>
+                  {regenerateMutation.isPending ? "Rebuilding..." : "Rebuild List"}
+                </Text>
+              </Pressable>
+            </View>
+
+            {groceryLoading ? (
+              <View style={styles.emptyGrocery}>
+                <ActivityIndicator size="large" color={Colors.primary} />
+                <Text style={styles.emptyGroceryText}>Loading grocery list...</Text>
+              </View>
+            ) : groceryData?.groceryList?.sections && groceryData.groceryList.sections.length > 0 ? (
+              groceryData.groceryList.sections.map((section, sIdx) => (
+                <View key={sIdx} style={styles.groceryCategoryBlock}>
+                  <Text style={styles.groceryCategoryTitle}>{section.name}</Text>
                   <View style={styles.groceryCard}>
-                    {cat.items.map((item, i) => (
-                      <View
-                        key={i}
-                        style={[
-                          styles.groceryRow,
-                          i < cat.items.length - 1 && styles.groceryRowBorder,
-                        ]}
-                      >
-                        <View style={styles.groceryRowLeft}>
-                          <Text style={styles.groceryItem}>{item.item}</Text>
-                          <Text style={styles.groceryQuantity}>{item.quantity}</Text>
-                        </View>
-                        {item.estimatedPrice != null ? (
-                          <Text style={styles.groceryPrice}>
-                            ${typeof item.estimatedPrice === "number" ? item.estimatedPrice.toFixed(2) : item.estimatedPrice}
-                          </Text>
-                        ) : null}
-                      </View>
-                    ))}
+                    {section.items.map((item, i) => {
+                      const key = generateItemKey(item.item);
+                      const isOwned = !!groceryData.ownedItems?.[key];
+                      const price = pricingMap.get(key);
+                      return (
+                        <Pressable
+                          key={i}
+                          onPress={() => handleToggleOwned(item.item)}
+                          style={[
+                            styles.groceryRow,
+                            i < section.items.length - 1 && styles.groceryRowBorder,
+                          ]}
+                        >
+                          <View style={[
+                            styles.groceryCheckbox,
+                            isOwned && { backgroundColor: Colors.primary, borderColor: Colors.primary },
+                          ]}>
+                            {isOwned && <Ionicons name="checkmark" size={14} color="#fff" />}
+                          </View>
+                          <View style={styles.groceryRowLeft}>
+                            <Text style={[
+                              styles.groceryItem,
+                              isOwned && styles.groceryItemOwned,
+                            ]}>
+                              {item.item}
+                            </Text>
+                            <Text style={[
+                              styles.groceryQuantity,
+                              isOwned && styles.groceryItemOwned,
+                            ]}>
+                              {item.quantity}
+                            </Text>
+                          </View>
+                          {price ? (
+                            <Text style={styles.groceryPrice}>
+                              ${price.min.toFixed(2)}–${price.max.toFixed(2)}
+                            </Text>
+                          ) : null}
+                        </Pressable>
+                      );
+                    })}
                   </View>
                 </View>
               ))
-            ) : groceryList.length > 0 ? (
-              <View style={styles.groceryCard}>
-                {groceryList.map((item, i) => (
-                  <View
-                    key={i}
-                    style={[
-                      styles.groceryRow,
-                      i < groceryList.length - 1 && styles.groceryRowBorder,
-                    ]}
-                  >
-                    <View style={styles.groceryRowLeft}>
-                      <Text style={styles.groceryItem}>{item.item}</Text>
-                      <Text style={styles.groceryQuantity}>{item.quantity}</Text>
-                    </View>
-                    {item.estimatedPrice != null ? (
-                      <Text style={styles.groceryPrice}>
-                        ${typeof item.estimatedPrice === "number" ? item.estimatedPrice.toFixed(2) : item.estimatedPrice}
-                      </Text>
-                    ) : null}
-                  </View>
-                ))}
-              </View>
             ) : (
               <View style={styles.emptyGrocery}>
                 <Ionicons name="cart-outline" size={40} color={Colors.textTertiary} />
@@ -1093,6 +1144,60 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   grocerySection: {
     marginBottom: 16,
   },
+  totalsCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginBottom: 16,
+  },
+  totalsRow: {
+    flexDirection: "row" as const,
+    justifyContent: "space-between" as const,
+    alignItems: "center" as const,
+  },
+  totalsLabel: {
+    fontSize: 14,
+    fontWeight: "500" as const,
+    color: Colors.textSecondary,
+  },
+  totalsValue: {
+    fontSize: 15,
+    fontWeight: "700" as const,
+    color: Colors.text,
+  },
+  totalsDisclaimer: {
+    fontSize: 11,
+    color: Colors.textTertiary,
+    marginTop: 10,
+    textAlign: "center" as const,
+  },
+  grocerySectionHeader: {
+    flexDirection: "row" as const,
+    justifyContent: "space-between" as const,
+    alignItems: "center" as const,
+    marginBottom: 12,
+  },
+  grocerySectionTitle: {
+    fontSize: 16,
+    fontWeight: "700" as const,
+    color: Colors.text,
+  },
+  rebuildBtn: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: Colors.primary + "14",
+  },
+  rebuildBtnText: {
+    fontSize: 12,
+    fontWeight: "600" as const,
+    color: Colors.primary,
+  },
   groceryCategoryBlock: {
     marginBottom: 16,
   },
@@ -1111,13 +1216,22 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   },
   groceryRow: {
     flexDirection: "row" as const,
-    justifyContent: "space-between" as const,
     alignItems: "center" as const,
     paddingVertical: 10,
   },
   groceryRowBorder: {
     borderBottomWidth: 0.5,
     borderBottomColor: Colors.border,
+  },
+  groceryCheckbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: Colors.textTertiary,
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
+    marginRight: 12,
   },
   groceryRowLeft: {
     flex: 1,
@@ -1128,15 +1242,19 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     color: Colors.text,
     fontWeight: "500" as const,
   },
+  groceryItemOwned: {
+    textDecorationLine: "line-through" as const,
+    color: Colors.textTertiary,
+  },
   groceryQuantity: {
     fontSize: 11,
     color: Colors.textSecondary,
     marginTop: 2,
   },
   groceryPrice: {
-    fontSize: 13,
-    fontWeight: "600" as const,
-    color: Colors.accent,
+    fontSize: 12,
+    fontWeight: "500" as const,
+    color: Colors.textTertiary,
   },
   emptyGrocery: {
     alignItems: "center" as const,
