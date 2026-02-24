@@ -9,98 +9,194 @@ import {
   Platform,
   RefreshControl,
   Alert,
+  Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
-import { useMealPlan } from "@/lib/api-hooks";
-import { getAccessToken } from "@/lib/api-client";
+import { useMealPlan, useMealFeedback, useResolveIngredientProposal, computeMealFingerprint } from "@/lib/api-hooks";
 
-async function sendMealPreference(mealName: string, liked: boolean) {
-  const token = await getAccessToken();
-  const baseUrl = Platform.OS === "web"
-    ? ""
-    : process.env.EXPO_PUBLIC_API_BASE_URL || "";
-  const res = await fetch(`${baseUrl}/api/preferences/meal`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ mealName, liked }),
-  });
-  if (!res.ok) throw new Error("Failed to save preference");
-  return res.json();
-}
-
-function MealActionButtons({ mealName }: { mealName: string }) {
+function IngredientProposalModal({
+  visible,
+  onClose,
+  proposalId,
+  ingredients,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  proposalId: string;
+  ingredients: string[];
+}) {
   const Colors = useColors();
-  const [state, setState] = useState<"none" | "liked" | "disliked">("none");
-  const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const resolveMutation = useResolveIngredientProposal();
 
-  const handlePress = async (liked: boolean) => {
-    const newState = liked ? "liked" : "disliked";
-    if (state === newState) {
-      setState("none");
-      return;
-    }
-    setLoading(true);
+  const toggleIngredient = (ing: string) => {
+    setSelected((prev) => ({ ...prev, [ing]: !prev[ing] }));
+  };
+
+  const handleSubmit = async () => {
+    const selectedList = Object.keys(selected).filter((k) => selected[k]);
     try {
-      await sendMealPreference(mealName, liked);
-      setState(newState);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      await resolveMutation.mutateAsync({ proposalId, selectedIngredients: selectedList });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      onClose();
     } catch {
-      Alert.alert("Error", "Could not save preference");
-    } finally {
-      setLoading(false);
+      Alert.alert("Error", "Could not save ingredient preferences");
     }
   };
 
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-      <Pressable
-        onPress={(e) => { e.stopPropagation(); handlePress(true); }}
-        disabled={loading}
-        hitSlop={8}
-        style={({ pressed }) => ({
-          opacity: loading ? 0.4 : pressed ? 0.6 : 1,
-          padding: 4,
-        })}
-      >
-        <Ionicons
-          name={state === "liked" ? "thumbs-up" : "thumbs-up-outline"}
-          size={18}
-          color={state === "liked" ? "#30D158" : Colors.textTertiary}
-        />
-      </Pressable>
-      <Pressable
-        onPress={(e) => { e.stopPropagation(); handlePress(false); }}
-        disabled={loading}
-        hitSlop={8}
-        style={({ pressed }) => ({
-          opacity: loading ? 0.4 : pressed ? 0.6 : 1,
-          padding: 4,
-        })}
-      >
-        <Ionicons
-          name={state === "disliked" ? "thumbs-down" : "thumbs-down-outline"}
-          size={18}
-          color={state === "disliked" ? "#FF6B6B" : Colors.textTertiary}
-        />
-      </Pressable>
-      <Pressable
-        onPress={(e) => { e.stopPropagation(); }}
-        hitSlop={8}
-        style={({ pressed }) => ({
-          opacity: pressed ? 0.6 : 1,
-          padding: 4,
-        })}
-      >
-        <Ionicons name="refresh-outline" size={18} color={Colors.textTertiary} />
-      </Pressable>
-    </View>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <View style={{ backgroundColor: Colors.surface, borderRadius: 16, padding: 20, width: "85%", maxHeight: "70%" }}>
+          <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: Colors.text, marginBottom: 4 }}>
+            Which ingredients didn't you like?
+          </Text>
+          <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textSecondary, marginBottom: 16 }}>
+            Select ingredients to avoid in future plans
+          </Text>
+          <ScrollView style={{ maxHeight: 300 }}>
+            {ingredients.map((ing) => (
+              <Pressable
+                key={ing}
+                onPress={() => toggleIngredient(ing)}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingVertical: 10,
+                  paddingHorizontal: 8,
+                  borderBottomWidth: 1,
+                  borderBottomColor: Colors.border,
+                }}
+              >
+                <View style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 4,
+                  borderWidth: 2,
+                  borderColor: selected[ing] ? "#FF6B6B" : Colors.textTertiary,
+                  backgroundColor: selected[ing] ? "#FF6B6B" : "transparent",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  marginRight: 12,
+                }}>
+                  {selected[ing] && <Ionicons name="checkmark" size={14} color="#fff" />}
+                </View>
+                <Text style={{ fontSize: 14, fontFamily: "Inter_500Medium", color: Colors.text, flex: 1 }}>
+                  {ing.charAt(0).toUpperCase() + ing.slice(1)}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+          <View style={{ flexDirection: "row", gap: 10, marginTop: 16 }}>
+            <Pressable
+              onPress={onClose}
+              style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: Colors.surfaceElevated, alignItems: "center" }}
+            >
+              <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.textSecondary }}>Cancel</Text>
+            </Pressable>
+            <Pressable
+              onPress={handleSubmit}
+              disabled={resolveMutation.isPending}
+              style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: "#FF6B6B", alignItems: "center", opacity: resolveMutation.isPending ? 0.6 : 1 }}
+            >
+              <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>
+                {resolveMutation.isPending ? "Saving..." : "Avoid Selected"}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function MealActionButtons({ mealName, cuisineTag, ingredients }: { mealName: string; cuisineTag?: string; ingredients?: any[] }) {
+  const Colors = useColors();
+  const [state, setState] = useState<"none" | "liked" | "disliked">("none");
+  const feedbackMutation = useMealFeedback();
+  const [proposalModal, setProposalModal] = useState<{ visible: boolean; proposalId: string; ingredients: string[] }>({
+    visible: false,
+    proposalId: "",
+    ingredients: [],
+  });
+
+  const handlePress = async (feedback: "like" | "dislike") => {
+    const newState = feedback === "like" ? "liked" : "disliked";
+    if (state === newState) {
+      setState("none");
+      return;
+    }
+
+    const fingerprint = computeMealFingerprint(mealName, cuisineTag, ingredients);
+
+    try {
+      const result = await feedbackMutation.mutateAsync({ fingerprint, feedback, mealName, cuisineTag });
+      setState(newState);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+      if (feedback === "dislike" && result?.proposalId && Array.isArray(result?.ingredients) && result.ingredients.length > 0) {
+        setProposalModal({ visible: true, proposalId: result.proposalId, ingredients: result.ingredients });
+      }
+    } catch {
+      Alert.alert("Error", "Could not save preference");
+    }
+  };
+
+  return (
+    <>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <Pressable
+          onPress={(e) => { e.stopPropagation(); handlePress("like"); }}
+          disabled={feedbackMutation.isPending}
+          hitSlop={8}
+          style={({ pressed }) => ({
+            opacity: feedbackMutation.isPending ? 0.4 : pressed ? 0.6 : 1,
+            padding: 4,
+          })}
+        >
+          <Ionicons
+            name={state === "liked" ? "thumbs-up" : "thumbs-up-outline"}
+            size={18}
+            color={state === "liked" ? "#30D158" : Colors.textTertiary}
+          />
+        </Pressable>
+        <Pressable
+          onPress={(e) => { e.stopPropagation(); handlePress("dislike"); }}
+          disabled={feedbackMutation.isPending}
+          hitSlop={8}
+          style={({ pressed }) => ({
+            opacity: feedbackMutation.isPending ? 0.4 : pressed ? 0.6 : 1,
+            padding: 4,
+          })}
+        >
+          <Ionicons
+            name={state === "disliked" ? "thumbs-down" : "thumbs-down-outline"}
+            size={18}
+            color={state === "disliked" ? "#FF6B6B" : Colors.textTertiary}
+          />
+        </Pressable>
+        <Pressable
+          onPress={(e) => { e.stopPropagation(); }}
+          hitSlop={8}
+          style={({ pressed }) => ({
+            opacity: pressed ? 0.6 : 1,
+            padding: 4,
+          })}
+        >
+          <Ionicons name="refresh-outline" size={18} color={Colors.textTertiary} />
+        </Pressable>
+      </View>
+      <IngredientProposalModal
+        visible={proposalModal.visible}
+        onClose={() => setProposalModal((p) => ({ ...p, visible: false }))}
+        proposalId={proposalModal.proposalId}
+        ingredients={proposalModal.ingredients}
+      />
+    </>
   );
 }
 
@@ -214,7 +310,7 @@ function MealCard({ mealType, meal, completed }: { mealType: string; meal: MealD
           </View>
         </View>
         <View style={styles.mealTopRight}>
-          <MealActionButtons mealName={meal.name} />
+          <MealActionButtons mealName={meal.name} cuisineTag={meal.cuisineTag} ingredients={meal.ingredients} />
           <Pressable
             onPress={() => setExpanded(!expanded)}
             hitSlop={8}

@@ -1082,6 +1082,93 @@ export function useDeleteExercisePreference() {
   });
 }
 
+function slugify(str: string): string {
+  return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function toExerciseKey(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+}
+
+export function computeMealFingerprint(name: string, cuisineTag?: string, ingredients?: any[]): string {
+  const slugName = slugify(name);
+  const slugCuisine = cuisineTag ? slugify(cuisineTag) : "";
+  let firstIngredient = "";
+  if (Array.isArray(ingredients) && ingredients.length > 0) {
+    const raw = typeof ingredients[0] === "string" ? ingredients[0] : ingredients[0]?.item || ingredients[0]?.name || "";
+    firstIngredient = slugify(raw);
+  }
+  return [slugName, slugCuisine, firstIngredient].filter(Boolean).join("|");
+}
+
+export function useMealFeedback() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: { fingerprint: string; feedback: "like" | "dislike"; mealName: string; cuisineTag?: string }) => {
+      const response = await apiClient.post("/api/feedback/meal", {
+        fingerprint: params.fingerprint,
+        feedback: params.feedback,
+        mealName: params.mealName,
+        cuisineTag: params.cuisineTag,
+      });
+      logApiCall("POST", "/api/feedback/meal", response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["meal-preferences"] });
+    },
+  });
+}
+
+export function useResolveIngredientProposal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: { proposalId: string; selectedIngredients: string[] }) => {
+      const response = await apiClient.post(`/api/ingredient-proposals/${params.proposalId}/resolve`, {
+        selectedIngredients: params.selectedIngredients,
+      });
+      logApiCall("POST", `/api/ingredient-proposals/${params.proposalId}/resolve`, response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["meal-preferences"] });
+    },
+  });
+}
+
+export function useExerciseFeedback() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: { key: string; exerciseName: string; feedback: "like" | "dislike"; avoid?: boolean }) => {
+      const response = await apiClient.post("/api/preferences/exercise", {
+        key: params.key,
+        exerciseName: params.exerciseName,
+        feedback: params.feedback,
+        avoid: params.avoid ?? false,
+      });
+      logApiCall("POST", "/api/preferences/exercise", response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["exercise-preferences"] });
+    },
+  });
+}
+
+export function useDeleteExercisePreferenceByKey() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (key: string) => {
+      const response = await apiClient.delete(`/api/preferences/exercise/key/${key}`);
+      logApiCall("DELETE", `/api/preferences/exercise/key/${key}`, response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["exercise-preferences"] });
+    },
+  });
+}
+
 function generateMockWeekData(weekStart: string): DayData[] {
   const start = new Date(weekStart + "T12:00:00Z");
   const days: DayData[] = [];

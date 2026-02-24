@@ -9,33 +9,20 @@ import {
   Platform,
   RefreshControl,
   Alert,
+  Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
-import { useWorkoutPlan } from "@/lib/api-hooks";
-import { getAccessToken } from "@/lib/api-client";
+import { useWorkoutPlan, useExerciseFeedback, useDeleteExercisePreferenceByKey } from "@/lib/api-hooks";
 
 const WEB_TOP_INSET = 67;
 const WORKOUT_ACCENT = "#FF6B6B";
 
-async function sendExercisePreference(exerciseName: string, liked: boolean) {
-  const token = await getAccessToken();
-  const baseUrl = Platform.OS === "web"
-    ? ""
-    : process.env.EXPO_PUBLIC_API_BASE_URL || "";
-  const res = await fetch(`${baseUrl}/api/preferences/exercise`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ exerciseName, liked }),
-  });
-  if (!res.ok) throw new Error("Failed to save preference");
-  return res.json();
+function toExerciseKey(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 }
 
 export default function WorkoutPlanDetailScreen() {
@@ -223,53 +210,164 @@ function formatBulletContent(content: any[] | string): string[] {
   });
 }
 
-function LikeDislikeButtons({ exerciseName }: { exerciseName: string }) {
+function ExerciseAvoidModal({
+  visible,
+  onClose,
+  exerciseName,
+  exerciseKey,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  exerciseName: string;
+  exerciseKey: string;
+}) {
   const Colors = useColors();
-  const [state, setState] = useState<"none" | "liked" | "disliked">("none");
-  const [loading, setLoading] = useState(false);
+  const feedbackMutation = useExerciseFeedback();
 
-  const handlePress = async (liked: boolean) => {
-    const newState = liked ? "liked" : "disliked";
-    if (state === newState) return;
-    setLoading(true);
+  const handleChoice = async (avoid: boolean) => {
     try {
-      await sendExercisePreference(exerciseName, liked);
-      setState(newState);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      await feedbackMutation.mutateAsync({ key: exerciseKey, exerciseName, feedback: "dislike", avoid });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      onClose();
     } catch {
       Alert.alert("Error", "Could not save preference");
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
-    <View style={{ flexDirection: "row", gap: 8 }}>
-      <Pressable
-        onPress={() => handlePress(true)}
-        disabled={loading}
-        hitSlop={6}
-        style={{ opacity: loading ? 0.4 : 1 }}
-      >
-        <Ionicons
-          name={state === "liked" ? "thumbs-up" : "thumbs-up-outline"}
-          size={18}
-          color={state === "liked" ? "#30D158" : Colors.textTertiary}
-        />
-      </Pressable>
-      <Pressable
-        onPress={() => handlePress(false)}
-        disabled={loading}
-        hitSlop={6}
-        style={{ opacity: loading ? 0.4 : 1 }}
-      >
-        <Ionicons
-          name={state === "disliked" ? "thumbs-down" : "thumbs-down-outline"}
-          size={18}
-          color={state === "disliked" ? WORKOUT_ACCENT : Colors.textTertiary}
-        />
-      </Pressable>
-    </View>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <View style={{ backgroundColor: Colors.surface, borderRadius: 16, padding: 20, width: "85%" }}>
+          <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: Colors.text, marginBottom: 4 }}>
+            {exerciseName}
+          </Text>
+          <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.textSecondary, marginBottom: 20 }}>
+            How would you like to handle this exercise?
+          </Text>
+          <Pressable
+            onPress={() => handleChoice(false)}
+            disabled={feedbackMutation.isPending}
+            style={({ pressed }) => ({
+              paddingVertical: 14,
+              paddingHorizontal: 16,
+              borderRadius: 10,
+              backgroundColor: Colors.surfaceElevated,
+              marginBottom: 10,
+              opacity: pressed ? 0.7 : 1,
+            })}
+          >
+            <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.text }}>Just Dislike</Text>
+            <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textSecondary, marginTop: 2 }}>
+              May still appear, but AI will be informed
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => handleChoice(true)}
+            disabled={feedbackMutation.isPending}
+            style={({ pressed }) => ({
+              paddingVertical: 14,
+              paddingHorizontal: 16,
+              borderRadius: 10,
+              backgroundColor: "#FF6B6B18",
+              marginBottom: 10,
+              opacity: pressed ? 0.7 : 1,
+            })}
+          >
+            <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#FF6B6B" }}>Avoid Completely</Text>
+            <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textSecondary, marginTop: 2 }}>
+              This exercise will never appear again
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={onClose}
+            style={({ pressed }) => ({
+              paddingVertical: 12,
+              alignItems: "center",
+              opacity: pressed ? 0.6 : 1,
+            })}
+          >
+            <Text style={{ fontSize: 14, fontFamily: "Inter_500Medium", color: Colors.textSecondary }}>Cancel</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function LikeDislikeButtons({ exerciseName }: { exerciseName: string }) {
+  const Colors = useColors();
+  const [state, setState] = useState<"none" | "liked" | "disliked">("none");
+  const feedbackMutation = useExerciseFeedback();
+  const deleteMutation = useDeleteExercisePreferenceByKey();
+  const [showAvoidModal, setShowAvoidModal] = useState(false);
+  const exerciseKey = toExerciseKey(exerciseName);
+
+  const handleLike = async () => {
+    if (state === "liked") {
+      try {
+        await deleteMutation.mutateAsync(exerciseKey);
+        setState("none");
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      } catch {}
+      return;
+    }
+    try {
+      await feedbackMutation.mutateAsync({ key: exerciseKey, exerciseName, feedback: "like" });
+      setState("liked");
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      Alert.alert("Error", "Could not save preference");
+    }
+  };
+
+  const handleDislike = () => {
+    if (state === "disliked") {
+      deleteMutation.mutateAsync(exerciseKey).then(() => {
+        setState("none");
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }).catch(() => {});
+      return;
+    }
+    setShowAvoidModal(true);
+  };
+
+  const loading = feedbackMutation.isPending || deleteMutation.isPending;
+
+  return (
+    <>
+      <View style={{ flexDirection: "row", gap: 8 }}>
+        <Pressable
+          onPress={handleLike}
+          disabled={loading}
+          hitSlop={6}
+          style={{ opacity: loading ? 0.4 : 1 }}
+        >
+          <Ionicons
+            name={state === "liked" ? "thumbs-up" : "thumbs-up-outline"}
+            size={18}
+            color={state === "liked" ? "#30D158" : Colors.textTertiary}
+          />
+        </Pressable>
+        <Pressable
+          onPress={handleDislike}
+          disabled={loading}
+          hitSlop={6}
+          style={{ opacity: loading ? 0.4 : 1 }}
+        >
+          <Ionicons
+            name={state === "disliked" ? "thumbs-down" : "thumbs-down-outline"}
+            size={18}
+            color={state === "disliked" ? WORKOUT_ACCENT : Colors.textTertiary}
+          />
+        </Pressable>
+      </View>
+      <ExerciseAvoidModal
+        visible={showAvoidModal}
+        onClose={() => { setShowAvoidModal(false); setState("disliked"); }}
+        exerciseName={exerciseName}
+        exerciseKey={exerciseKey}
+      />
+    </>
   );
 }
 
