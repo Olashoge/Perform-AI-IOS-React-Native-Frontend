@@ -829,6 +829,25 @@ export function useWorkoutPlanStatus(planId: string | null, enabled: boolean) {
   });
 }
 
+export interface BudgetData {
+  mealSwaps?: { used: number; total: number };
+  dayRegens?: { used: number; total: number };
+  planRegens?: { used: number; total: number };
+}
+
+export function useBudget() {
+  return useQuery<BudgetData>({
+    queryKey: ["budget"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/budget");
+      logApiCall("GET", "/api/budget", response.status);
+      return response.data;
+    },
+    staleTime: 30000,
+    retry: 1,
+  });
+}
+
 export function useWellnessPlans() {
   return useQuery({
     queryKey: ["plans:wellness"],
