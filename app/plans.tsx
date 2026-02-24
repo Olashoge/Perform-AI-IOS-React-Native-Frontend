@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 import {
@@ -22,24 +22,21 @@ import {
   useDeleteGoalPlan,
   useDeleteMealPlan,
   useDeleteWorkoutPlan,
-  useUpdateGoalPlan,
   useBudget,
 } from "@/lib/api-hooks";
 
 const WEB_TOP_INSET = 67;
-const TABS = ["Wellness", "Nutrition", "Training"] as const;
-type Tab = (typeof TABS)[number];
 
 function formatDateRange(start: string | undefined, end: string | undefined): string {
   if (!start) return "";
   try {
-    const fmt = (s: string) => {
-      const d = new Date(s + "T12:00:00Z");
-      return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
-    };
     const fmtShort = (s: string) => {
       const d = new Date(s + "T12:00:00Z");
       return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+    };
+    const fmt = (s: string) => {
+      const d = new Date(s + "T12:00:00Z");
+      return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
     };
     if (end) {
       const ds = new Date(start + "T12:00:00Z");
@@ -52,16 +49,6 @@ function formatDateRange(start: string | undefined, end: string | undefined): st
     return fmt(start);
   } catch {
     return start || "";
-  }
-}
-
-function formatShortDate(dateStr: string | undefined): string {
-  if (!dateStr) return "";
-  try {
-    const d = new Date(dateStr + "T12:00:00Z");
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
-  } catch {
-    return dateStr;
   }
 }
 
@@ -95,7 +82,6 @@ function GoalBadge({ goal, Colors }: { goal: string; Colors: ThemeColors }) {
 function BudgetCard({ Colors }: { Colors: ThemeColors }) {
   const { data } = useBudget();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
-
   const mealSwaps = data?.mealSwaps ?? { used: 0, total: 0 };
   const dayRegens = data?.dayRegens ?? { used: 0, total: 0 };
   const planRegens = data?.planRegens ?? { used: 0, total: 0 };
@@ -134,7 +120,6 @@ function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: {
   const startDate = plan.startDate || plan.start_date;
   const endDate = plan.endDate || plan.end_date;
   const goal = plan.goalType || plan.primaryGoal || "";
-  const planType = plan.planType || "both";
   const linkedMeal = mealPlans.find((mp: any) => mp.id === plan.mealPlanId);
   const linkedWorkout = workoutPlans.find((wp: any) => wp.id === plan.workoutPlanId);
   const mealPlanName = linkedMeal?.name || plan.mealPlan?.name || plan.mealPlanName || "";
@@ -148,11 +133,19 @@ function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: {
           <Ionicons name="sync-circle" size={28} color={Colors.primary} />
         </View>
         <View style={{ flex: 1, gap: 4 }}>
-          <Text style={styles.wellnessCardTitle} numberOfLines={2}>{name}</Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <Text style={styles.wellnessCardTitle} numberOfLines={1}>{name}</Text>
             {goal ? <GoalBadge goal={goal} Colors={Colors} /> : null}
             <StatusBadge status={status} Colors={Colors} />
           </View>
+          {startDate && (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+              <Ionicons name="calendar-outline" size={11} color={Colors.textSecondary} />
+              <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textSecondary }}>
+                {formatDateRange(startDate, endDate)}
+              </Text>
+            </View>
+          )}
         </View>
         <Pressable
           onPress={() => {
@@ -166,16 +159,7 @@ function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: {
         </Pressable>
       </View>
 
-      {startDate && (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 12 }}>
-          <Ionicons name="calendar-outline" size={12} color={Colors.textSecondary} />
-          <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textSecondary }}>
-            {formatDateRange(startDate, endDate)}
-          </Text>
-        </View>
-      )}
-
-      <View style={styles.linkedPlansRow}>
+      <View style={styles.linkedPlansSection}>
         <Pressable
           style={styles.linkedPlanBox}
           onPress={() => {
@@ -262,8 +246,10 @@ function MealPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () => v
         <Ionicons name="restaurant" size={20} color="#FF9F0A" />
       </View>
       <View style={{ flex: 1, gap: 4 }}>
-        <Text style={styles.simplePlanName} numberOfLines={2}>{name}</Text>
-        <StatusBadge status={status} Colors={Colors} />
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+          <Text style={styles.simplePlanName} numberOfLines={2}>{name}</Text>
+          <StatusBadge status={status} Colors={Colors} />
+        </View>
         {startDate && (
           <Text style={styles.simplePlanDate}>{formatDateRange(startDate, endDate)}</Text>
         )}
@@ -305,8 +291,8 @@ function WorkoutPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () =
         <Ionicons name="barbell" size={20} color="#30D158" />
       </View>
       <View style={{ flex: 1, gap: 4 }}>
-        <Text style={styles.simplePlanName} numberOfLines={2}>{name}</Text>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+          <Text style={styles.simplePlanName} numberOfLines={2}>{name}</Text>
           <StatusBadge status={status} Colors={Colors} />
         </View>
         {startDate && (
@@ -343,25 +329,13 @@ function EmptyState({ type, Colors }: { type: string; Colors: ThemeColors }) {
   );
 }
 
-export default function PlansHubScreen() {
-  const Colors = useColors();
-  const styles = useMemo(() => createStyles(Colors), [Colors]);
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === "web" ? WEB_TOP_INSET : insets.top;
-  const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
-  const [activeTab, setActiveTab] = useState<Tab>("Wellness");
-
+function WellnessPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) {
   const wellnessQuery = useWellnessPlans();
   const mealQuery = useMealPlans();
   const workoutQuery = useWorkoutPlans();
-
   const deleteGoalPlan = useDeleteGoalPlan();
-  const deleteMealPlan = useDeleteMealPlan();
-  const deleteWorkoutPlan = useDeleteWorkoutPlan();
-
-  const activeQuery = activeTab === "Wellness" ? wellnessQuery : activeTab === "Nutrition" ? mealQuery : workoutQuery;
-  const plans = activeQuery.data || [];
-  const isLoading = activeQuery.isLoading;
+  const plans = wellnessQuery.data || [];
+  const isLoading = wellnessQuery.isLoading;
 
   const onRefresh = useCallback(() => {
     wellnessQuery.refetch();
@@ -369,8 +343,7 @@ export default function PlansHubScreen() {
     workoutQuery.refetch();
   }, []);
 
-  const confirmDelete = (id: string, type: "wellness" | "meal" | "workout") => {
-    const mutation = type === "wellness" ? deleteGoalPlan : type === "meal" ? deleteMealPlan : deleteWorkoutPlan;
+  const confirmDelete = (id: string) => {
     Alert.alert("Delete Plan", "Are you sure you want to delete this plan?", [
       { text: "Cancel", style: "cancel" },
       {
@@ -378,151 +351,263 @@ export default function PlansHubScreen() {
         style: "destructive",
         onPress: () => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          mutation.mutate(id);
+          deleteGoalPlan.mutate(id);
         },
       },
     ]);
   };
 
-  const activeWellnessPlan = (wellnessQuery.data || []).find((p: any) => {
-    const s = p.status || p.generationStatus || "";
-    return s === "active" || s === "ready";
-  });
+  return (
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={wellnessQuery.isFetching && !wellnessQuery.isLoading}
+          onRefresh={onRefresh}
+          tintColor={Colors.primary}
+        />
+      }
+    >
+      <View style={styles.pageHeader}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.pageTitle}>Wellness Plans</Text>
+        </View>
+        <Pressable style={{ padding: 8 }} onPress={() => {}}>
+          <Ionicons name="swap-vertical" size={18} color={Colors.textSecondary} />
+        </Pressable>
+        <Pressable
+          style={styles.newPlanButton}
+          onPress={() => {
+            Haptics.impactAsync();
+            router.push("/(tabs)/create" as any);
+          }}
+        >
+          <Ionicons name="add" size={14} color="#fff" />
+          <Text style={styles.newPlanButtonText}>New</Text>
+        </Pressable>
+      </View>
 
-  const tabConfig = {
-    Wellness: { title: "Wellness Plans", subtitle: "", btnLabel: "New Wellness Plan", btnIcon: "add" as const, createType: "wellness" },
-    Nutrition: { title: "Nutrition", subtitle: "Meal plans aligned with your goal", btnLabel: "New Meal Plan", btnIcon: "sparkles" as const, createType: "meal" },
-    Training: { title: "Training", subtitle: "Workout plans for progressive results", btnLabel: "New Workout Plan", btnIcon: "sparkles" as const, createType: "workout" },
+      {isLoading ? (
+        <View style={styles.emptyState}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+        </View>
+      ) : plans.length === 0 ? (
+        <EmptyState type="Wellness" Colors={Colors} />
+      ) : (
+        <View style={{ gap: 14 }}>
+          {plans.map((plan: any, i: number) => (
+            <WellnessPlanCard
+              key={plan._id || plan.id || i}
+              plan={plan}
+              onDelete={() => confirmDelete(plan._id || plan.id)}
+              Colors={Colors}
+              mealPlans={mealQuery.data || []}
+              workoutPlans={workoutQuery.data || []}
+            />
+          ))}
+        </View>
+      )}
+    </ScrollView>
+  );
+}
+
+function NutritionPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) {
+  const mealQuery = useMealPlans();
+  const deleteMealPlan = useDeleteMealPlan();
+  const plans = mealQuery.data || [];
+  const isLoading = mealQuery.isLoading;
+
+  const confirmDelete = (id: string) => {
+    Alert.alert("Delete Plan", "Are you sure you want to delete this plan?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          deleteMealPlan.mutate(id);
+        },
+      },
+    ]);
   };
-  const cfg = tabConfig[activeTab];
 
   return (
-    <View style={[styles.container, { paddingTop: topInset }]}>
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={mealQuery.isFetching && !mealQuery.isLoading}
+          onRefresh={() => mealQuery.refetch()}
+          tintColor={Colors.primary}
+        />
+      }
+    >
+      <View style={styles.pageHeader}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.pageTitle}>Nutrition</Text>
+          <Text style={styles.pageSubtitle}>Meal plans aligned with your goal</Text>
+        </View>
+      </View>
+
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
+        <Pressable style={{ padding: 8 }} onPress={() => {}}>
+          <Ionicons name="swap-vertical" size={18} color={Colors.textSecondary} />
+        </Pressable>
+        <Pressable
+          style={styles.newPlanButton}
+          onPress={() => {
+            Haptics.impactAsync();
+            router.push("/(tabs)/create" as any);
+          }}
+        >
+          <Ionicons name="sparkles" size={14} color="#fff" />
+          <Text style={styles.newPlanButtonText}>New Meal Plan</Text>
+        </Pressable>
+      </View>
+
+      <BudgetCard Colors={Colors} />
+
+      {isLoading ? (
+        <View style={styles.emptyState}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+        </View>
+      ) : plans.length === 0 ? (
+        <EmptyState type="Meal" Colors={Colors} />
+      ) : (
+        <>
+          <Text style={styles.activePlansLabel}>ACTIVE PLANS</Text>
+          <View style={{ gap: 10 }}>
+            {plans.map((plan: any, i: number) => (
+              <MealPlanCard
+                key={plan._id || plan.id || i}
+                plan={plan}
+                onDelete={() => confirmDelete(plan._id || plan.id)}
+                Colors={Colors}
+              />
+            ))}
+          </View>
+        </>
+      )}
+    </ScrollView>
+  );
+}
+
+function TrainingPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) {
+  const workoutQuery = useWorkoutPlans();
+  const deleteWorkoutPlan = useDeleteWorkoutPlan();
+  const plans = workoutQuery.data || [];
+  const isLoading = workoutQuery.isLoading;
+
+  const confirmDelete = (id: string) => {
+    Alert.alert("Delete Plan", "Are you sure you want to delete this plan?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          deleteWorkoutPlan.mutate(id);
+        },
+      },
+    ]);
+  };
+
+  return (
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={workoutQuery.isFetching && !workoutQuery.isLoading}
+          onRefresh={() => workoutQuery.refetch()}
+          tintColor={Colors.primary}
+        />
+      }
+    >
+      <View style={styles.pageHeader}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.pageTitle}>Training</Text>
+          <Text style={styles.pageSubtitle}>Workout plans for progressive results</Text>
+        </View>
+      </View>
+
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
+        <Pressable style={{ padding: 8 }} onPress={() => {}}>
+          <Ionicons name="swap-vertical" size={18} color={Colors.textSecondary} />
+        </Pressable>
+        <Pressable
+          style={styles.newPlanButton}
+          onPress={() => {
+            Haptics.impactAsync();
+            router.push("/(tabs)/create" as any);
+          }}
+        >
+          <Ionicons name="sparkles" size={14} color="#fff" />
+          <Text style={styles.newPlanButtonText}>New Workout Plan</Text>
+        </Pressable>
+      </View>
+
+      <BudgetCard Colors={Colors} />
+
+      {isLoading ? (
+        <View style={styles.emptyState}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+        </View>
+      ) : plans.length === 0 ? (
+        <EmptyState type="Workout" Colors={Colors} />
+      ) : (
+        <>
+          <Text style={styles.activePlansLabel}>ACTIVE PLANS</Text>
+          <View style={{ gap: 10 }}>
+            {plans.map((plan: any, i: number) => (
+              <WorkoutPlanCard
+                key={plan._id || plan.id || i}
+                plan={plan}
+                onDelete={() => confirmDelete(plan._id || plan.id)}
+                Colors={Colors}
+              />
+            ))}
+          </View>
+        </>
+      )}
+    </ScrollView>
+  );
+}
+
+export default function PlansScreen() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+  const insets = useSafeAreaInsets();
+  const topInset = Platform.OS === "web" ? WEB_TOP_INSET : insets.top;
+  const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
+  const params = useLocalSearchParams<{ tab?: string }>();
+
+  const tab = params.tab || "wellness";
+
+  const headerTitles: Record<string, string> = {
+    wellness: "Wellness Plans",
+    meals: "Nutrition",
+    workouts: "Training",
+  };
+
+  return (
+    <View style={[styles.container, { paddingTop: topInset, paddingBottom: bottomInset }]}>
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={28} color={Colors.text} />
         </Pressable>
-        <Text style={styles.headerTitle}>Plans</Text>
+        <Text style={styles.headerTitle}>{headerTitles[tab] || "Plans"}</Text>
         <View style={{ width: 40 }} />
       </View>
 
-      {activeWellnessPlan && (
-        <View style={styles.activePlanBanner}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1 }}>
-            <Ionicons name="ellipse" size={8} color={Colors.primary} />
-            <Text style={styles.activePlanBannerLabel}>ACTIVE PLAN</Text>
-            <Text style={styles.activePlanBannerName} numberOfLines={1}>
-              {activeWellnessPlan.primaryGoal || activeWellnessPlan.name || "Wellness"}
-            </Text>
-            {activeWellnessPlan.targetDate && (
-              <Text style={styles.activePlanBannerDate}>
-                Target: {formatShortDate(activeWellnessPlan.targetDate)}
-              </Text>
-            )}
-          </View>
-        </View>
-      )}
-
-      <View style={styles.tabBar}>
-        {TABS.map((tab) => {
-          const isActive = activeTab === tab;
-          return (
-            <Pressable
-              key={tab}
-              style={[styles.tab, isActive && styles.tabActive]}
-              onPress={() => {
-                Haptics.selectionAsync();
-                setActiveTab(tab);
-              }}
-            >
-              <Text style={[styles.tabText, isActive && styles.tabTextActive]}>{tab}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInset + 20 }]}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={activeQuery.isFetching && !activeQuery.isLoading}
-            onRefresh={onRefresh}
-            tintColor={Colors.primary}
-          />
-        }
-      >
-        <View style={styles.sectionHeader}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.sectionTitle}>{cfg.title}</Text>
-            {cfg.subtitle ? <Text style={styles.sectionSubtitle}>{cfg.subtitle}</Text> : null}
-          </View>
-          <Pressable style={{ padding: 8 }} onPress={() => {}}>
-            <Ionicons name="swap-vertical" size={18} color={Colors.textSecondary} />
-          </Pressable>
-          <Pressable
-            style={styles.newPlanButton}
-            onPress={() => {
-              Haptics.impactAsync();
-              router.push("/(tabs)/create" as any);
-            }}
-          >
-            <Ionicons name={cfg.btnIcon as any} size={14} color="#fff" />
-            <Text style={styles.newPlanButtonText}>{cfg.btnLabel}</Text>
-          </Pressable>
-        </View>
-
-        {(activeTab === "Nutrition" || activeTab === "Training") && (
-          <BudgetCard Colors={Colors} />
-        )}
-
-        {isLoading ? (
-          <View style={styles.emptyState}>
-            <ActivityIndicator size="large" color={Colors.primary} />
-          </View>
-        ) : plans.length === 0 ? (
-          <EmptyState type={activeTab} Colors={Colors} />
-        ) : (
-          <>
-            {(activeTab === "Nutrition" || activeTab === "Training") && (
-              <Text style={styles.activePlansLabel}>ACTIVE PLANS</Text>
-            )}
-
-            {activeTab === "Wellness" &&
-              plans.map((plan: any, i: number) => (
-                <WellnessPlanCard
-                  key={plan._id || plan.id || i}
-                  plan={plan}
-                  onDelete={() => confirmDelete(plan._id || plan.id, "wellness")}
-                  Colors={Colors}
-                  mealPlans={mealQuery.data || []}
-                  workoutPlans={workoutQuery.data || []}
-                />
-              ))}
-
-            {activeTab === "Nutrition" &&
-              plans.map((plan: any, i: number) => (
-                <MealPlanCard
-                  key={plan._id || plan.id || i}
-                  plan={plan}
-                  onDelete={() => confirmDelete(plan._id || plan.id, "meal")}
-                  Colors={Colors}
-                />
-              ))}
-
-            {activeTab === "Training" &&
-              plans.map((plan: any, i: number) => (
-                <WorkoutPlanCard
-                  key={plan._id || plan.id || i}
-                  plan={plan}
-                  onDelete={() => confirmDelete(plan._id || plan.id, "workout")}
-                  Colors={Colors}
-                />
-              ))}
-          </>
-        )}
-      </ScrollView>
+      {tab === "wellness" && <WellnessPage Colors={Colors} styles={styles} />}
+      {tab === "meals" && <NutritionPage Colors={Colors} styles={styles} />}
+      {tab === "workouts" && <TrainingPage Colors={Colors} styles={styles} />}
     </View>
   );
 }
@@ -554,77 +639,28 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     flex: 1,
     textAlign: "center" as const,
   },
-  activePlanBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-  },
-  activePlanBannerLabel: {
-    fontSize: 9,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.textSecondary,
-    letterSpacing: 0.5,
-  },
-  activePlanBannerName: {
-    fontSize: 12,
-    fontFamily: "Inter_700Bold",
-    color: Colors.text,
-    flexShrink: 1,
-  },
-  activePlanBannerDate: {
-    fontSize: 10,
-    fontFamily: "Inter_400Regular",
-    color: Colors.textSecondary,
-  },
-  tabBar: {
-    flexDirection: "row",
-    paddingHorizontal: 16,
-    gap: 4,
-    paddingVertical: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
-  },
-  tab: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 8,
-  },
-  tabActive: {
-    backgroundColor: Colors.primary + "18",
-  },
-  tabText: {
-    fontSize: 12,
-    fontFamily: "Inter_500Medium",
-    color: Colors.textSecondary,
-  },
-  tabTextActive: {
-    color: Colors.primary,
-    fontFamily: "Inter_600SemiBold",
-  },
   scrollContent: {
     paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 40,
     gap: 12,
-    paddingTop: 16,
   },
-  sectionHeader: {
+  pageHeader: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 8,
-    marginBottom: 4,
+    marginBottom: 8,
   },
-  sectionTitle: {
-    fontSize: 22,
+  pageTitle: {
+    fontSize: 24,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
   },
-  sectionSubtitle: {
-    fontSize: 12,
+  pageSubtitle: {
+    fontSize: 13,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
-    marginTop: 2,
+    marginTop: 4,
   },
   newPlanButton: {
     flexDirection: "row",
@@ -689,7 +725,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     fontFamily: "Inter_700Bold",
     color: Colors.textSecondary,
     letterSpacing: 0.8,
-    marginTop: 4,
+    marginTop: 8,
   },
   wellnessCard: {
     backgroundColor: Colors.surface,
@@ -702,7 +738,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 10,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   wellnessIconCircle: {
     width: 36,
@@ -716,14 +752,13 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     fontSize: 13,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
+    flexShrink: 1,
   },
-  linkedPlansRow: {
-    flexDirection: "row",
+  linkedPlansSection: {
     gap: 10,
     marginBottom: 12,
   },
   linkedPlanBox: {
-    flex: 1,
     backgroundColor: Colors.background,
     borderRadius: 10,
     borderWidth: 1,
@@ -736,10 +771,10 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     color: Colors.text,
   },
   linkedPlanName: {
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
-    color: Colors.textSecondary,
-    lineHeight: 16,
+    color: Colors.primary,
+    lineHeight: 18,
   },
   linkButton: {
     flexDirection: "row",
@@ -792,6 +827,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     fontSize: 13,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
+    flexShrink: 1,
   },
   simplePlanDate: {
     fontSize: 10,
