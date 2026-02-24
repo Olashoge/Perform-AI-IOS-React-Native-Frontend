@@ -335,12 +335,15 @@ function LikeDislikeButtons({ exerciseName }: { exerciseName: string }) {
 
   return (
     <>
-      <View style={{ flexDirection: "row", gap: 8 }}>
+      <View style={{ flexDirection: "row", gap: 2 }}>
         <Pressable
-          onPress={handleLike}
+          onPress={(e) => { e.stopPropagation(); handleLike(); }}
           disabled={loading}
-          hitSlop={6}
-          style={{ opacity: loading ? 0.4 : 1 }}
+          style={({ pressed }) => ({
+            opacity: loading ? 0.4 : pressed ? 0.6 : 1,
+            paddingHorizontal: 8,
+            paddingVertical: 8,
+          })}
         >
           <Ionicons
             name={state === "liked" ? "thumbs-up" : "thumbs-up-outline"}
@@ -349,10 +352,13 @@ function LikeDislikeButtons({ exerciseName }: { exerciseName: string }) {
           />
         </Pressable>
         <Pressable
-          onPress={handleDislike}
+          onPress={(e) => { e.stopPropagation(); handleDislike(); }}
           disabled={loading}
-          hitSlop={6}
-          style={{ opacity: loading ? 0.4 : 1 }}
+          style={({ pressed }) => ({
+            opacity: loading ? 0.4 : pressed ? 0.6 : 1,
+            paddingHorizontal: 8,
+            paddingVertical: 8,
+          })}
         >
           <Ionicons
             name={state === "disliked" ? "thumbs-down" : "thumbs-down-outline"}

@@ -148,14 +148,14 @@ function MealActionButtons({ mealName, cuisineTag, ingredients }: { mealName: st
 
   return (
     <>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
         <Pressable
           onPress={(e) => { e.stopPropagation(); handlePress("like"); }}
           disabled={feedbackMutation.isPending}
-          hitSlop={8}
           style={({ pressed }) => ({
             opacity: feedbackMutation.isPending ? 0.4 : pressed ? 0.6 : 1,
-            padding: 4,
+            paddingHorizontal: 8,
+            paddingVertical: 8,
           })}
         >
           <Ionicons
@@ -167,10 +167,10 @@ function MealActionButtons({ mealName, cuisineTag, ingredients }: { mealName: st
         <Pressable
           onPress={(e) => { e.stopPropagation(); handlePress("dislike"); }}
           disabled={feedbackMutation.isPending}
-          hitSlop={8}
           style={({ pressed }) => ({
             opacity: feedbackMutation.isPending ? 0.4 : pressed ? 0.6 : 1,
-            padding: 4,
+            paddingHorizontal: 8,
+            paddingVertical: 8,
           })}
         >
           <Ionicons
@@ -181,10 +181,10 @@ function MealActionButtons({ mealName, cuisineTag, ingredients }: { mealName: st
         </Pressable>
         <Pressable
           onPress={(e) => { e.stopPropagation(); }}
-          hitSlop={8}
           style={({ pressed }) => ({
             opacity: pressed ? 0.6 : 1,
-            padding: 4,
+            paddingHorizontal: 8,
+            paddingVertical: 8,
           })}
         >
           <Ionicons name="refresh-outline" size={18} color={Colors.textTertiary} />
