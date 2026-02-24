@@ -1,283 +1,283 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
   ScrollView,
   StyleSheet,
   Pressable,
-  Alert,
   Platform,
-  TextInput,
-  KeyboardAvoidingView,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
-import { useProfile, useUpdateProfile, ProfileData } from "@/lib/api-hooks";
+import {
+  useMealPreferences,
+  useDeleteMealPreference,
+  useDeleteIngredientPreference,
+  MealPreference,
+  IngredientPreference,
+} from "@/lib/api-hooks";
 
-const FOODS_TO_AVOID_PRESETS = [
-  "Pork",
-  "Shellfish",
-  "Dairy",
-  "Gluten",
-  "Soy",
-  "Eggs",
-  "Nuts",
-  "Red Meat",
-  "Fish",
-  "Mushrooms",
-  "Chicken",
-  "Beans/Legumes",
-  "Spicy Foods",
-  "Garlic/Onion",
-];
+type Tab = "liked" | "disliked" | "avoided";
 
-function TagInput({
-  tags,
-  onChangeTags,
-  placeholder,
+function MealCard({
+  meal,
+  onDelete,
+  Colors,
 }: {
-  tags: string[];
-  onChangeTags: (tags: string[]) => void;
-  placeholder?: string;
+  meal: MealPreference;
+  onDelete: () => void;
+  Colors: ThemeColors;
 }) {
-  const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
-  const [inputValue, setInputValue] = useState("");
-
-  const addTag = () => {
-    const trimmed = inputValue.trim();
-    if (trimmed && !tags.includes(trimmed)) {
-      onChangeTags([...tags, trimmed]);
-    }
-    setInputValue("");
-  };
-
-  const removeTag = (tag: string) => {
-    onChangeTags(tags.filter((t) => t !== tag));
-  };
 
   return (
-    <View>
-      {tags.length > 0 && (
-        <View style={styles.tagWrap}>
-          {tags.map((tag) => (
-            <View key={tag} style={styles.tag}>
-              <Text style={styles.tagText}>{tag}</Text>
-              <Pressable onPress={() => removeTag(tag)} hitSlop={6}>
-                <Ionicons name="close" size={14} color={Colors.text} />
-              </Pressable>
-            </View>
-          ))}
-        </View>
-      )}
-      <TextInput
-        style={styles.textInput}
-        value={inputValue}
-        onChangeText={setInputValue}
-        onSubmitEditing={addTag}
-        returnKeyType="done"
-        placeholderTextColor={Colors.textTertiary}
-        placeholder={placeholder || "Type and press Enter to add"}
-      />
+    <View style={styles.itemCard}>
+      <View style={styles.itemIconCircle}>
+        <Ionicons name="restaurant" size={18} color={Colors.textSecondary} />
+      </View>
+      <View style={styles.itemContent}>
+        <Text style={styles.itemName} numberOfLines={2}>{meal.mealName}</Text>
+        {meal.cuisineTag ? (
+          <Text style={styles.itemSubtext}>{meal.cuisineTag}</Text>
+        ) : null}
+      </View>
+      <Pressable
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          Alert.alert("Remove", `Remove "${meal.mealName}" from your preferences?`, [
+            { text: "Cancel", style: "cancel" },
+            { text: "Remove", style: "destructive", onPress: onDelete },
+          ]);
+        }}
+        hitSlop={10}
+        style={styles.deleteBtn}
+      >
+        <Ionicons name="trash-outline" size={18} color={Colors.textTertiary} />
+      </Pressable>
     </View>
   );
 }
 
-export default function FoodPreferencesScreen() {
-  const Colors = useColors();
+function IngredientCard({
+  ingredient,
+  onDelete,
+  Colors,
+  type,
+}: {
+  ingredient: IngredientPreference;
+  onDelete: () => void;
+  Colors: ThemeColors;
+  type: "prefer" | "avoid";
+}) {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
 
-  const insets = useSafeAreaInsets();
-  const webTopInset = Platform.OS === "web" ? 67 : 0;
-  const profile = useProfile();
-  const updateProfile = useUpdateProfile();
-
-  const [favoriteMealsText, setFavoriteMealsText] = useState("");
-  const [foodsToAvoid, setFoodsToAvoid] = useState<string[]>([]);
-  const [allergiesIntolerances, setAllergiesIntolerances] = useState<string[]>([]);
-  const [loaded, setLoaded] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (profile.data && !loaded) {
-      setFavoriteMealsText(profile.data.favoriteMealsText || "");
-      setFoodsToAvoid(profile.data.foodsToAvoid || []);
-      setAllergiesIntolerances(profile.data.allergiesIntolerances || []);
-      setLoaded(true);
-    }
-  }, [profile.data, loaded]);
-
-  const foodsToAvoidPresetSelected = foodsToAvoid.filter((f) =>
-    FOODS_TO_AVOID_PRESETS.includes(f)
-  );
-  const foodsToAvoidCustom = foodsToAvoid.filter(
-    (f) => !FOODS_TO_AVOID_PRESETS.includes(f)
-  );
-
-  const handlePresetToggle = (item: string) => {
-    Haptics.selectionAsync();
-    const isSelected = foodsToAvoidPresetSelected.includes(item);
-    if (isSelected) {
-      setFoodsToAvoid([
-        ...foodsToAvoidPresetSelected.filter((f) => f !== item),
-        ...foodsToAvoidCustom,
-      ]);
-    } else {
-      setFoodsToAvoid([
-        ...foodsToAvoidPresetSelected,
-        item,
-        ...foodsToAvoidCustom,
-      ]);
-    }
-  };
-
-  const handleCustomFoodsChange = (customTags: string[]) => {
-    setFoodsToAvoid([...foodsToAvoidPresetSelected, ...customTags]);
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await updateProfile.mutateAsync({
-        favoriteMealsText,
-        foodsToAvoid,
-        allergiesIntolerances,
-      });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.back();
-    } catch (err: any) {
-      Alert.alert("Error", err?.message || "Failed to save preferences");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (profile.isLoading) {
-    return (
-      <View style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+  return (
+    <View style={styles.itemCard}>
+      <View style={styles.itemIconCircle}>
+        <Ionicons
+          name={type === "avoid" ? "close-circle-outline" : "leaf-outline"}
+          size={18}
+          color={type === "avoid" ? Colors.error : Colors.scoreGreen}
+        />
       </View>
-    );
-  }
+      <View style={styles.itemContent}>
+        <Text style={styles.itemName}>
+          {ingredient.ingredientKey.charAt(0).toUpperCase() + ingredient.ingredientKey.slice(1)}
+        </Text>
+        {ingredient.source ? (
+          <Text style={styles.itemSubtext}>{ingredient.source}</Text>
+        ) : null}
+      </View>
+      <Pressable
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          Alert.alert("Remove", `Remove "${ingredient.ingredientKey}" from your preferences?`, [
+            { text: "Cancel", style: "cancel" },
+            { text: "Remove", style: "destructive", onPress: onDelete },
+          ]);
+        }}
+        hitSlop={10}
+        style={styles.deleteBtn}
+      >
+        <Ionicons name="trash-outline" size={18} color={Colors.textTertiary} />
+      </Pressable>
+    </View>
+  );
+}
+
+function EmptyState({ tab, Colors }: { tab: Tab; Colors: ThemeColors }) {
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+  const config = {
+    liked: {
+      icon: "thumbs-up-outline" as const,
+      text: "No liked meals yet. Like meals in your meal plans to improve future suggestions.",
+    },
+    disliked: {
+      icon: "thumbs-down-outline" as const,
+      text: "No disliked meals yet. Dislike meals in your meal plans to avoid them in the future.",
+    },
+    avoided: {
+      icon: "ban-outline" as const,
+      text: "No avoided ingredients yet. Ingredients are added here when you dislike meals containing them.",
+    },
+  };
+  const c = config[tab];
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-    >
-      <View
-        style={[
-          styles.header,
-          { paddingTop: insets.top + webTopInset + 8 },
-        ]}
-      >
+    <View style={styles.emptyContainer}>
+      <View style={styles.emptyIconCircle}>
+        <Ionicons name={c.icon} size={28} color={Colors.textTertiary} />
+      </View>
+      <Text style={styles.emptyText}>{c.text}</Text>
+    </View>
+  );
+}
+
+export default function MealPreferencesScreen() {
+  const Colors = useColors();
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+  const insets = useSafeAreaInsets();
+  const webTopInset = Platform.OS === "web" ? 67 : 0;
+
+  const [activeTab, setActiveTab] = useState<Tab>("liked");
+  const { data, isLoading } = useMealPreferences();
+  const deleteMeal = useDeleteMealPreference();
+  const deleteIngredient = useDeleteIngredientPreference();
+
+  const likedMeals = data?.likedMeals ?? [];
+  const dislikedMeals = data?.dislikedMeals ?? [];
+  const preferIngredients = data?.preferIngredients ?? [];
+  const avoidIngredients = data?.avoidIngredients ?? [];
+
+  const likedCount = likedMeals.length + preferIngredients.length;
+  const dislikedCount = dislikedMeals.length;
+  const avoidedCount = avoidIngredients.length;
+
+  const tabs: { key: Tab; label: string; count: number; icon: keyof typeof Ionicons.glyphMap }[] = [
+    { key: "liked", label: "Liked", count: likedCount, icon: "thumbs-up-outline" },
+    { key: "disliked", label: "Disliked", count: dislikedCount, icon: "thumbs-down-outline" },
+    { key: "avoided", label: "Avoided", count: avoidedCount, icon: "ban-outline" },
+  ];
+
+  return (
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: insets.top + webTopInset + 8 }]}>
         <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={28} color={Colors.text} />
         </Pressable>
-        <Text style={styles.headerTitle}>Food Preferences</Text>
-        <Pressable
-          onPress={handleSave}
-          disabled={saving}
-          hitSlop={12}
-          style={styles.saveBtn}
-        >
-          {saving ? (
-            <ActivityIndicator size="small" color={Colors.primary} />
-          ) : (
-            <Ionicons name="checkmark" size={28} color={Colors.primary} />
-          )}
-        </Pressable>
+        <Text style={styles.headerTitle}>Meal Preferences</Text>
+        <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 40 },
-        ]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="heart-outline" size={18} color={Colors.primary} />
-            <Text style={styles.sectionHeaderText}>FAVORITE MEALS</Text>
-          </View>
-          <View style={styles.sectionCard}>
-            <Text style={styles.fieldDescription}>
-              Describe your favorite meals, cuisines, or dishes so the AI can tailor recommendations.
-            </Text>
-            <TextInput
-              style={[styles.textInput, styles.multilineInput]}
-              value={favoriteMealsText}
-              onChangeText={setFavoriteMealsText}
-              multiline
-              placeholderTextColor={Colors.textTertiary}
-              placeholder="e.g. Grilled chicken salads, Mediterranean bowls, stir-fry with rice..."
-            />
-          </View>
-        </View>
+      <Text style={styles.subtitle}>
+        Manage your liked and disliked meals and ingredient preferences. These are used to personalize your future meal plans.
+      </Text>
 
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="close-circle-outline" size={18} color={Colors.warning} />
-            <Text style={styles.sectionHeaderText}>FOODS TO AVOID</Text>
-          </View>
-          <View style={styles.sectionCard}>
-            <Text style={styles.fieldDescription}>
-              Select common foods to avoid or add your own below.
-            </Text>
-            <View style={styles.pillWrap}>
-              {FOODS_TO_AVOID_PRESETS.map((item) => {
-                const active = foodsToAvoidPresetSelected.includes(item);
-                return (
-                  <Pressable
-                    key={item}
-                    style={[styles.pill, active && styles.pillActive]}
-                    onPress={() => handlePresetToggle(item)}
-                  >
-                    <Text
-                      style={[styles.pillText, active && styles.pillTextActive]}
-                    >
-                      {item}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-            <View style={styles.customTagSection}>
-              <Text style={styles.customTagLabel}>Custom items</Text>
-              <TagInput
-                tags={foodsToAvoidCustom}
-                onChangeTags={handleCustomFoodsChange}
-                placeholder="Add custom food to avoid..."
+      <View style={styles.tabRow}>
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.key;
+          return (
+            <Pressable
+              key={tab.key}
+              style={[styles.tab, isActive && styles.tabActive]}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setActiveTab(tab.key);
+              }}
+            >
+              <Ionicons
+                name={tab.icon}
+                size={14}
+                color={isActive ? Colors.primary : Colors.textSecondary}
+                style={{ marginRight: 4 }}
               />
-            </View>
-          </View>
-        </View>
+              <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
+                {tab.label} ({tab.count})
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
 
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="warning-outline" size={18} color={Colors.error} />
-            <Text style={styles.sectionHeaderText}>ALLERGIES & INTOLERANCES</Text>
-          </View>
-          <View style={styles.sectionCard}>
-            <Text style={styles.fieldDescription}>
-              List any food allergies or intolerances to ensure safe meal recommendations.
-            </Text>
-            <TagInput
-              tags={allergiesIntolerances}
-              onChangeTags={setAllergiesIntolerances}
-              placeholder="e.g. Peanuts, Lactose, Celiac..."
-            />
-          </View>
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      ) : (
+        <ScrollView
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
+          showsVerticalScrollIndicator={false}
+        >
+          {activeTab === "liked" && (
+            <>
+              {likedMeals.length > 0 && likedMeals.map((meal) => (
+                <MealCard
+                  key={meal.id}
+                  meal={meal}
+                  onDelete={() => deleteMeal.mutate(meal.id)}
+                  Colors={Colors}
+                />
+              ))}
+              {preferIngredients.length > 0 && (
+                <>
+                  {likedMeals.length > 0 && <Text style={styles.sectionLabel}>Preferred Ingredients</Text>}
+                  {preferIngredients.map((ing) => (
+                    <IngredientCard
+                      key={ing.id}
+                      ingredient={ing}
+                      onDelete={() => deleteIngredient.mutate(ing.id)}
+                      Colors={Colors}
+                      type="prefer"
+                    />
+                  ))}
+                </>
+              )}
+              {likedCount === 0 && <EmptyState tab="liked" Colors={Colors} />}
+            </>
+          )}
+
+          {activeTab === "disliked" && (
+            <>
+              {dislikedMeals.length > 0 ? (
+                dislikedMeals.map((meal) => (
+                  <MealCard
+                    key={meal.id}
+                    meal={meal}
+                    onDelete={() => deleteMeal.mutate(meal.id)}
+                    Colors={Colors}
+                  />
+                ))
+              ) : (
+                <EmptyState tab="disliked" Colors={Colors} />
+              )}
+            </>
+          )}
+
+          {activeTab === "avoided" && (
+            <>
+              {avoidIngredients.length > 0 ? (
+                avoidIngredients.map((ing) => (
+                  <IngredientCard
+                    key={ing.id}
+                    ingredient={ing}
+                    onDelete={() => deleteIngredient.mutate(ing.id)}
+                    Colors={Colors}
+                    type="avoid"
+                  />
+                ))
+              ) : (
+                <EmptyState tab="avoided" Colors={Colors} />
+              )}
+            </>
+          )}
+        </ScrollView>
+      )}
+    </View>
   );
 }
 
@@ -285,10 +285,6 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-  },
-  loadingContainer: {
-    justifyContent: "center",
-    alignItems: "center",
   },
   header: {
     flexDirection: "row",
@@ -306,114 +302,122 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   },
   headerTitle: {
     fontSize: 17,
-    fontWeight: "600" as const,
+    fontFamily: "Inter_700Bold",
     color: Colors.text,
     flex: 1,
-    textAlign: "center" as const,
+    textAlign: "center",
   },
-  saveBtn: {
-    width: 40,
-    alignItems: "flex-end",
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
-  },
-  section: {
-    marginBottom: 28,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 12,
-    paddingHorizontal: 4,
-  },
-  sectionHeaderText: {
-    fontSize: 13,
-    fontWeight: "600" as const,
-    color: Colors.textSecondary,
-    letterSpacing: 0.5,
-  },
-  sectionCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 16,
-  },
-  fieldDescription: {
+  subtitle: {
     fontSize: 14,
+    fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
     lineHeight: 20,
-    marginBottom: 14,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
   },
-  textInput: {
-    backgroundColor: Colors.inputBg === Colors.surface ? Colors.surfaceElevated : Colors.inputBg,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: Colors.text,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  multilineInput: {
-    minHeight: 100,
-    textAlignVertical: "top" as const,
-  },
-  pillWrap: {
+  tabRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
+    paddingHorizontal: 20,
     gap: 8,
+    paddingBottom: 16,
   },
-  pill: {
+  tab: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: Colors.surfaceElevated,
+    backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  pillActive: {
-    backgroundColor: Colors.primary + "22",
-    borderColor: Colors.primary,
+  tabActive: {
+    backgroundColor: Colors.primary + "18",
+    borderColor: Colors.primary + "50",
   },
-  pillText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-  },
-  pillTextActive: {
-    color: Colors.primary,
-    fontWeight: "600" as const,
-  },
-  customTagSection: {
-    marginTop: 16,
-  },
-  customTagLabel: {
+  tabText: {
     fontSize: 13,
+    fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
-    marginBottom: 8,
-    fontWeight: "500" as const,
   },
-  tagWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 10,
+  tabTextActive: {
+    color: Colors.primary,
+    fontFamily: "Inter_600SemiBold",
   },
-  tag: {
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    gap: 10,
+  },
+  sectionLabel: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.textSecondary,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    marginTop: 8,
+    marginBottom: 2,
+    paddingLeft: 4,
+  },
+  itemCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: Colors.primary + "22",
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    padding: 14,
     borderWidth: 1,
-    borderColor: Colors.primary + "44",
+    borderColor: Colors.border,
+    gap: 12,
   },
-  tagText: {
-    fontSize: 13,
-    color: Colors.primary,
-    fontWeight: "500" as const,
+  itemIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.surfaceElevated,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  itemContent: {
+    flex: 1,
+    gap: 2,
+  },
+  itemName: {
+    fontSize: 15,
+    fontFamily: "Inter_500Medium",
+    color: Colors.text,
+  },
+  itemSubtext: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textSecondary,
+  },
+  deleteBtn: {
+    padding: 6,
+  },
+  emptyContainer: {
+    alignItems: "center",
+    paddingTop: 60,
+    paddingHorizontal: 40,
+    gap: 16,
+  },
+  emptyIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.surface,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textSecondary,
+    textAlign: "center",
+    lineHeight: 20,
   },
 });
