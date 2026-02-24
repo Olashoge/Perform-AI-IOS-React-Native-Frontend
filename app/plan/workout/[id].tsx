@@ -337,7 +337,10 @@ function DayCard({
 
       {session && (
         <View style={styles.sessionPreview}>
-          <Text style={styles.sessionTitle}>{session.sessionTitle ?? session.name ?? "Training Session"}</Text>
+          <Text style={styles.sessionTitle}>{session.sessionTitle ?? session.title ?? session.name ?? session.focus ?? "Training Session"}</Text>
+          {(session.description || session.summary) ? (
+            <Text style={styles.sessionDescription}>{session.description ?? session.summary}</Text>
+          ) : null}
           <View style={styles.sessionMeta}>
             {session.focus ? (
               <View style={styles.metaTag}>
@@ -643,7 +646,13 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     fontSize: 15,
     fontWeight: "600" as const,
     color: WORKOUT_ACCENT,
-    marginBottom: 8,
+    marginBottom: 4,
+  },
+  sessionDescription: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: 6,
   },
   sessionMeta: {
     flexDirection: "row",
