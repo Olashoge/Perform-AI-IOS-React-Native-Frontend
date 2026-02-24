@@ -314,9 +314,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/calendar/occupied-dates", proxyToExternal);
 
   app.post("/api/daily-meals", proxyToExternal);
+  app.post("/api/daily-meal", proxyToExternal);
   app.get("/api/daily-meals/:date", proxyToExternal);
+  app.get("/api/daily-meal/:date", proxyToExternal);
   app.post("/api/daily-workouts", proxyToExternal);
+  app.post("/api/daily-workout", proxyToExternal);
   app.get("/api/daily-workouts/:date", proxyToExternal);
+  app.get("/api/daily-workout/:date", proxyToExternal);
   app.get("/api/daily-coverage", proxyToExternal);
 
   app.get("/api/meta", (_req, res) => {

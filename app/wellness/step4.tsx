@@ -88,7 +88,7 @@ export default function Step4Screen() {
     if (showMeal) {
       payload.mealPlanConfig = {
         goal: mapGoalForMeal(state.goalType),
-        dietStyles: state.mealForm.dietStyles,
+        dietStyles: state.mealForm.dietStyles.length > 0 ? state.mealForm.dietStyles : ["No Preference"],
         foodsToAvoid: state.mealForm.foodsToAvoid,
         allergies: state.mealForm.allergies,
         mealsPerDay: state.mealForm.mealsPerDay,
@@ -108,7 +108,7 @@ export default function Step4Screen() {
         location: state.workoutForm.location,
         trainingMode: state.workoutForm.trainingMode,
         focusAreas: state.workoutForm.focusAreas,
-        daysOfWeek: state.workoutForm.daysOfWeek.map((d) => d.toLowerCase()),
+        daysOfWeek: state.workoutForm.daysOfWeek,
         sessionLength: state.workoutForm.sessionLength,
         experienceLevel: state.workoutForm.experienceLevel,
         limitations: state.workoutForm.limitations,

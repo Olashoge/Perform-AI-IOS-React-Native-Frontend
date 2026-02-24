@@ -289,25 +289,24 @@ export default function NewMealPlanScreen() {
 
     const workoutDays = profile.trainingDaysOfWeek || [];
 
+    const resolvedDietStyles = dietStyles.includes("No Preference") ? ["No Preference"] : dietStyles;
+
     const payload: any = {
       goal,
       mealsPerDay,
-      dietStyles: dietStyles.includes("No Preference") ? [] : dietStyles,
-      cuisineStyles: dietStyles.includes("No Preference") ? [] : dietStyles,
-      foodsToAvoid,
-      allergies: allergies ? allergies.split(",").map((s) => s.trim()).filter(Boolean) : [],
-      allergiesIntolerances: allergies ? allergies.split(",").map((s) => s.trim()).filter(Boolean) : [],
-      favoriteMeals: favoriteMeals || undefined,
+      dietStyles: resolvedDietStyles,
       spiceLevel,
       prepStyle,
       budgetMode,
       cookingTime,
       authenticityMode,
       householdSize,
-      workoutDays,
-      workoutDaysPerWeek: workoutDays.length,
       idempotencyKey: Crypto.randomUUID(),
     };
+
+    if (foodsToAvoid.length > 0) payload.foodsToAvoid = foodsToAvoid;
+    if (allergies) payload.allergies = allergies.split(",").map((s) => s.trim()).filter(Boolean);
+    if (favoriteMeals) payload.favoriteMeals = favoriteMeals;
 
     if (mealsPerDay === 2 && mealSlots.length === 2) {
       payload.mealSlots = mealSlots;

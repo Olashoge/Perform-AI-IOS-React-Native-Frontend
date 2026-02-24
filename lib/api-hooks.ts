@@ -761,8 +761,8 @@ export function useCreateDailyMeal() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ date, mealsPerDay }: { date: string; mealsPerDay: number }) => {
-      const response = await apiClient.post("/api/daily-meals", { date, mealsPerDay });
-      logApiCall("POST", "/api/daily-meals", response.status);
+      const response = await apiClient.post("/api/daily-meal", { date, mealsPerDay });
+      logApiCall("POST", "/api/daily-meal", response.status);
       return response.data;
     },
     onSuccess: (_data, variables) => {
@@ -778,8 +778,8 @@ export function useCreateDailyWorkout() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ date }: { date: string }) => {
-      const response = await apiClient.post("/api/daily-workouts", { date });
-      logApiCall("POST", "/api/daily-workouts", response.status);
+      const response = await apiClient.post("/api/daily-workout", { date });
+      logApiCall("POST", "/api/daily-workout", response.status);
       return response.data;
     },
     onSuccess: (_data, variables) => {
