@@ -284,6 +284,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/preferences", proxyToExternal);
   app.get("/api/preferences/exercise", proxyToExternal);
+  app.post("/api/preferences/exercise", proxyToExternal);
+  app.post("/api/preferences/meal", proxyToExternal);
   app.delete("/api/preferences/meal/:id", proxyToExternal);
   app.delete("/api/preferences/ingredient/:id", proxyToExternal);
   app.delete("/api/preferences/exercise/:id", proxyToExternal);

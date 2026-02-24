@@ -8,15 +8,35 @@ import {
   Pressable,
   Platform,
   RefreshControl,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
+import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useWorkoutPlan } from "@/lib/api-hooks";
+import { getAccessToken } from "@/lib/api-client";
 
 const WEB_TOP_INSET = 67;
 const WORKOUT_ACCENT = "#FF6B6B";
+
+async function sendExercisePreference(exerciseName: string, liked: boolean) {
+  const token = await getAccessToken();
+  const baseUrl = Platform.OS === "web"
+    ? ""
+    : process.env.EXPO_PUBLIC_API_BASE_URL || "";
+  const res = await fetch(`${baseUrl}/api/preferences/exercise`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ exerciseName, liked }),
+  });
+  if (!res.ok) throw new Error("Failed to save preference");
+  return res.json();
+}
 
 export default function WorkoutPlanDetailScreen() {
   const Colors = useColors();
@@ -162,6 +182,97 @@ function StatBadge({ icon, label, value }: { icon: string; label: string; value:
   );
 }
 
+function getSessionWarmup(session: any): any[] | string | null {
+  const raw = session.warmUp ?? session.warmup ?? session.warm_up;
+  if (!raw) return null;
+  if (typeof raw === "string") return raw;
+  if (Array.isArray(raw)) return raw;
+  return null;
+}
+
+function getSessionCooldown(session: any): any[] | string | null {
+  const raw = session.coolDown ?? session.cooldown ?? session.cool_down;
+  if (!raw) return null;
+  if (typeof raw === "string") return raw;
+  if (Array.isArray(raw)) return raw;
+  return null;
+}
+
+function getSessionMain(session: any): any[] {
+  return session.main ?? session.exercises ?? session.mainWorkout ?? [];
+}
+
+function getSessionCoachingTips(session: any): string[] {
+  const tips = session.coachingTips ?? session.coaching_tips ?? session.tips ?? [];
+  if (typeof tips === "string") return [tips];
+  if (Array.isArray(tips)) return tips.map((t: any) => typeof t === "string" ? t : t.text ?? t.tip ?? String(t));
+  return [];
+}
+
+function formatBulletContent(content: any[] | string): string[] {
+  if (typeof content === "string") return content.split("\n").filter(Boolean);
+  return content.map((item: any) => {
+    if (typeof item === "string") return item;
+    const name = item.name ?? item.exercise ?? item.description ?? "";
+    const dur = item.duration ?? item.time ?? "";
+    const reps = item.reps ?? "";
+    let line = name;
+    if (dur) line += ` · ${dur}`;
+    if (reps) line += ` · ${reps}`;
+    return line;
+  });
+}
+
+function LikeDislikeButtons({ exerciseName }: { exerciseName: string }) {
+  const Colors = useColors();
+  const [state, setState] = useState<"none" | "liked" | "disliked">("none");
+  const [loading, setLoading] = useState(false);
+
+  const handlePress = async (liked: boolean) => {
+    const newState = liked ? "liked" : "disliked";
+    if (state === newState) return;
+    setLoading(true);
+    try {
+      await sendExercisePreference(exerciseName, liked);
+      setState(newState);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      Alert.alert("Error", "Could not save preference");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <View style={{ flexDirection: "row", gap: 8 }}>
+      <Pressable
+        onPress={() => handlePress(true)}
+        disabled={loading}
+        hitSlop={6}
+        style={{ opacity: loading ? 0.4 : 1 }}
+      >
+        <Ionicons
+          name={state === "liked" ? "thumbs-up" : "thumbs-up-outline"}
+          size={18}
+          color={state === "liked" ? "#30D158" : Colors.textTertiary}
+        />
+      </Pressable>
+      <Pressable
+        onPress={() => handlePress(false)}
+        disabled={loading}
+        hitSlop={6}
+        style={{ opacity: loading ? 0.4 : 1 }}
+      >
+        <Ionicons
+          name={state === "disliked" ? "thumbs-down" : "thumbs-down-outline"}
+          size={18}
+          color={state === "disliked" ? WORKOUT_ACCENT : Colors.textTertiary}
+        />
+      </Pressable>
+    </View>
+  );
+}
+
 function DayCard({
   day,
   dayIndex,
@@ -201,6 +312,11 @@ function DayCard({
     );
   }
 
+  const warmup = session ? getSessionWarmup(session) : null;
+  const cooldown = session ? getSessionCooldown(session) : null;
+  const mainExercises = session ? getSessionMain(session) : [];
+  const coachingTips = session ? getSessionCoachingTips(session) : [];
+
   return (
     <View style={styles.dayCard}>
       <Pressable onPress={onToggle} style={styles.dayHeaderRow}>
@@ -221,7 +337,7 @@ function DayCard({
 
       {session && (
         <View style={styles.sessionPreview}>
-          <Text style={styles.sessionTitle}>{session.sessionTitle ?? "Training Session"}</Text>
+          <Text style={styles.sessionTitle}>{session.sessionTitle ?? session.name ?? "Training Session"}</Text>
           <View style={styles.sessionMeta}>
             {session.focus ? (
               <View style={styles.metaTag}>
@@ -229,10 +345,10 @@ function DayCard({
                 <Text style={styles.metaText}>{session.focus}</Text>
               </View>
             ) : null}
-            {session.durationMinutes ? (
+            {(session.durationMinutes || session.estimatedDuration) ? (
               <View style={styles.metaTag}>
                 <Ionicons name="time-outline" size={14} color={Colors.textSecondary} />
-                <Text style={styles.metaText}>{session.durationMinutes} min</Text>
+                <Text style={styles.metaText}>{session.durationMinutes ?? session.estimatedDuration} min</Text>
               </View>
             ) : null}
           </View>
@@ -241,34 +357,58 @@ function DayCard({
 
       {expanded && session && (
         <View style={styles.expandedContent}>
-          {session.warmup && (
-            <SessionSection
-              title="Warm-up"
-              icon="flame-outline"
-              iconColor="#FF9F0A"
-              content={session.warmup}
-            />
+          {warmup && (
+            <View style={styles.sessionSectionCard}>
+              <View style={styles.sectionHeaderRow}>
+                <Ionicons name="flame-outline" size={18} color="#FF9F0A" />
+                <Text style={styles.sectionTitle}>WARM-UP</Text>
+              </View>
+              {formatBulletContent(warmup).map((line, i) => (
+                <View key={i} style={styles.bulletRow}>
+                  <Text style={styles.bulletDot}>·</Text>
+                  <Text style={styles.bulletText}>{line}</Text>
+                </View>
+              ))}
+            </View>
           )}
 
-          {Array.isArray(session.exercises) && session.exercises.length > 0 && (
+          {mainExercises.length > 0 && (
             <View style={styles.exercisesSection}>
               <View style={styles.sectionHeaderRow}>
                 <Ionicons name="barbell-outline" size={18} color={WORKOUT_ACCENT} />
-                <Text style={styles.sectionTitle}>Exercises</Text>
+                <Text style={styles.sectionTitle}>MAIN WORKOUT</Text>
               </View>
-              {session.exercises.map((ex: any, idx: number) => (
+              {mainExercises.map((ex: any, idx: number) => (
                 <ExerciseCard key={idx} exercise={ex} index={idx} />
               ))}
             </View>
           )}
 
-          {session.cooldown && (
-            <SessionSection
-              title="Cool-down"
-              icon="snow-outline"
-              iconColor="#64D2FF"
-              content={session.cooldown}
-            />
+          {cooldown && (
+            <View style={styles.sessionSectionCard}>
+              <View style={styles.sectionHeaderRow}>
+                <Ionicons name="snow-outline" size={18} color="#64D2FF" />
+                <Text style={styles.sectionTitle}>COOL-DOWN</Text>
+              </View>
+              {formatBulletContent(cooldown).map((line, i) => (
+                <View key={i} style={styles.bulletRow}>
+                  <Text style={styles.bulletDot}>·</Text>
+                  <Text style={styles.bulletText}>{line}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {coachingTips.length > 0 && (
+            <View style={styles.sessionSectionCard}>
+              <View style={styles.sectionHeaderRow}>
+                <Ionicons name="bulb-outline" size={18} color="#FFD60A" />
+                <Text style={styles.sectionTitle}>COACHING TIPS</Text>
+              </View>
+              {coachingTips.map((tip, i) => (
+                <Text key={i} style={styles.coachingTipText}>{tip}</Text>
+              ))}
+            </View>
           )}
         </View>
       )}
@@ -276,70 +416,61 @@ function DayCard({
   );
 }
 
-function SessionSection({
-  title,
-  icon,
-  iconColor,
-  content,
-}: {
-  title: string;
-  icon: string;
-  iconColor: string;
-  content: any;
-}) {
-  const Colors = useColors();
-  const styles = useMemo(() => createStyles(Colors), [Colors]);
-  const text =
-    typeof content === "string"
-      ? content
-      : Array.isArray(content)
-        ? content.map((item: any) => (typeof item === "string" ? item : item.name ?? item.description ?? JSON.stringify(item))).join("\n")
-        : content?.description ?? content?.instructions ?? JSON.stringify(content);
-
-  return (
-    <View style={styles.sessionSectionCard}>
-      <View style={styles.sectionHeaderRow}>
-        <Ionicons name={icon as any} size={18} color={iconColor} />
-        <Text style={styles.sectionTitle}>{title}</Text>
-      </View>
-      <Text style={styles.sectionText}>{text}</Text>
-    </View>
-  );
-}
-
 function ExerciseCard({ exercise, index }: { exercise: any; index: number }) {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
+  const name = exercise.name ?? exercise.exercise ?? `Exercise ${index + 1}`;
+  const type = exercise.type ?? exercise.exerciseType ?? "";
+  const sets = exercise.sets ?? undefined;
+  const reps = exercise.reps ?? undefined;
+  const duration = exercise.duration ?? exercise.durationMinutes ?? undefined;
+  const rest = exercise.restSeconds ?? exercise.rest ?? undefined;
+  const notes = exercise.notes ?? exercise.note ?? exercise.tip ?? "";
+
   return (
     <View style={styles.exerciseCard}>
       <View style={styles.exerciseHeaderRow}>
         <View style={styles.exerciseIndex}>
           <Text style={styles.exerciseIndexText}>{index + 1}</Text>
         </View>
-        <Text style={styles.exerciseName}>{exercise.name}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.exerciseName}>{name}</Text>
+        </View>
+        <LikeDislikeButtons exerciseName={name} />
       </View>
       <View style={styles.exerciseDetails}>
-        {exercise.sets != null && (
+        {type ? (
+          <View style={styles.exerciseTypeBadge}>
+            <Text style={styles.exerciseTypeText}>{type}</Text>
+          </View>
+        ) : null}
+        {duration != null && (
           <View style={styles.detailChip}>
-            <Text style={styles.detailValue}>{exercise.sets}</Text>
+            <Ionicons name="time-outline" size={12} color={Colors.textSecondary} />
+            <Text style={styles.detailValue}>{duration}{typeof duration === "number" ? " minutes" : ""}</Text>
+          </View>
+        )}
+        {sets != null && (
+          <View style={styles.detailChip}>
+            <Text style={styles.detailValue}>{sets}</Text>
             <Text style={styles.detailLabel}>sets</Text>
           </View>
         )}
-        {exercise.reps != null && (
+        {reps != null && (
           <View style={styles.detailChip}>
-            <Text style={styles.detailValue}>{exercise.reps}</Text>
+            <Text style={styles.detailValue}>{reps}</Text>
             <Text style={styles.detailLabel}>reps</Text>
           </View>
         )}
-        {exercise.restSeconds != null && (
+        {rest != null && (
           <View style={styles.detailChip}>
-            <Text style={styles.detailValue}>{exercise.restSeconds}s</Text>
-            <Text style={styles.detailLabel}>rest</Text>
+            <Ionicons name="pause-outline" size={12} color={Colors.textSecondary} />
+            <Text style={styles.detailLabel}>Rest: {rest}{typeof rest === "number" ? "s" : ""}</Text>
           </View>
         )}
       </View>
-      {exercise.notes ? (
-        <Text style={styles.exerciseNotes}>{exercise.notes}</Text>
+      {notes ? (
+        <Text style={styles.exerciseNotes}>{notes}</Text>
       ) : null}
     </View>
   );
@@ -551,10 +682,27 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     textTransform: "uppercase" as const,
     letterSpacing: 0.5,
   },
-  sectionText: {
+  bulletRow: {
+    flexDirection: "row",
+    gap: 8,
+    paddingVertical: 2,
+  },
+  bulletDot: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+  },
+  bulletText: {
     fontSize: 12,
     color: Colors.textSecondary,
     lineHeight: 20,
+    flex: 1,
+  },
+  coachingTipText: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+    paddingVertical: 2,
   },
   exercisesSection: {
     gap: 8,
@@ -584,24 +732,36 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     color: WORKOUT_ACCENT,
   },
   exerciseName: {
-    flex: 1,
     fontSize: 13,
     fontWeight: "600" as const,
     color: Colors.text,
   },
+  exerciseTypeBadge: {
+    backgroundColor: Colors.surface,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  exerciseTypeText: {
+    fontSize: 10,
+    fontWeight: "500" as const,
+    color: Colors.textSecondary,
+  },
   exerciseDetails: {
     flexDirection: "row",
-    gap: 16,
+    flexWrap: "wrap",
+    gap: 10,
     marginBottom: 4,
+    alignItems: "center",
   },
   detailChip: {
     flexDirection: "row",
-    alignItems: "baseline",
+    alignItems: "center",
     gap: 4,
   },
   detailValue: {
-    fontSize: 14,
-    fontWeight: "700" as const,
+    fontSize: 12,
+    fontWeight: "600" as const,
     color: Colors.text,
   },
   detailLabel: {

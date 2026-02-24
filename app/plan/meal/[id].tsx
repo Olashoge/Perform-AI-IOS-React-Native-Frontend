@@ -8,12 +8,82 @@ import {
   Pressable,
   Platform,
   RefreshControl,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
+import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useMealPlan } from "@/lib/api-hooks";
+import { getAccessToken } from "@/lib/api-client";
+
+async function sendMealPreference(mealName: string, liked: boolean) {
+  const token = await getAccessToken();
+  const baseUrl = Platform.OS === "web"
+    ? ""
+    : process.env.EXPO_PUBLIC_API_BASE_URL || "";
+  const res = await fetch(`${baseUrl}/api/preferences/meal`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ mealName, liked }),
+  });
+  if (!res.ok) throw new Error("Failed to save preference");
+  return res.json();
+}
+
+function MealLikeDislikeButtons({ mealName }: { mealName: string }) {
+  const Colors = useColors();
+  const [state, setState] = useState<"none" | "liked" | "disliked">("none");
+  const [loading, setLoading] = useState(false);
+
+  const handlePress = async (liked: boolean) => {
+    const newState = liked ? "liked" : "disliked";
+    if (state === newState) return;
+    setLoading(true);
+    try {
+      await sendMealPreference(mealName, liked);
+      setState(newState);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      Alert.alert("Error", "Could not save preference");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <View style={{ flexDirection: "row", gap: 8 }}>
+      <Pressable
+        onPress={() => handlePress(true)}
+        disabled={loading}
+        hitSlop={6}
+        style={{ opacity: loading ? 0.4 : 1 }}
+      >
+        <Ionicons
+          name={state === "liked" ? "thumbs-up" : "thumbs-up-outline"}
+          size={18}
+          color={state === "liked" ? "#30D158" : Colors.textTertiary}
+        />
+      </Pressable>
+      <Pressable
+        onPress={() => handlePress(false)}
+        disabled={loading}
+        hitSlop={6}
+        style={{ opacity: loading ? 0.4 : 1 }}
+      >
+        <Ionicons
+          name={state === "disliked" ? "thumbs-down" : "thumbs-down-outline"}
+          size={18}
+          color={state === "disliked" ? "#FF6B6B" : Colors.textTertiary}
+        />
+      </Pressable>
+    </View>
+  );
+}
 
 const WEB_TOP_INSET = 67;
 
@@ -74,11 +144,14 @@ function MealCard({ mealType, meal }: { mealType: string; meal: MealData }) {
             {meal.name}
           </Text>
         </View>
-        <Ionicons
-          name={expanded ? "chevron-up" : "chevron-down"}
-          size={20}
-          color={Colors.textSecondary}
-        />
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <MealLikeDislikeButtons mealName={meal.name} />
+          <Ionicons
+            name={expanded ? "chevron-up" : "chevron-down"}
+            size={20}
+            color={Colors.textSecondary}
+          />
+        </View>
       </View>
 
       <View style={styles.mealQuickInfo}>
