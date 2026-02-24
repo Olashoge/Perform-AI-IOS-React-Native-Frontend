@@ -567,6 +567,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     color: Colors.textSecondary,
     lineHeight: 20,
     marginBottom: 16,
+    flexShrink: 1,
   },
   statsRow: {
     flexDirection: "row",
@@ -653,6 +654,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     color: Colors.textSecondary,
     lineHeight: 18,
     marginBottom: 6,
+    flexShrink: 1,
   },
   sessionMeta: {
     flexDirection: "row",
@@ -744,6 +746,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     fontSize: 13,
     fontWeight: "600" as const,
     color: Colors.text,
+    flexShrink: 1,
   },
   exerciseTypeBadge: {
     backgroundColor: Colors.surface,
@@ -759,7 +762,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   exerciseDetails: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
+    gap: 8,
     marginBottom: 4,
     alignItems: "center",
   },
