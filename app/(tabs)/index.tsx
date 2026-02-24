@@ -398,7 +398,7 @@ function ActivePlansSection({ Colors }: { Colors: ThemeColors }) {
 function QuickActionsGrid({ Colors }: { Colors: ThemeColors }) {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const actions = [
-    { icon: "nutrition-outline" as const, label: "Wellness", sub: "Your health journey", color: "#FF6B6B", onPress: () => router.push({ pathname: "/plans", params: { tab: "wellness" } }) },
+    { icon: "heart-outline" as const, label: "Wellness", sub: "Your health journey", color: "#FF6B6B", onPress: () => router.push({ pathname: "/plans", params: { tab: "wellness" } }) },
     { icon: "restaurant" as const, label: "Meal Plans", sub: "Adjust nutrition", color: Colors.warning, onPress: () => router.push({ pathname: "/plans", params: { tab: "meals" } }) },
     { icon: "barbell" as const, label: "Workouts", sub: "View training", color: Colors.scoreGreen, onPress: () => router.push({ pathname: "/plans", params: { tab: "workouts" } }) },
     { icon: "calendar" as const, label: "View Week", sub: "See your schedule", color: Colors.primary, onPress: () => router.push("/(tabs)/calendar") },
@@ -509,7 +509,7 @@ export default function DashboardScreen() {
           style={({ pressed }) => [styles.activePlanBanner, pressed && { opacity: 0.8 }]}
           onPress={() => router.push({ pathname: "/plan/wellness/[id]", params: { id: activeWellness.id } })}
         >
-          <Ionicons name="nutrition-outline" size={16} color={Colors.textSecondary} />
+          <Ionicons name="settings-outline" size={16} color={Colors.textSecondary} />
           <Text style={styles.activePlanLabel}>ACTIVE PLAN</Text>
           <Text style={styles.activePlanName} numberOfLines={1}>{activeWellness.title || activeWellness.name || "General Fitness"}</Text>
           <View style={{ flex: 1 }} />
