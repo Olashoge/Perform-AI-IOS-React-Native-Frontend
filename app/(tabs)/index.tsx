@@ -326,17 +326,34 @@ function DayDetailSection({ day, Colors }: { day: DayData | undefined; Colors: T
   );
 }
 
+function getTodayUTC(): string {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString().split("T")[0];
+}
+
+function isPlanActive(plan: any): boolean {
+  const backendStatus = plan.status || plan.generationStatus;
+  if (backendStatus && backendStatus !== "ready") return false;
+  const startDate = plan.startDate || plan.start_date || plan.planStartDate;
+  if (!startDate) return false;
+  const today = getTodayUTC();
+  const endDate = new Date(startDate + "T12:00:00Z");
+  endDate.setUTCDate(endDate.getUTCDate() + 6);
+  const end = endDate.toISOString().split("T")[0];
+  return today >= startDate && today <= end;
+}
+
 function ActivePlansSection({ Colors }: { Colors: ThemeColors }) {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const { data: mealPlans } = useMealPlans();
   const { data: workoutPlans } = useWorkoutPlans();
 
   const activeMealPlans = useMemo(() =>
-    (mealPlans || []).filter((p: any) => p.status === "active" || p.status === "ready").slice(0, 2),
+    (mealPlans || []).filter((p: any) => isPlanActive(p)).slice(0, 2),
     [mealPlans]
   );
   const activeWorkoutPlans = useMemo(() =>
-    (workoutPlans || []).filter((p: any) => p.status === "active" || p.status === "ready").slice(0, 2),
+    (workoutPlans || []).filter((p: any) => isPlanActive(p)).slice(0, 2),
     [workoutPlans]
   );
 
