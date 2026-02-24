@@ -1389,7 +1389,7 @@ export function useMealSwap(planId: string | null) {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/plan", planId] });
+      queryClient.invalidateQueries({ queryKey: ["meal-plan", planId] });
       queryClient.invalidateQueries({ queryKey: ["/api/plan", planId, "grocery"] });
       queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
     },
@@ -1409,7 +1409,7 @@ export function useDayRegen(planId: string | null) {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/plan", planId] });
+      queryClient.invalidateQueries({ queryKey: ["meal-plan", planId] });
       queryClient.invalidateQueries({ queryKey: ["/api/plan", planId, "grocery"] });
       queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
     },
