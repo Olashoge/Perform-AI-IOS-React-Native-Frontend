@@ -398,8 +398,8 @@ function WellnessPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
             router.push("/(tabs)/create" as any);
           }}
         >
-          <Ionicons name="add" size={14} color="#fff" />
-          <Text style={styles.newPlanButtonText}>New</Text>
+          <Ionicons name="sparkles" size={14} color="#fff" />
+          <Text style={styles.newPlanButtonText}>New Wellness Plan</Text>
         </Pressable>
       </View>
 
