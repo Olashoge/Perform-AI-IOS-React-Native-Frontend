@@ -17,7 +17,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
-import { useMealPlan, useMealFeedback, useResolveIngredientProposal, computeMealFingerprint, useMealPreferences, useGroceryList, useToggleGroceryOwned, useRegenerateGroceryList, GrocerySection, GroceryPricingItem } from "@/lib/api-hooks";
+import { useMealPlan, useMealFeedback, useResolveIngredientProposal, computeMealFingerprint, useMealPreferences, useGroceryList, useToggleGroceryOwned, useRegenerateGroceryList, useAllowance, useMealSwap, useDayRegen, GrocerySection, GroceryPricingItem } from "@/lib/api-hooks";
 
 function IngredientProposalModal({
   visible,
@@ -281,7 +281,7 @@ interface DayPlanData {
 }
 
 
-function MealCard({ mealType, meal, completed }: { mealType: string; meal: MealData; completed?: boolean }) {
+function MealCard({ mealType, meal, completed, onSwap, swapDisabled, isSwapping }: { mealType: string; meal: MealData; completed?: boolean; onSwap?: () => void; swapDisabled?: boolean; isSwapping?: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
@@ -336,6 +336,24 @@ function MealCard({ mealType, meal, completed }: { mealType: string; meal: MealD
         </View>
         <View style={styles.mealTopRight}>
           <MealActionButtons mealName={meal.name} cuisineTag={meal.cuisineTag} ingredients={meal.ingredients} />
+          {onSwap && (
+            <TouchableOpacity
+              onPress={onSwap}
+              disabled={swapDisabled || isSwapping}
+              activeOpacity={0.5}
+              style={{
+                opacity: swapDisabled ? 0.3 : 1,
+                paddingHorizontal: 8,
+                paddingVertical: 10,
+              }}
+            >
+              {isSwapping ? (
+                <ActivityIndicator size={16} color={Colors.primary} />
+              ) : (
+                <Ionicons name="swap-horizontal-outline" size={18} color={Colors.primary} />
+              )}
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             onPress={() => setExpanded(!expanded)}
             activeOpacity={0.5}
@@ -476,14 +494,73 @@ export default function MealPlanDetailScreen() {
   const { data: groceryData, isLoading: groceryLoading, refetch: refetchGrocery } = useGroceryList(id ?? null);
   const toggleOwnedMutation = useToggleGroceryOwned(id ?? null);
   const regenerateMutation = useRegenerateGroceryList(id ?? null);
+  const { data: allowance, refetch: refetchAllowance } = useAllowance();
+  const swapMutation = useMealSwap(id ?? null);
+  const dayRegenMutation = useDayRegen(id ?? null);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"meals" | "grocery">("meals");
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([refetch(), refetchGrocery()]);
+    await Promise.all([refetch(), refetchGrocery(), refetchAllowance()]);
     setRefreshing(false);
-  }, [refetch, refetchGrocery]);
+  }, [refetch, refetchGrocery, refetchAllowance]);
+
+  const mealSwapsRemaining = allowance ? allowance.today.mealSwapsLimit - allowance.today.mealSwapsUsed : 0;
+  const dayRegensRemaining = allowance ? allowance.today.mealRegensLimit - allowance.today.mealRegensUsed : 0;
+  const planRegensRemaining = allowance ? allowance.plan.regensLimit - allowance.plan.regensUsed : 0;
+  const isCooldownActive = allowance?.cooldown?.active ?? false;
+
+  const handleMealSwap = useCallback((dayIndex: number, mealType: string, mealName: string) => {
+    if (isCooldownActive) {
+      Alert.alert("Cooldown Active", `Please wait ${allowance?.cooldown?.minutesRemaining ?? 0} minutes before swapping again.`);
+      return;
+    }
+    if (mealSwapsRemaining <= 0) {
+      Alert.alert("No Swaps Left", "You've used all your meal swaps for today. They reset at midnight.");
+      return;
+    }
+    Alert.alert(
+      "Swap Meal",
+      `Replace "${mealName}" with a new meal?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Swap",
+          onPress: () => {
+            swapMutation.mutate({ dayIndex, mealType });
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          },
+        },
+      ]
+    );
+  }, [mealSwapsRemaining, isCooldownActive, allowance, swapMutation]);
+
+  const handleDayRegen = useCallback((dayIndex: number) => {
+    if (isCooldownActive) {
+      Alert.alert("Cooldown Active", `Please wait ${allowance?.cooldown?.minutesRemaining ?? 0} minutes before regenerating.`);
+      return;
+    }
+    if (dayRegensRemaining <= 0) {
+      Alert.alert("No Regens Left", "You've used your day regeneration for today. It resets at midnight.");
+      return;
+    }
+    Alert.alert(
+      "Regenerate Day",
+      "This will replace all meals for this day with new ones.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Regenerate",
+          style: "destructive",
+          onPress: () => {
+            dayRegenMutation.mutate({ dayIndex });
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          },
+        },
+      ]
+    );
+  }, [dayRegensRemaining, isCooldownActive, allowance, dayRegenMutation]);
 
   const pricingMap = useMemo(() => {
     const map = new Map<string, { min: number; max: number }>();
@@ -611,6 +688,46 @@ export default function MealPlanDetailScreen() {
           </View>
         ) : null}
 
+        {allowance && (
+          <View style={styles.budgetCard}>
+            <View style={styles.budgetHeader}>
+              <Ionicons name="analytics-outline" size={16} color={Colors.text} />
+              <Text style={styles.budgetTitle}>Today's Budget</Text>
+            </View>
+            <View style={styles.budgetRow}>
+              <View style={styles.budgetItem}>
+                <Ionicons name="swap-horizontal-outline" size={14} color={Colors.textSecondary} />
+                <Text style={styles.budgetLabel}>Meal Swaps</Text>
+                <Text style={[styles.budgetValue, mealSwapsRemaining === 0 && styles.budgetExhausted]}>
+                  {allowance.today.mealSwapsUsed}/{allowance.today.mealSwapsLimit}
+                </Text>
+              </View>
+              <View style={styles.budgetItem}>
+                <Ionicons name="refresh-outline" size={14} color={Colors.textSecondary} />
+                <Text style={styles.budgetLabel}>Day Regens</Text>
+                <Text style={[styles.budgetValue, dayRegensRemaining === 0 && styles.budgetExhausted]}>
+                  {allowance.today.mealRegensUsed}/{allowance.today.mealRegensLimit}
+                </Text>
+              </View>
+              <View style={styles.budgetItem}>
+                <Ionicons name="build-outline" size={14} color={Colors.textSecondary} />
+                <Text style={styles.budgetLabel}>Plan Regens</Text>
+                <Text style={[styles.budgetValue, planRegensRemaining === 0 && styles.budgetExhausted]}>
+                  {allowance.plan.regensUsed}/{allowance.plan.regensLimit}
+                </Text>
+              </View>
+            </View>
+            {isCooldownActive && (
+              <View style={styles.cooldownBanner}>
+                <Ionicons name="time-outline" size={13} color="#FF9F0A" />
+                <Text style={styles.cooldownText}>
+                  Cooldown active — {allowance.cooldown.minutesRemaining}m remaining
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+
         <View style={styles.tabBar}>
           <Pressable
             style={[styles.tab, activeTab === "meals" && styles.tabActive]}
@@ -654,15 +771,31 @@ export default function MealPlanDetailScreen() {
                       {dateStr ? <Text style={styles.dayDate}>{dateStr}</Text> : null}
                     </View>
                     <Pressable
-                      style={({ pressed }) => [styles.regenDayBtn, pressed && { opacity: 0.7 }]}
-                      onPress={() => {}}
+                      style={({ pressed }) => [
+                        styles.regenDayBtn,
+                        pressed && { opacity: 0.7 },
+                        (dayRegensRemaining <= 0 || isCooldownActive || dayRegenMutation.isPending) && { opacity: 0.4 },
+                      ]}
+                      onPress={() => handleDayRegen(dayNum)}
+                      disabled={dayRegenMutation.isPending}
                     >
-                      <Ionicons name="refresh-outline" size={14} color={Colors.textSecondary} />
+                      {dayRegenMutation.isPending && dayRegenMutation.variables?.dayIndex === dayNum ? (
+                        <ActivityIndicator size={12} color={Colors.textSecondary} />
+                      ) : (
+                        <Ionicons name="refresh-outline" size={14} color={Colors.textSecondary} />
+                      )}
                       <Text style={styles.regenDayText}>Regenerate Day</Text>
                     </Pressable>
                   </View>
                   {mealEntries.map(([mealType, meal]) => (
-                    <MealCard key={mealType} mealType={mealType} meal={meal as MealData} />
+                    <MealCard
+                      key={mealType}
+                      mealType={mealType}
+                      meal={meal as MealData}
+                      onSwap={() => handleMealSwap(dayNum, mealType, (meal as MealData).name)}
+                      swapDisabled={mealSwapsRemaining <= 0 || isCooldownActive || swapMutation.isPending}
+                      isSwapping={swapMutation.isPending && swapMutation.variables?.mealType === mealType && swapMutation.variables?.dayIndex === dayNum}
+                    />
                   ))}
                 </View>
               );
@@ -887,6 +1020,61 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   },
   dailyTargetsBold: {
     fontWeight: "600" as const,
+  },
+  budgetCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  budgetHeader: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 6,
+    marginBottom: 10,
+  },
+  budgetTitle: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    color: Colors.text,
+  },
+  budgetRow: {
+    flexDirection: "row" as const,
+    justifyContent: "space-between" as const,
+  },
+  budgetItem: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 4,
+  },
+  budgetLabel: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+  budgetValue: {
+    fontSize: 13,
+    fontWeight: "700" as const,
+    color: Colors.text,
+    marginLeft: 2,
+  },
+  budgetExhausted: {
+    color: Colors.error || "#FF3B30",
+  },
+  cooldownBanner: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 6,
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 0.5,
+    borderTopColor: Colors.border,
+  },
+  cooldownText: {
+    fontSize: 12,
+    color: "#FF9F0A",
+    fontWeight: "500" as const,
   },
   tabBar: {
     flexDirection: "row" as const,

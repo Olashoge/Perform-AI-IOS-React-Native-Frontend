@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Alert } from "react-native";
 import apiClient, { getAccessToken } from "./api-client";
 import { logApiCall } from "./api-log";
 import { getWeekStartUTC, getWeekEndUTC, computeWeekStartForDate } from "./week-utils";
@@ -1339,6 +1340,82 @@ export function useRegenerateGroceryList(mealPlanId: string | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/plan", mealPlanId, "grocery"] });
+    },
+  });
+}
+
+export interface AllowanceData {
+  goalPlanId: string;
+  allowanceId: string;
+  today: {
+    mealSwapsUsed: number;
+    mealSwapsLimit: number;
+    workoutSwapsUsed: number;
+    workoutSwapsLimit: number;
+    mealRegensUsed: number;
+    mealRegensLimit: number;
+    workoutRegensUsed: number;
+    workoutRegensLimit: number;
+  };
+  plan: {
+    regensUsed: number;
+    regensLimit: number;
+  };
+  cooldown: {
+    active: boolean;
+    minutesRemaining: number;
+  };
+  flexTokensAvailable: number;
+  coachInsight: string | null;
+}
+
+export function useAllowance() {
+  return useQuery<AllowanceData>({
+    queryKey: ["/api/allowance/current"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/allowance/current");
+      logApiCall("GET", "/api/allowance/current", response.status);
+      return response.data;
+    },
+  });
+}
+
+export function useMealSwap(planId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ dayIndex, mealType }: { dayIndex: number; mealType: string }) => {
+      const response = await apiClient.post(`/api/plan/${planId}/swap`, { dayIndex, mealType });
+      logApiCall("POST", `/api/plan/${planId}/swap`, response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/plan", planId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/plan", planId, "grocery"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
+    },
+    onError: (error: any) => {
+      const msg = error?.response?.data?.message || "Could not swap meal";
+      Alert.alert("Swap Failed", msg);
+    },
+  });
+}
+
+export function useDayRegen(planId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ dayIndex }: { dayIndex: number }) => {
+      const response = await apiClient.post(`/api/plan/${planId}/regenerate-day`, { dayIndex });
+      logApiCall("POST", `/api/plan/${planId}/regenerate-day`, response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/plan", planId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/plan", planId, "grocery"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
+    },
+    onError: (error: any) => {
+      const msg = error?.response?.data?.message || "Could not regenerate day";
+      Alert.alert("Regen Failed", msg);
     },
   });
 }

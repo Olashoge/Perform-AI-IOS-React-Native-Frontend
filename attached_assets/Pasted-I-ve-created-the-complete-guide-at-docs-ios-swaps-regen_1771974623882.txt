@@ -1,0 +1,30 @@
+I've created the complete guide at docs/ios-swaps-regens-guide.md. Here's the breakdown:
+
+The 6 Regeneration/Swap Actions
+1. Meal Swap (POST /api/plan/:id/swap) — Replaces a single meal. Send { dayIndex, mealType }. Synchronous — the response has the updated plan with the new meal already in place.
+
+2. Meal Day Regen (POST /api/plan/:id/regenerate-day) — Regenerates all meals for one day. Send { dayIndex }. Also synchronous.
+
+3. Workout Session Regen (POST /api/workout/:id/regenerate-session) — Regenerates one day's workout exercises. Send { dayIndex }. Synchronous. Only works on training days, not rest days.
+
+4. Grocery List Regen (POST /api/plan/:id/grocery/regenerate) — Rebuilds the grocery list from current ingredients. No body needed, no budget limit. Call this after any swap or day regen.
+
+5 & 6. Daily Meal/Workout Regen (POST /api/daily-meal/:date/regenerate and POST /api/daily-workout/:date/regenerate) — These are for standalone single-day plans. They're async — they return immediately with { id, status: "generating" } and you must poll until ready.
+
+The Budget/Allowance System
+Every wellness plan gets a budget tracked via GET /api/allowance/current:
+
+2 meal swaps per day (resets midnight UTC)
+2 workout swaps per day (resets midnight UTC)
+1 meal day regen per day (resets midnight UTC)
+1 workout session regen per day (resets midnight UTC)
+5 total plan regens for the plan's lifetime (never resets)
+6-hour cooldown triggers if you regen 3 times in 24 hours
+Flex tokens can be redeemed to bypass limits
+Bonuses/penalties adjust limits based on adherence
+Key Implementation Notes
+Meal swap and day regen return the full updated plan — no polling needed
+After every swap/regen, refetch the grocery list and allowance state
+Check the budget before enabling/disabling buttons
+A 403 response always includes a descriptive message field explaining why the action was blocked
+The guide includes Swift code snippets for computing disabled states and displaying remaining budget. Let me know if you need clarification on any part.
