@@ -107,7 +107,7 @@ function WeekScoreCard({ weekStart, days, Colors }: { weekStart: string; days: D
   return (
     <View style={styles.scoreCard}>
       <View style={{ alignItems: "center", marginBottom: 20 }}>
-        <ScoreRing score={score} Colors={Colors} />
+        <ScoreRing score={score} size={100} Colors={Colors} />
       </View>
       <Text style={styles.thisWeekLabel}>THIS WEEK</Text>
       <Text style={styles.weekRangeText}>{weekRange}</Text>
