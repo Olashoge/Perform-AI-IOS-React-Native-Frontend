@@ -398,6 +398,14 @@ export default function PlansHubScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: topInset }]}>
+      <View style={styles.header}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={28} color={Colors.text} />
+        </Pressable>
+        <Text style={styles.headerTitle}>Plans</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       {activeWellnessPlan && (
         <View style={styles.activePlanBanner}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1 }}>
@@ -523,6 +531,28 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    paddingTop: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+    backgroundColor: Colors.background,
+  },
+  backBtn: {
+    width: 40,
+    alignItems: "flex-start" as const,
+  },
+  headerTitle: {
+    fontSize: 15,
+    fontFamily: "Inter_700Bold",
+    color: Colors.text,
+    flex: 1,
+    textAlign: "center" as const,
   },
   activePlanBanner: {
     flexDirection: "row",

@@ -93,27 +93,24 @@ export default function SettingsIndexScreen() {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[
-        styles.scrollContent,
-        {
-          paddingTop: insets.top + 16 + webTopInset,
-          paddingBottom: insets.bottom + 120,
-        },
-      ]}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.backRow}>
-        <Pressable
-          onPress={() => router.back()}
-          style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
-          hitSlop={8}
-        >
-          <Ionicons name="chevron-back" size={24} color={Colors.text} />
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: insets.top + webTopInset + 8 }]}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={28} color={Colors.text} />
         </Pressable>
         <Text style={styles.headerTitle}>Settings</Text>
+        <View style={{ width: 40 }} />
       </View>
+
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingBottom: insets.bottom + 120,
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
 
       <Text style={styles.sectionTitle}>LOGIN INFORMATION</Text>
       <View style={styles.card}>
@@ -171,6 +168,7 @@ export default function SettingsIndexScreen() {
         <Text style={styles.signOutText}>Sign Out</Text>
       </Pressable>
     </ScrollView>
+    </View>
   );
 }
 
@@ -182,24 +180,26 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
   },
-  backRow: {
+  header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 24,
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+    backgroundColor: Colors.background,
   },
   backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    backgroundColor: Colors.surface,
-    justifyContent: "center",
-    alignItems: "center",
+    width: 40,
+    alignItems: "flex-start",
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 15,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
+    flex: 1,
+    textAlign: "center",
   },
   sectionTitle: {
     fontSize: 10,

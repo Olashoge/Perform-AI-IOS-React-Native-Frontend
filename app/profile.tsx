@@ -506,27 +506,23 @@ export default function ProfileScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
     >
+      <View style={[styles.header, { paddingTop: insets.top + webTopInset + 8 }]}>
+        <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={28} color={Colors.text} />
+        </Pressable>
+        <Text style={styles.headerTitle}>Profile</Text>
+        <View style={{ width: 40 }} />
+      </View>
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: insets.top + 16 + webTopInset,
             paddingBottom: insets.bottom + 100,
           },
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.backRow}>
-          <Pressable
-            onPress={() => router.back()}
-            style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
-            hitSlop={8}
-          >
-            <Ionicons name="chevron-back" size={24} color={Colors.text} />
-          </Pressable>
-          <Text style={styles.headerTitle}>Profile</Text>
-        </View>
 
         <View style={styles.avatarSection}>
           <View style={styles.avatar}>
@@ -911,24 +907,26 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
   },
-  backRow: {
+  header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 24,
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+    backgroundColor: Colors.background,
   },
   backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    backgroundColor: Colors.surface,
-    justifyContent: "center",
-    alignItems: "center",
+    width: 40,
+    alignItems: "flex-start" as const,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 15,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
+    flex: 1,
+    textAlign: "center" as const,
   },
   avatarSection: {
     alignItems: "center",
