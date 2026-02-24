@@ -353,7 +353,7 @@ function ActivePlansSection({ Colors }: { Colors: ThemeColors }) {
     const sStr = `${MONTHS_SHORT[s.getUTCMonth()]} ${s.getUTCDate()}`;
     if (!e) return sStr;
     const eStr = `${MONTHS_SHORT[e.getUTCMonth()]} ${e.getUTCDate()}`;
-    return `${sStr} → ${eStr}`;
+    return `${sStr} — ${eStr}`;
   }
 
   return (
