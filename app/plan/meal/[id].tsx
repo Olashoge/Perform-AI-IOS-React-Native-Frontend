@@ -176,9 +176,6 @@ function MealActionButtons({ mealName, cuisineTag, ingredients }: { mealName: st
     handlePress("dislike");
   }, [state, feedbackMutation.isPending]);
 
-  const handleRegenPress = useCallback(() => {
-  }, []);
-
   return (
     <>
       <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -213,16 +210,6 @@ function MealActionButtons({ mealName, cuisineTag, ingredients }: { mealName: st
             size={18}
             color={state === "disliked" ? "#FF6B6B" : Colors.textTertiary}
           />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleRegenPress}
-          activeOpacity={0.5}
-          style={{
-            paddingHorizontal: 10,
-            paddingVertical: 10,
-          }}
-        >
-          <Ionicons name="refresh-outline" size={18} color={Colors.textTertiary} />
         </TouchableOpacity>
       </View>
       <IngredientProposalModal
