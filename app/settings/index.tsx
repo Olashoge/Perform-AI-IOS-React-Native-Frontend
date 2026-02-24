@@ -197,12 +197,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: "Inter_700Bold",
     color: Colors.textSecondary,
     letterSpacing: 0.8,
@@ -231,12 +231,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     flex: 1,
   },
   rowLabel: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
   },
   rowValue: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Inter_500Medium",
     color: Colors.text,
     marginTop: 2,
@@ -257,7 +257,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     backgroundColor: Colors.surfaceTertiary,
   },
   segmentedText: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
   },
@@ -266,7 +266,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
   },
   hintText: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: "Inter_400Regular",
     color: Colors.textTertiary,
     textAlign: "center",
@@ -285,7 +285,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderColor: Colors.error + "30",
   },
   signOutText: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Inter_600SemiBold",
     color: Colors.error,
   },

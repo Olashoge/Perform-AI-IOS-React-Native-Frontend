@@ -926,7 +926,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
   },
@@ -944,12 +944,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 14,
   },
   userName: {
-    fontSize: 22,
+    fontSize: 18,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
   },
   userEmail: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
     marginTop: 4,
@@ -963,7 +963,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginLeft: 4,
   },
   sectionHeaderText: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_600SemiBold",
     color: Colors.textSecondary,
     textTransform: "uppercase",
@@ -979,13 +979,13 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 18,
   },
   formLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
     marginBottom: 8,
   },
   helperText: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: "Inter_400Regular",
     color: Colors.textTertiary,
     marginTop: 6,
@@ -995,7 +995,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Inter_400Regular",
     color: Colors.text,
     borderWidth: 1,
@@ -1023,7 +1023,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderColor: Colors.primary,
   },
   segmentedBtnText: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
   },
@@ -1049,7 +1049,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderColor: Colors.primary,
   },
   pillText: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
   },
@@ -1071,7 +1071,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     flex: 1,
   },
   heightUnit: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
   },
@@ -1091,7 +1091,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingVertical: 6,
   },
   tagText: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_500Medium",
     color: Colors.text,
   },
@@ -1111,7 +1111,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 8,
   },
   accordionHeaderText: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
   },
@@ -1125,7 +1125,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 6,
   },
   accordionBadgeText: {
-    fontSize: 11,
+    fontSize: 9,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
   },
@@ -1141,7 +1141,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     opacity: 0.6,
   },
   saveButtonText: {
-    fontSize: 17,
+    fontSize: 15,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
   },
@@ -1157,7 +1157,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingVertical: 10,
   },
   diagnosticsText: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: "Inter_500Medium",
     color: Colors.warning,
   },
@@ -1168,7 +1168,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingVertical: 10,
   },
   signOutText: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: "Inter_500Medium",
     color: Colors.error,
   },

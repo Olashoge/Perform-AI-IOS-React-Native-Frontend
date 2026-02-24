@@ -77,7 +77,7 @@ const statusBadgeStyles = StyleSheet.create({
     borderRadius: 3,
   },
   statusText: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: "Inter_500Medium",
   },
 });
@@ -479,7 +479,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     justifyContent: "center",
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 17,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
   },
@@ -513,7 +513,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderColor: Colors.primary + "40",
   },
   tabText: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
   },
@@ -533,7 +533,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     backgroundColor: Colors.primary + "30",
   },
   tabBadgeText: {
-    fontSize: 11,
+    fontSize: 9,
     fontFamily: "Inter_600SemiBold",
     color: Colors.textSecondary,
   },
@@ -572,12 +572,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     flex: 1,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
   },
   cardSubtitle: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
     marginTop: 2,
@@ -602,7 +602,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 4,
   },
   dateText: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
   },
@@ -613,12 +613,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingTop: 4,
   },
   planTypeLabel: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
   },
   planTypeValue: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_500Medium",
     color: Colors.text,
   },
@@ -637,7 +637,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 4,
   },
   actionText: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: "Inter_500Medium",
     color: Colors.text,
   },
@@ -648,18 +648,18 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 12,
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: 15,
     fontFamily: "Inter_600SemiBold",
     color: Colors.textSecondary,
     marginTop: 8,
   },
   emptySubtitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
     color: Colors.textTertiary,
     textAlign: "center",
     paddingHorizontal: 32,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   emptyCreateButton: {
     flexDirection: "row",
@@ -672,7 +672,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginTop: 12,
   },
   emptyCreateText: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
   },

@@ -200,17 +200,17 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     alignItems: "flex-start",
   },
   headerTitle: {
-    fontSize: 17,
+    fontSize: 15,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
     flex: 1,
     textAlign: "center",
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
-    lineHeight: 20,
+    lineHeight: 18,
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 12,
@@ -236,7 +236,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderColor: Colors.primary + "50",
   },
   tabText: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
   },
@@ -276,12 +276,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 2,
   },
   itemName: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: "Inter_500Medium",
     color: Colors.text,
   },
   itemSubtext: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
   },
@@ -303,10 +303,10 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
   },
   emptyText: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
     textAlign: "center",
-    lineHeight: 20,
+    lineHeight: 18,
   },
 });

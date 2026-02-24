@@ -884,12 +884,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
   },
   headerDate: {
-    fontSize: 18,
+    fontSize: 15,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
   },
   headerSubdate: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
     marginTop: 2,
@@ -918,12 +918,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
   },
   scoreBarLabel: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
   },
   scoreBarValue: {
-    fontSize: 22,
+    fontSize: 18,
     fontFamily: "Inter_700Bold",
   },
   progressBarLarge: {
@@ -937,7 +937,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderRadius: 4,
   },
   scoreBarSummary: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
   },
@@ -951,13 +951,13 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 17,
+    fontSize: 15,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
     flex: 1,
   },
   sectionCount: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_600SemiBold",
     color: Colors.textSecondary,
   },
@@ -989,7 +989,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     justifyContent: "space-between",
   },
   expandableCardName: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
   },
@@ -999,12 +999,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderRadius: 8,
   },
   typePillText: {
-    fontSize: 11,
+    fontSize: 9,
     fontFamily: "Inter_600SemiBold",
     textTransform: "capitalize",
   },
   quickInfoLine: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
     marginTop: 2,
@@ -1052,7 +1052,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 4,
   },
   workoutMetaText: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
   },
@@ -1064,7 +1064,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 16,
   },
   descriptionText: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
     fontStyle: "italic",
@@ -1074,7 +1074,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 8,
   },
   detailSectionTitle: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: "Inter_700Bold",
     color: Colors.textSecondary,
     letterSpacing: 0.8,
@@ -1092,13 +1092,13 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginTop: 6,
   },
   dashBullet: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
     color: Colors.textTertiary,
     width: 12,
   },
   bulletText: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
     color: Colors.text,
     flex: 1,
@@ -1118,7 +1118,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
   },
   stepNumberText: {
-    fontSize: 11,
+    fontSize: 9,
     fontFamily: "Inter_700Bold",
   },
   macroBar: {
@@ -1138,13 +1138,13 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderRadius: 4,
   },
   macroLabel: {
-    fontSize: 10,
+    fontSize: 9,
     fontFamily: "Inter_500Medium",
     color: Colors.textTertiary,
     textTransform: "uppercase",
   },
   macroValue: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
   },
@@ -1169,7 +1169,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 4,
   },
   exerciseName: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
   },
@@ -1185,16 +1185,16 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderRadius: 6,
   },
   miniPillText: {
-    fontSize: 10,
+    fontSize: 9,
     fontFamily: "Inter_600SemiBold",
   },
   exerciseDetail: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
   },
   exerciseNote: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: "Inter_400Regular",
     color: Colors.textTertiary,
     fontStyle: "italic",
@@ -1208,7 +1208,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingLeft: 4,
   },
   tipText: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
     color: Colors.text,
     flex: 1,
@@ -1229,12 +1229,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 8,
   },
   emptyTitle: {
-    fontSize: 20,
+    fontSize: 17,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
   },
   emptySubtitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
     textAlign: "center",
@@ -1251,7 +1251,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginTop: 8,
   },
   planButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Inter_600SemiBold",
     color: "#fff",
   },
@@ -1264,7 +1264,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 16,
   },
   addMoreText: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: "Inter_500Medium",
     color: Colors.primary,
   },
@@ -1295,7 +1295,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderColor: Colors.primary + "30",
   },
   generatingText: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_500Medium",
     color: Colors.primary,
     flex: 1,
@@ -1321,13 +1321,13 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 16,
   },
   sheetTitle: {
-    fontSize: 20,
+    fontSize: 17,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
     textAlign: "center",
   },
   sheetSubtitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
     textAlign: "center",
@@ -1358,12 +1358,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 2,
   },
   sheetOptionTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
   },
   sheetOptionDesc: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
   },
@@ -1373,12 +1373,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingVertical: 24,
   },
   sheetEmptyText: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
   },
   mealPickerLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
     textAlign: "center",
@@ -1397,12 +1397,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 6,
   },
   mealPickerNum: {
-    fontSize: 28,
+    fontSize: 24,
     fontFamily: "Inter_700Bold",
     color: Colors.primary,
   },
   mealPickerBtnLabel: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
     textAlign: "center",
@@ -1412,7 +1412,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingVertical: 8,
   },
   mealPickerBackText: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
   },

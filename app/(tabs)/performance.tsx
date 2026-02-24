@@ -228,7 +228,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 20,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
     marginBottom: 24,
@@ -246,13 +246,13 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 16,
   },
   scoreCardLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
     marginBottom: 4,
   },
   scoreCardValue: {
-    fontSize: 36,
+    fontSize: 30,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
   },
@@ -266,7 +266,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderRadius: 20,
   },
   trendText: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_600SemiBold",
   },
   scoreBarTrack: {
@@ -300,7 +300,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     flex: 1,
   },
   bannerLabel: {
-    fontSize: 11,
+    fontSize: 9,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
     textTransform: "uppercase",
@@ -308,7 +308,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 2,
   },
   bannerMessage: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Inter_600SemiBold",
   },
   card: {
@@ -318,7 +318,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
     marginBottom: 16,
@@ -337,7 +337,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 6,
   },
   chartValue: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_600SemiBold",
     color: Colors.textSecondary,
   },
@@ -353,7 +353,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderRadius: 6,
   },
   chartLabel: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
   },
@@ -383,12 +383,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderRadius: 4,
   },
   splitLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
   },
   splitValue: {
-    fontSize: 28,
+    fontSize: 24,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
     marginBottom: 10,
@@ -425,12 +425,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
   },
   streakValue: {
-    fontSize: 22,
+    fontSize: 18,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
   },
   streakLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
     marginTop: 2,

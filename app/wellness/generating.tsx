@@ -159,14 +159,14 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     transform: [{ scale: 1.5 }],
   },
   title: {
-    fontSize: 26,
+    fontSize: 22,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
     textAlign: "center",
     marginBottom: 12,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
     textAlign: "center",
@@ -188,12 +188,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   },
   stageLabel: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Inter_500Medium",
     color: Colors.text,
   },
   stageStatus: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
   },
@@ -212,7 +212,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
   },
   primaryButtonText: {
-    fontSize: 17,
+    fontSize: 15,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
   },
@@ -223,7 +223,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
   },
   secondaryButtonText: {
-    fontSize: 17,
+    fontSize: 15,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
   },

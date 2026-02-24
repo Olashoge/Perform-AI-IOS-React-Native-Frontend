@@ -74,8 +74,8 @@ function ScoreRing({ score, size = 140, Colors }: { score: number; size?: number
         transform: [{ rotate: "-90deg" }],
         opacity: 0.9,
       }} />
-      <Text style={{ fontSize: 36, fontFamily: "Inter_700Bold", color }}>{score}</Text>
-      <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.textSecondary, marginTop: 2 }}>SCORE</Text>
+      <Text style={{ fontSize: 30, fontFamily: "Inter_700Bold", color }}>{score}</Text>
+      <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: Colors.textSecondary, marginTop: 2 }}>SCORE</Text>
     </View>
   );
 }
@@ -250,7 +250,7 @@ function DayDetailSection({ day, Colors }: { day: DayData | undefined; Colors: T
         <View style={styles.nutritionCard}>
           <View style={styles.nutritionHeader}>
             <View style={[styles.nutritionIconBg, { backgroundColor: Colors.warning + "20" }]}>
-              <Text style={{ fontSize: 20 }}>🍽</Text>
+              <Text style={{ fontSize: 17 }}>🍽</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.nutritionTitle}>Nutrition</Text>
@@ -290,7 +290,7 @@ function DayDetailSection({ day, Colors }: { day: DayData | undefined; Colors: T
           onPress={() => router.push({ pathname: "/daily/[date]", params: { date: day.date } })}
         >
           <View style={[styles.nutritionIconBg, { backgroundColor: Colors.scoreGreen + "20" }]}>
-            <Text style={{ fontSize: 20 }}>💪</Text>
+            <Text style={{ fontSize: 17 }}>💪</Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.nutritionTitle}>Workout</Text>
@@ -372,7 +372,7 @@ function ActivePlansSection({ Colors }: { Colors: ThemeColors }) {
           }}
         >
           <View style={[styles.planIconBg, { backgroundColor: plan.planType === "meal" ? Colors.warning + "20" : Colors.scoreGreen + "20" }]}>
-            <Text style={{ fontSize: 22 }}>{plan.planType === "meal" ? "🍽" : "💪"}</Text>
+            <Text style={{ fontSize: 18 }}>{plan.planType === "meal" ? "🍽" : "💪"}</Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.planCardTitle} numberOfLines={1}>{plan.name || plan.title || "Plan"}</Text>
@@ -561,13 +561,13 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 4,
     marginBottom: 4,
   },
-  activePlanLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: Colors.textSecondary, letterSpacing: 0.5 },
-  activePlanName: { fontSize: 14, fontFamily: "Inter_700Bold", color: Colors.text, maxWidth: 160 },
-  viewProgressLink: { fontSize: 13, fontFamily: "Inter_500Medium", color: Colors.primary },
+  activePlanLabel: { fontSize: 9, fontFamily: "Inter_600SemiBold", color: Colors.textSecondary, letterSpacing: 0.5 },
+  activePlanName: { fontSize: 12, fontFamily: "Inter_700Bold", color: Colors.text, maxWidth: 160 },
+  viewProgressLink: { fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.primary },
 
   dashboardHeader: { marginBottom: 20 },
-  headerTitle: { fontSize: 28, fontFamily: "Inter_700Bold", color: Colors.text },
-  headerSubtitle: { fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.textSecondary, marginTop: 2 },
+  headerTitle: { fontSize: 24, fontFamily: "Inter_700Bold", color: Colors.text },
+  headerSubtitle: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textSecondary, marginTop: 2 },
 
   scoreCard: {
     backgroundColor: Colors.surface,
@@ -575,8 +575,8 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     padding: 24,
     marginBottom: 16,
   },
-  thisWeekLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: Colors.textSecondary, letterSpacing: 0.5, marginBottom: 2 },
-  weekRangeText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.text, marginBottom: 16 },
+  thisWeekLabel: { fontSize: 9, fontFamily: "Inter_600SemiBold", color: Colors.textSecondary, letterSpacing: 0.5, marginBottom: 2 },
+  weekRangeText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.text, marginBottom: 16 },
 
   splitStatsRow: { flexDirection: "row", gap: 12, marginBottom: 16 },
   splitStatCard: {
@@ -587,14 +587,14 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderWidth: 1,
   },
   splitStatHeader: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 },
-  splitStatIcon: { fontSize: 14 },
-  splitStatTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.text, flex: 1 },
-  splitStatPct: { fontSize: 16, fontFamily: "Inter_700Bold" },
+  splitStatIcon: { fontSize: 12 },
+  splitStatTitle: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: Colors.text, flex: 1 },
+  splitStatPct: { fontSize: 14, fontFamily: "Inter_700Bold" },
   progressBarBg: { height: 6, backgroundColor: Colors.surfaceElevated, borderRadius: 3, marginBottom: 8 },
   progressBarFill: { height: 6, borderRadius: 3 },
-  splitStatSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textSecondary },
+  splitStatSub: { fontSize: 10, fontFamily: "Inter_400Regular", color: Colors.textSecondary },
 
-  insightText: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.textSecondary, lineHeight: 19 },
+  insightText: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textSecondary, lineHeight: 19 },
 
   weekPickerCard: {
     backgroundColor: Colors.surface,
@@ -608,15 +608,15 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 20,
   },
-  weekOfLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: Colors.textSecondary, letterSpacing: 0.5 },
-  weekOfDate: { fontSize: 17, fontFamily: "Inter_700Bold", color: Colors.text, marginTop: 2 },
+  weekOfLabel: { fontSize: 9, fontFamily: "Inter_600SemiBold", color: Colors.textSecondary, letterSpacing: 0.5 },
+  weekOfDate: { fontSize: 15, fontFamily: "Inter_700Bold", color: Colors.text, marginTop: 2 },
   weekNavRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 4 },
   todayBtn: { paddingHorizontal: 4, paddingVertical: 2 },
-  todayBtnText: { fontSize: 14, fontFamily: "Inter_500Medium", color: Colors.text },
+  todayBtnText: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.text },
 
   dayPickerRow: { flexDirection: "row", justifyContent: "space-between" },
   dayPickerItem: { alignItems: "center", width: 42 },
-  dayPickerLabel: { fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.textSecondary, marginBottom: 8 },
+  dayPickerLabel: { fontSize: 9, fontFamily: "Inter_500Medium", color: Colors.textSecondary, marginBottom: 8 },
   dayPickerCircle: {
     width: 36,
     height: 36,
@@ -625,11 +625,11 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
     marginBottom: 6,
   },
-  dayPickerNum: { fontSize: 16, fontFamily: "Inter_600SemiBold", color: Colors.text },
+  dayPickerNum: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.text },
   dotRow: { flexDirection: "row", gap: 4, height: 8, alignItems: "center" },
   dayDot: { width: 6, height: 6, borderRadius: 3 },
 
-  dayHeaderText: { fontSize: 20, fontFamily: "Inter_700Bold", color: Colors.text, marginBottom: 16 },
+  dayHeaderText: { fontSize: 17, fontFamily: "Inter_700Bold", color: Colors.text, marginBottom: 16 },
 
   nutritionCard: {
     backgroundColor: Colors.surface,
@@ -639,8 +639,8 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   },
   nutritionHeader: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 4 },
   nutritionIconBg: { width: 42, height: 42, borderRadius: 12, justifyContent: "center", alignItems: "center" },
-  nutritionTitle: { fontSize: 16, fontFamily: "Inter_700Bold", color: Colors.text },
-  nutritionSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textSecondary, marginTop: 1 },
+  nutritionTitle: { fontSize: 14, fontFamily: "Inter_700Bold", color: Colors.text },
+  nutritionSub: { fontSize: 10, fontFamily: "Inter_400Regular", color: Colors.textSecondary, marginTop: 1 },
 
   mealListItem: {
     flexDirection: "row",
@@ -650,9 +650,9 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderBottomColor: Colors.border + "30",
     gap: 12,
   },
-  mealSlotLabel: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.textSecondary, marginBottom: 2 },
-  mealItemName: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.text },
-  mealIngredientPreview: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textSecondary, marginTop: 2 },
+  mealSlotLabel: { fontSize: 10, fontFamily: "Inter_500Medium", color: Colors.textSecondary, marginBottom: 2 },
+  mealItemName: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.text },
+  mealIngredientPreview: { fontSize: 10, fontFamily: "Inter_400Regular", color: Colors.textSecondary, marginTop: 2 },
   mealItemRight: { flexDirection: "row", alignItems: "center", gap: 10 },
   completionCircle: {
     width: 24,
@@ -673,7 +673,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 12,
     marginBottom: 12,
   },
-  workoutDesc: { fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.textSecondary, marginTop: 2 },
+  workoutDesc: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textSecondary, marginTop: 2 },
 
   emptyDayCard: {
     backgroundColor: Colors.surface,
@@ -683,7 +683,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 8,
     marginBottom: 12,
   },
-  emptyDayText: { fontSize: 14, fontFamily: "Inter_400Regular", color: Colors.textSecondary },
+  emptyDayText: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textSecondary },
 
   planDayBtn: {
     flexDirection: "row",
@@ -692,10 +692,10 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingVertical: 12,
     marginBottom: 16,
   },
-  planDayText: { fontSize: 14, fontFamily: "Inter_500Medium", color: Colors.text },
+  planDayText: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.text },
 
   activePlansSection: { marginBottom: 20 },
-  sectionLabel: { fontSize: 11, fontFamily: "Inter_700Bold", color: Colors.textSecondary, letterSpacing: 0.8, marginBottom: 12 },
+  sectionLabel: { fontSize: 9, fontFamily: "Inter_700Bold", color: Colors.textSecondary, letterSpacing: 0.8, marginBottom: 12 },
   activePlanCard: {
     backgroundColor: Colors.surface,
     borderRadius: 16,
@@ -706,12 +706,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 10,
   },
   planIconBg: { width: 46, height: 46, borderRadius: 14, justifyContent: "center", alignItems: "center" },
-  planCardTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.text, marginBottom: 4 },
+  planCardTitle: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: Colors.text, marginBottom: 4 },
   planBadgeRow: { flexDirection: "row", gap: 6, marginBottom: 4 },
   activeBadge: { backgroundColor: Colors.scoreGreen + "20", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
-  activeBadgeText: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: Colors.scoreGreen },
+  activeBadgeText: { fontSize: 9, fontFamily: "Inter_600SemiBold", color: Colors.scoreGreen },
   planDateRow: { flexDirection: "row", alignItems: "center", gap: 4 },
-  planDateText: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textSecondary },
+  planDateText: { fontSize: 10, fontFamily: "Inter_400Regular", color: Colors.textSecondary },
 
   quickActionsGrid: {
     flexDirection: "row",
@@ -727,6 +727,6 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   },
   quickActionTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
   quickActionIconBg: { width: 40, height: 40, borderRadius: 12, justifyContent: "center", alignItems: "center" },
-  quickActionLabel: { fontSize: 14, fontFamily: "Inter_700Bold", color: Colors.text, marginBottom: 2 },
-  quickActionSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textSecondary },
+  quickActionLabel: { fontSize: 12, fontFamily: "Inter_700Bold", color: Colors.text, marginBottom: 2 },
+  quickActionSub: { fontSize: 10, fontFamily: "Inter_400Regular", color: Colors.textSecondary },
 });

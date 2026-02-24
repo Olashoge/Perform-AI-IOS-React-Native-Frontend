@@ -300,7 +300,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     justifyContent: "center",
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "600" as const,
     color: Colors.text,
     flex: 1,
@@ -324,7 +324,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 12,
   },
   errorText: {
-    fontSize: 16,
+    fontSize: 14,
     color: Colors.textSecondary,
     marginTop: 8,
   },
@@ -339,7 +339,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginTop: 8,
   },
   retryText: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "500" as const,
     color: Colors.text,
   },
@@ -362,7 +362,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     padding: 14,
   },
   generatingText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "500" as const,
     color: Colors.warning,
   },
@@ -392,7 +392,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 6,
   },
   planName: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: "700" as const,
     color: Colors.text,
   },
@@ -411,7 +411,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderRadius: 3,
   },
   statusLabel: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: "500" as const,
   },
   infoRow: {
@@ -421,12 +421,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingTop: 2,
   },
   infoLabel: {
-    fontSize: 13,
+    fontSize: 11,
     color: Colors.textSecondary,
     width: 60,
   },
   infoValue: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: "500" as const,
     color: Colors.text,
     flex: 1,
@@ -435,7 +435,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 10,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600" as const,
     color: Colors.text,
     paddingLeft: 4,
@@ -465,7 +465,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 4,
   },
   linkedTitle: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "600" as const,
     color: Colors.text,
   },
@@ -475,6 +475,6 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 6,
   },
   linkedStatus: {
-    fontSize: 13,
+    fontSize: 11,
   },
 });

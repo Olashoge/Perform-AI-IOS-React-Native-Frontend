@@ -286,7 +286,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 20,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
     marginBottom: 20,
@@ -310,7 +310,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     flex: 1,
   },
   weekLabelText: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
   },
@@ -324,7 +324,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginTop: 4,
   },
   todayBtnText: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_600SemiBold",
     color: Colors.primary,
   },
@@ -342,12 +342,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 10,
   },
   summaryLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_600SemiBold",
     color: Colors.textSecondary,
   },
   summaryScore: {
-    fontSize: 22,
+    fontSize: 18,
     fontFamily: "Inter_700Bold",
   },
   summaryProgressBar: {
@@ -378,12 +378,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     backgroundColor: Colors.border,
   },
   adherenceLabel: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
   },
   adherenceValue: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_700Bold",
   },
   loadingContainer: {
@@ -427,7 +427,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   dayNumText: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
   },
@@ -435,7 +435,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     color: "#FFFFFF",
   },
   dayOfWeekText: {
-    fontSize: 10,
+    fontSize: 9,
     fontFamily: "Inter_600SemiBold",
     color: Colors.textSecondary,
     letterSpacing: 0.5,
@@ -461,12 +461,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderRadius: 4,
   },
   mealTypeBadgeText: {
-    fontSize: 9,
+    fontSize: 8,
     fontFamily: "Inter_700Bold",
     letterSpacing: 0.3,
   },
   mealName: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
     color: Colors.text,
     flex: 1,
@@ -478,18 +478,18 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginTop: 2,
   },
   workoutName: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_500Medium",
     color: Colors.text,
     flex: 1,
   },
   workoutDuration: {
-    fontSize: 11,
+    fontSize: 9,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
   },
   emptyDayText: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: "Inter_400Regular",
     color: Colors.textTertiary,
     fontStyle: "italic",
@@ -502,7 +502,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginLeft: 8,
   },
   scoreValue: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_700Bold",
   },
   fab: {

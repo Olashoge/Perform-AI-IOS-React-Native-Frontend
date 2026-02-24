@@ -176,12 +176,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 17,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
   },
   sectionSubtitle: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
     marginBottom: 24,
@@ -219,7 +219,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     flexWrap: "wrap",
   },
   planTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
   },
@@ -227,7 +227,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     color: Colors.textSecondary,
   },
   planSubtitle: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
   },
@@ -241,7 +241,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderRadius: 8,
   },
   recommendedText: {
-    fontSize: 11,
+    fontSize: 9,
     fontFamily: "Inter_600SemiBold",
     color: Colors.primary,
   },

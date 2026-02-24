@@ -380,18 +380,18 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 32,
   },
   loadingText: {
-    fontSize: 16,
+    fontSize: 14,
     color: Colors.textSecondary,
     marginTop: 16,
   },
   errorTitle: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: "700" as const,
     color: Colors.text,
     marginTop: 16,
   },
   errorSubtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: Colors.textSecondary,
     textAlign: "center" as const,
     marginTop: 8,
@@ -408,19 +408,19 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginTop: 24,
   },
   retryText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600" as const,
     color: Colors.text,
   },
   generatingTitle: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: "700" as const,
     color: Colors.text,
     marginTop: 24,
     textAlign: "center" as const,
   },
   generatingSubtitle: {
-    fontSize: 15,
+    fontSize: 13,
     color: Colors.textSecondary,
     textAlign: "center" as const,
     marginTop: 8,
@@ -436,7 +436,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderBottomColor: Colors.border,
   },
   headerTitle: {
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: "600" as const,
     color: Colors.text,
     flex: 1,
@@ -457,7 +457,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 16,
   },
   summaryText: {
-    fontSize: 15,
+    fontSize: 13,
     color: Colors.textSecondary,
     lineHeight: 22,
   },
@@ -468,7 +468,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 20,
   },
   macroTargetsTitle: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "600" as const,
     color: Colors.text,
     marginBottom: 14,
@@ -487,12 +487,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderRadius: 5,
   },
   macroTargetValue: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "700" as const,
     color: Colors.text,
   },
   macroTargetLabel: {
-    fontSize: 12,
+    fontSize: 10,
     color: Colors.textSecondary,
   },
   daySection: {
@@ -509,7 +509,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderRadius: 20,
   },
   dayBadgeText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "600" as const,
     color: Colors.primary,
   },
@@ -538,13 +538,13 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderRadius: 8,
   },
   mealTypeBadgeText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: "600" as const,
     color: Colors.textSecondary,
     textTransform: "capitalize" as const,
   },
   mealName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600" as const,
     color: Colors.text,
     flex: 1,
@@ -565,7 +565,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderRadius: 8,
   },
   infoPillText: {
-    fontSize: 12,
+    fontSize: 10,
     color: Colors.textSecondary,
   },
   mealExpanded: {
@@ -575,7 +575,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingTop: 14,
   },
   mealDescription: {
-    fontSize: 14,
+    fontSize: 12,
     color: Colors.textSecondary,
     lineHeight: 20,
     marginBottom: 12,
@@ -587,7 +587,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 12,
   },
   servingsText: {
-    fontSize: 13,
+    fontSize: 11,
     color: Colors.textSecondary,
   },
   macrosContainer: {
@@ -611,19 +611,19 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderRadius: 4,
   },
   macroValue: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: "600" as const,
     color: Colors.text,
   },
   macroLabel: {
-    fontSize: 11,
+    fontSize: 9,
     color: Colors.textSecondary,
   },
   sectionBlock: {
     marginBottom: 14,
   },
   sectionLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "600" as const,
     color: Colors.text,
     marginBottom: 10,
@@ -642,7 +642,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginTop: 7,
   },
   ingredientText: {
-    fontSize: 14,
+    fontSize: 12,
     color: Colors.textSecondary,
     flex: 1,
     lineHeight: 20,
@@ -666,12 +666,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     justifyContent: "center" as const,
   },
   stepNumberText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: "700" as const,
     color: Colors.primary,
   },
   instructionText: {
-    fontSize: 14,
+    fontSize: 12,
     color: Colors.textSecondary,
     flex: 1,
     lineHeight: 20,
@@ -686,7 +686,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 12,
   },
   grocerySectionTitle: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "700" as const,
     color: Colors.text,
   },
@@ -710,17 +710,17 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginRight: 12,
   },
   groceryItem: {
-    fontSize: 15,
+    fontSize: 13,
     color: Colors.text,
     fontWeight: "500" as const,
   },
   groceryQuantity: {
-    fontSize: 13,
+    fontSize: 11,
     color: Colors.textSecondary,
     marginTop: 2,
   },
   groceryPrice: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "600" as const,
     color: Colors.accent,
   },

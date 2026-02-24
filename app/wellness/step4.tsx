@@ -322,13 +322,13 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderRadius: 4,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
     marginBottom: 4,
   },
   headerSubtitle: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
     marginBottom: 20,
@@ -346,14 +346,14 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_600SemiBold",
     color: Colors.textSecondary,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   editLink: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_500Medium",
     color: Colors.primary,
   },
@@ -366,13 +366,13 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderBottomColor: Colors.border,
   },
   reviewLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
     flex: 1,
   },
   reviewValue: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_500Medium",
     color: Colors.text,
     flex: 1.2,
@@ -399,7 +399,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 8,
   },
   submitBtnText: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Inter_600SemiBold",
     color: "#fff",
   },

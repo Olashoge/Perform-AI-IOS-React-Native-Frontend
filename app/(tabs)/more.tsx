@@ -190,7 +190,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 20,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
     marginBottom: 20,
@@ -210,12 +210,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     minWidth: 60,
   },
   profileStatValue: {
-    fontSize: 22,
+    fontSize: 18,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
   },
   profileStatLabel: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
   },
@@ -234,7 +234,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderColor: Colors.primary + "40",
   },
   profileName: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
   },
@@ -242,7 +242,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: "Inter_700Bold",
     color: Colors.textSecondary,
     letterSpacing: 0.8,
@@ -269,7 +269,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
   },
   menuLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Inter_500Medium",
     color: Colors.text,
     flex: 1,

@@ -179,13 +179,13 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 20,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
   },
@@ -199,7 +199,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 10,
   },
   errorText: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_500Medium",
     color: Colors.error,
     flex: 1,
@@ -222,7 +222,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     flex: 1,
     paddingVertical: 16,
     paddingHorizontal: 12,
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Inter_400Regular",
     color: Colors.text,
   },
@@ -244,7 +244,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     opacity: 0.6,
   },
   loginButtonText: {
-    fontSize: 17,
+    fontSize: 15,
     fontFamily: "Inter_600SemiBold",
     color: "#FFFFFF",
   },

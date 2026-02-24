@@ -567,19 +567,19 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderRadius: 4,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
     marginBottom: 4,
   },
   headerSubtitle: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
     marginBottom: 20,
   },
   sectionLabel: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_600SemiBold",
     color: Colors.textSecondary,
     textTransform: "uppercase",
@@ -605,7 +605,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     backgroundColor: Colors.primary + "18",
   },
   pillText: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
   },
@@ -618,7 +618,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: "Inter_400Regular",
     color: Colors.text,
     borderWidth: 1,
@@ -642,7 +642,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     backgroundColor: Colors.primary + "18",
   },
   toggleBtnText: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
   },
@@ -683,7 +683,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderColor: Colors.primary,
   },
   checkboxLabel: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
   },
@@ -709,7 +709,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     backgroundColor: Colors.primary + "18",
   },
   optionBtnText: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
   },
@@ -726,7 +726,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingVertical: 12,
   },
   advancedToggleText: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "Inter_500Medium",
     color: Colors.primary,
   },
@@ -750,7 +750,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     opacity: 0.4,
   },
   numberValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
     minWidth: 40,
@@ -777,7 +777,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 8,
   },
   nextBtnText: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Inter_600SemiBold",
     color: "#fff",
   },
@@ -794,14 +794,14 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 12,
   },
   profileCardTitle: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_600SemiBold",
     color: Colors.textSecondary,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   profileEditLink: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_500Medium",
     color: Colors.primary,
   },
@@ -815,13 +815,13 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     flexBasis: "47%",
   },
   profileCardLabel: {
-    fontSize: 11,
+    fontSize: 9,
     fontFamily: "Inter_500Medium",
     color: Colors.textTertiary,
     marginBottom: 2,
   },
   profileCardValue: {
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
     color: Colors.text,
   },

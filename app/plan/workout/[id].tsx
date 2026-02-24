@@ -358,7 +358,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingVertical: 12,
   },
   headerTitle: {
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: "600" as const,
     color: Colors.text,
   },
@@ -373,18 +373,18 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 32,
   },
   loadingText: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "600" as const,
     color: Colors.text,
     textAlign: "center",
   },
   loadingSubtext: {
-    fontSize: 14,
+    fontSize: 12,
     color: Colors.textSecondary,
     textAlign: "center",
   },
   errorText: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "600" as const,
     color: Colors.text,
     marginTop: 8,
@@ -400,7 +400,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginTop: 8,
   },
   retryText: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "500" as const,
     color: Colors.text,
   },
@@ -422,14 +422,14 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     backgroundColor: WORKOUT_ACCENT,
   },
   planTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "700" as const,
     color: Colors.text,
     marginBottom: 8,
     marginTop: 4,
   },
   planSummary: {
-    fontSize: 14,
+    fontSize: 12,
     color: Colors.textSecondary,
     lineHeight: 20,
     marginBottom: 16,
@@ -447,12 +447,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 4,
   },
   statValue: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: "700" as const,
     color: Colors.text,
   },
   statLabel: {
-    fontSize: 11,
+    fontSize: 9,
     color: Colors.textSecondary,
     textTransform: "uppercase" as const,
     letterSpacing: 0.5,
@@ -476,7 +476,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 10,
   },
   dayLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600" as const,
     color: Colors.text,
   },
@@ -486,7 +486,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderRadius: 8,
   },
   dayTypeBadgeText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: "600" as const,
     color: Colors.textSecondary,
   },
@@ -496,12 +496,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 8,
   },
   restDayText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600" as const,
     color: Colors.textSecondary,
   },
   restDaySubtext: {
-    fontSize: 13,
+    fontSize: 11,
     color: Colors.textTertiary,
   },
   sessionPreview: {
@@ -509,7 +509,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     paddingBottom: 16,
   },
   sessionTitle: {
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: "600" as const,
     color: WORKOUT_ACCENT,
     marginBottom: 8,
@@ -525,7 +525,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 5,
   },
   metaText: {
-    fontSize: 13,
+    fontSize: 11,
     color: Colors.textSecondary,
   },
   expandedContent: {
@@ -545,14 +545,14 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 10,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "600" as const,
     color: Colors.text,
     textTransform: "uppercase" as const,
     letterSpacing: 0.5,
   },
   sectionText: {
-    fontSize: 14,
+    fontSize: 12,
     color: Colors.textSecondary,
     lineHeight: 20,
   },
@@ -579,13 +579,13 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     justifyContent: "center",
   },
   exerciseIndexText: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: "700" as const,
     color: WORKOUT_ACCENT,
   },
   exerciseName: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "600" as const,
     color: Colors.text,
   },
@@ -600,16 +600,16 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 4,
   },
   detailValue: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "700" as const,
     color: Colors.text,
   },
   detailLabel: {
-    fontSize: 12,
+    fontSize: 10,
     color: Colors.textSecondary,
   },
   exerciseNotes: {
-    fontSize: 13,
+    fontSize: 11,
     color: Colors.textTertiary,
     marginTop: 6,
     fontStyle: "italic" as const,
