@@ -15,6 +15,7 @@ import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors, useTheme, ThemeMode } from "@/lib/theme-context";
 import { useAuth } from "@/lib/auth-context";
 import { useWeekStart } from "@/lib/week-start-context";
+import { useProfile } from "@/lib/api-hooks";
 import { useQueryClient } from "@tanstack/react-query";
 
 function SegmentedControl({
@@ -61,11 +62,13 @@ export default function SettingsIndexScreen() {
   const insets = useSafeAreaInsets();
   const webTopInset = Platform.OS === "web" ? 67 : 0;
   const { user, logout } = useAuth();
+  const { data: profile } = useProfile();
   const queryClient = useQueryClient();
   const { weekStartDay, setWeekStartDay } = useWeekStart();
   const { themeMode, setThemeMode } = useTheme();
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
+  const userEmail = user?.email || (profile as any)?.email || "Not set";
 
   const handleLogout = () => {
     const doLogout = async () => {
@@ -120,7 +123,7 @@ export default function SettingsIndexScreen() {
           </View>
           <View style={styles.rowContent}>
             <Text style={styles.rowLabel}>Email</Text>
-            <Text style={styles.rowValue}>{user?.email || "Not set"}</Text>
+            <Text style={styles.rowValue}>{userEmail}</Text>
           </View>
         </View>
       </View>

@@ -37,9 +37,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const { accessToken, refreshToken: newRefresh } = response.data;
           await storeTokens(accessToken, newRefresh || refreshToken);
           setIsAuthenticated(true);
-          if (response.data.user) {
-            setUser(response.data.user);
+          const userData = response.data.user || {};
+          if (!userData.email && accessToken) {
+            try {
+              const payload = JSON.parse(atob(accessToken.split('.')[1]));
+              if (payload.email) userData.email = payload.email;
+            } catch {}
           }
+          setUser(Object.keys(userData).length > 0 ? userData : null);
         } catch {
           await clearTokens();
           setIsAuthenticated(false);
@@ -60,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { accessToken, refreshToken, user: userData } = response.data;
     await storeTokens(accessToken, refreshToken);
-    setUser(userData || null);
+    setUser({ ...(userData || {}), email: userData?.email || email.toLowerCase() });
     setIsAuthenticated(true);
   }
 
