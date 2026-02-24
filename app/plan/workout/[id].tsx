@@ -227,7 +227,11 @@ function ExerciseAvoidModal({
 
   const handleChoice = async (avoid: boolean) => {
     try {
-      await feedbackMutation.mutateAsync({ key: exerciseKey, exerciseName, feedback: "dislike", avoid });
+      await feedbackMutation.mutateAsync({
+        exerciseKey,
+        exerciseName,
+        status: avoid ? "avoided" : "disliked",
+      });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       onClose();
     } catch {
@@ -313,7 +317,7 @@ function LikeDislikeButtons({ exerciseName }: { exerciseName: string }) {
       return;
     }
     try {
-      await feedbackMutation.mutateAsync({ key: exerciseKey, exerciseName, feedback: "like" });
+      await feedbackMutation.mutateAsync({ exerciseKey, exerciseName, status: "liked" });
       setState("liked");
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch {

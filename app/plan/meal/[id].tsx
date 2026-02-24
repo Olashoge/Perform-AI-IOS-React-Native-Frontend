@@ -41,7 +41,7 @@ function IngredientProposalModal({
   const handleSubmit = async () => {
     const selectedList = Object.keys(selected).filter((k) => selected[k]);
     try {
-      await resolveMutation.mutateAsync({ proposalId, selectedIngredients: selectedList });
+      await resolveMutation.mutateAsync({ proposalId, chosenIngredients: selectedList, action: "avoid" });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       onClose();
     } catch {
@@ -125,6 +125,11 @@ function MealActionButtons({ mealName, cuisineTag, ingredients }: { mealName: st
     ingredients: [],
   });
 
+  const ingredientStrings = useMemo(() => {
+    if (!Array.isArray(ingredients)) return [];
+    return ingredients.map((ing: any) => typeof ing === "string" ? ing : ing?.item || ing?.name || "").filter(Boolean);
+  }, [ingredients]);
+
   const handlePress = async (feedback: "like" | "dislike") => {
     const newState = feedback === "like" ? "liked" : "disliked";
     if (state === newState) {
@@ -132,15 +137,21 @@ function MealActionButtons({ mealName, cuisineTag, ingredients }: { mealName: st
       return;
     }
 
-    const fingerprint = computeMealFingerprint(mealName, cuisineTag, ingredients);
+    const mealFingerprint = computeMealFingerprint(mealName, cuisineTag, ingredients);
 
     try {
-      const result = await feedbackMutation.mutateAsync({ fingerprint, feedback, mealName, cuisineTag });
+      const result = await feedbackMutation.mutateAsync({
+        mealFingerprint,
+        feedback,
+        mealName,
+        cuisineTag,
+        ingredients: ingredientStrings,
+      });
       setState(newState);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-      if (feedback === "dislike" && result?.proposalId && Array.isArray(result?.ingredients) && result.ingredients.length > 0) {
-        setProposalModal({ visible: true, proposalId: result.proposalId, ingredients: result.ingredients });
+      if (feedback === "dislike" && result?.proposalId && Array.isArray(result?.proposalIngredients) && result.proposalIngredients.length > 0) {
+        setProposalModal({ visible: true, proposalId: result.proposalId, ingredients: result.proposalIngredients });
       }
     } catch {
       Alert.alert("Error", "Could not save preference");

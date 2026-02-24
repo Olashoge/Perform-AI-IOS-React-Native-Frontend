@@ -1104,12 +1104,13 @@ export function computeMealFingerprint(name: string, cuisineTag?: string, ingred
 export function useMealFeedback() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (params: { fingerprint: string; feedback: "like" | "dislike"; mealName: string; cuisineTag?: string }) => {
+    mutationFn: async (params: { mealFingerprint: string; feedback: "like" | "dislike"; mealName: string; cuisineTag?: string; ingredients?: string[] }) => {
       const response = await apiClient.post("/api/feedback/meal", {
-        fingerprint: params.fingerprint,
+        mealFingerprint: params.mealFingerprint,
         feedback: params.feedback,
         mealName: params.mealName,
-        cuisineTag: params.cuisineTag,
+        cuisineTag: params.cuisineTag || "",
+        ingredients: params.ingredients || [],
       });
       logApiCall("POST", "/api/feedback/meal", response.status);
       return response.data;
@@ -1123,9 +1124,10 @@ export function useMealFeedback() {
 export function useResolveIngredientProposal() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (params: { proposalId: string; selectedIngredients: string[] }) => {
+    mutationFn: async (params: { proposalId: string; chosenIngredients: string[]; action?: string }) => {
       const response = await apiClient.post(`/api/ingredient-proposals/${params.proposalId}/resolve`, {
-        selectedIngredients: params.selectedIngredients,
+        chosenIngredients: params.chosenIngredients,
+        action: params.action || "avoid",
       });
       logApiCall("POST", `/api/ingredient-proposals/${params.proposalId}/resolve`, response.status);
       return response.data;
@@ -1139,12 +1141,11 @@ export function useResolveIngredientProposal() {
 export function useExerciseFeedback() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (params: { key: string; exerciseName: string; feedback: "like" | "dislike"; avoid?: boolean }) => {
+    mutationFn: async (params: { exerciseKey: string; exerciseName: string; status: "liked" | "disliked" | "avoided" }) => {
       const response = await apiClient.post("/api/preferences/exercise", {
-        key: params.key,
+        exerciseKey: params.exerciseKey,
         exerciseName: params.exerciseName,
-        feedback: params.feedback,
-        avoid: params.avoid ?? false,
+        status: params.status,
       });
       logApiCall("POST", "/api/preferences/exercise", response.status);
       return response.data;
