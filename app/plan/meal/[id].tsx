@@ -485,6 +485,36 @@ export default function MealPlanDetailScreen() {
     setRefreshing(false);
   }, [refetch, refetchGrocery]);
 
+  const pricingMap = useMemo(() => {
+    const map = new Map<string, { min: number; max: number }>();
+    if (groceryData?.pricing?.items) {
+      for (const p of groceryData.pricing.items) {
+        map.set(p.itemKey, p.estimatedRange);
+      }
+    }
+    return map;
+  }, [groceryData?.pricing]);
+
+  const generateItemKey = useCallback((itemName: string) => {
+    return itemName.toLowerCase().replace(/[^a-z0-9]/g, "");
+  }, []);
+
+  const handleToggleOwned = useCallback((itemName: string) => {
+    const key = generateItemKey(itemName);
+    const currentlyOwned = !!groceryData?.ownedItems?.[key];
+    toggleOwnedMutation.mutate({ itemKey: key, isOwned: !currentlyOwned });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, [groceryData?.ownedItems, toggleOwnedMutation, generateItemKey]);
+
+  const handleRegenerateGrocery = useCallback(async () => {
+    try {
+      await regenerateMutation.mutateAsync();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      Alert.alert("Error", "Could not rebuild grocery list");
+    }
+  }, [regenerateMutation]);
+
   if (isLoading) {
     return (
       <View style={[styles.container, styles.centered, { paddingTop: topInset }]}>
@@ -534,36 +564,6 @@ export default function MealPlanDetailScreen() {
   const nutritionNotes = planJson.nutritionNotes;
   const days: DayPlanData[] = planJson.days ?? [];
   const startDate = plan.startDate || planJson.startDate;
-
-  const pricingMap = useMemo(() => {
-    const map = new Map<string, { min: number; max: number }>();
-    if (groceryData?.pricing?.items) {
-      for (const p of groceryData.pricing.items) {
-        map.set(p.itemKey, p.estimatedRange);
-      }
-    }
-    return map;
-  }, [groceryData?.pricing]);
-
-  const generateItemKey = useCallback((itemName: string) => {
-    return itemName.toLowerCase().replace(/[^a-z0-9]/g, "");
-  }, []);
-
-  const handleToggleOwned = useCallback((itemName: string) => {
-    const key = generateItemKey(itemName);
-    const currentlyOwned = !!groceryData?.ownedItems?.[key];
-    toggleOwnedMutation.mutate({ itemKey: key, isOwned: !currentlyOwned });
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  }, [groceryData?.ownedItems, toggleOwnedMutation, generateItemKey]);
-
-  const handleRegenerateGrocery = useCallback(async () => {
-    try {
-      await regenerateMutation.mutateAsync();
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {
-      Alert.alert("Error", "Could not rebuild grocery list");
-    }
-  }, [regenerateMutation]);
 
   const macroTargets = nutritionNotes?.dailyMacroTargetsRange;
   const dailyTargetStr = macroTargets ? [
