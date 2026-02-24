@@ -154,8 +154,8 @@ export default function MealPreferencesScreen() {
   const preferIngredients = data?.preferIngredients ?? [];
   const avoidIngredients = data?.avoidIngredients ?? [];
 
-  const likedCount = likedMeals.length + preferIngredients.length;
-  const dislikedCount = dislikedMeals.length + avoidIngredients.length;
+  const likedCount = likedMeals.length;
+  const dislikedCount = dislikedMeals.length;
 
   const tabs: { key: Tab; label: string; count: number; icon: keyof typeof Ionicons.glyphMap }[] = [
     { key: "liked", label: "Liked", count: likedCount, icon: "thumbs-up-outline" },
