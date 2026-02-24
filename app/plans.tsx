@@ -141,7 +141,7 @@ function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: {
     <View style={styles.wellnessCard}>
       <View style={styles.wellnessCardHeader}>
         <View style={styles.wellnessIconCircle}>
-          <Ionicons name="sync-circle-outline" size={28} color="#2D6A4F" />
+          <Ionicons name="heart" size={20} color="#FF6B6B" />
         </View>
         <View style={{ flex: 1, gap: 4 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -742,7 +742,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#2D6A4F18",
+    backgroundColor: "#FF6B6B18",
     alignItems: "center",
     justifyContent: "center",
   },
