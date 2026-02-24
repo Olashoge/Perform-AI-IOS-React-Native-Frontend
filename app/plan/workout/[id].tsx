@@ -17,7 +17,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
-import { useWorkoutPlan, useExerciseFeedback, useDeleteExercisePreferenceByKey } from "@/lib/api-hooks";
+import { useWorkoutPlan, useExerciseFeedback, useDeleteExercisePreferenceByKey, useExercisePreferences } from "@/lib/api-hooks";
 
 const WEB_TOP_INSET = 67;
 const WORKOUT_ACCENT = "#FF6B6B";
@@ -301,24 +301,35 @@ function ExerciseAvoidModal({
 
 function LikeDislikeButtons({ exerciseName }: { exerciseName: string }) {
   const Colors = useColors();
-  const [state, setState] = useState<"none" | "liked" | "disliked">("none");
   const feedbackMutation = useExerciseFeedback();
   const deleteMutation = useDeleteExercisePreferenceByKey();
+  const { data: exercisePrefs } = useExercisePreferences();
+  const [localOverride, setLocalOverride] = useState<"none" | "liked" | "disliked" | null>(null);
   const [showAvoidModal, setShowAvoidModal] = useState(false);
   const exerciseKey = toExerciseKey(exerciseName);
+
+  const serverState = useMemo<"none" | "liked" | "disliked">(() => {
+    if (!exercisePrefs) return "none";
+    if (exercisePrefs.liked?.some((e: any) => e.exerciseKey === exerciseKey)) return "liked";
+    if (exercisePrefs.disliked?.some((e: any) => e.exerciseKey === exerciseKey)) return "disliked";
+    if (exercisePrefs.avoided?.some((e: any) => e.exerciseKey === exerciseKey)) return "disliked";
+    return "none";
+  }, [exercisePrefs, exerciseKey]);
+
+  const state = localOverride !== null ? localOverride : serverState;
 
   const handleLike = async () => {
     if (state === "liked") {
       try {
         await deleteMutation.mutateAsync(exerciseKey);
-        setState("none");
+        setLocalOverride("none");
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       } catch {}
       return;
     }
     try {
       await feedbackMutation.mutateAsync({ exerciseKey, exerciseName, status: "liked" });
-      setState("liked");
+      setLocalOverride("liked");
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch {
       Alert.alert("Error", "Could not save preference");
@@ -328,7 +339,7 @@ function LikeDislikeButtons({ exerciseName }: { exerciseName: string }) {
   const handleDislike = () => {
     if (state === "disliked") {
       deleteMutation.mutateAsync(exerciseKey).then(() => {
-        setState("none");
+        setLocalOverride("none");
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }).catch(() => {});
       return;
@@ -376,7 +387,7 @@ function LikeDislikeButtons({ exerciseName }: { exerciseName: string }) {
       </View>
       <ExerciseAvoidModal
         visible={showAvoidModal}
-        onClose={() => { setShowAvoidModal(false); setState("disliked"); }}
+        onClose={() => { setShowAvoidModal(false); setLocalOverride("disliked"); }}
         exerciseName={exerciseName}
         exerciseKey={exerciseKey}
       />

@@ -17,7 +17,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
-import { useMealPlan, useMealFeedback, useResolveIngredientProposal, computeMealFingerprint } from "@/lib/api-hooks";
+import { useMealPlan, useMealFeedback, useResolveIngredientProposal, computeMealFingerprint, useMealPreferences } from "@/lib/api-hooks";
 
 function IngredientProposalModal({
   visible,
@@ -117,13 +117,25 @@ function IngredientProposalModal({
 
 function MealActionButtons({ mealName, cuisineTag, ingredients }: { mealName: string; cuisineTag?: string; ingredients?: any[] }) {
   const Colors = useColors();
-  const [state, setState] = useState<"none" | "liked" | "disliked">("none");
   const feedbackMutation = useMealFeedback();
+  const { data: prefs } = useMealPreferences();
+  const [localOverride, setLocalOverride] = useState<"none" | "liked" | "disliked" | null>(null);
   const [proposalModal, setProposalModal] = useState<{ visible: boolean; proposalId: string; ingredients: string[] }>({
     visible: false,
     proposalId: "",
     ingredients: [],
   });
+
+  const fingerprint = useMemo(() => computeMealFingerprint(mealName, cuisineTag, ingredients), [mealName, cuisineTag, ingredients]);
+
+  const serverState = useMemo<"none" | "liked" | "disliked">(() => {
+    if (!prefs) return "none";
+    if (prefs.likedMeals?.some((m: any) => m.mealFingerprint === fingerprint)) return "liked";
+    if (prefs.dislikedMeals?.some((m: any) => m.mealFingerprint === fingerprint)) return "disliked";
+    return "none";
+  }, [prefs, fingerprint]);
+
+  const state = localOverride !== null ? localOverride : serverState;
 
   const ingredientStrings = useMemo(() => {
     if (!Array.isArray(ingredients)) return [];
@@ -133,21 +145,19 @@ function MealActionButtons({ mealName, cuisineTag, ingredients }: { mealName: st
   const handlePress = async (feedback: "like" | "dislike") => {
     const newState = feedback === "like" ? "liked" : "disliked";
     if (state === newState) {
-      setState("none");
+      setLocalOverride("none");
       return;
     }
 
-    const mealFingerprint = computeMealFingerprint(mealName, cuisineTag, ingredients);
-
     try {
       const result = await feedbackMutation.mutateAsync({
-        mealFingerprint,
+        mealFingerprint: fingerprint,
         feedback,
         mealName,
         cuisineTag,
         ingredients: ingredientStrings,
       });
-      setState(newState);
+      setLocalOverride(newState);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
       if (feedback === "dislike" && result?.proposalId && Array.isArray(result?.proposalIngredients) && result.proposalIngredients.length > 0) {
