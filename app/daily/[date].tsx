@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Pressable,
+  TouchableOpacity,
   ActivityIndicator,
   Platform,
   Modal,
@@ -20,6 +21,9 @@ import {
   useToggleCompletion,
   useCreateDailyMeal,
   useCreateDailyWorkout,
+  useExerciseFeedback,
+  useDeleteExercisePreferenceByKey,
+  useExercisePreferences,
   Meal,
   Workout,
   DayData,
@@ -200,32 +204,173 @@ function MealItem({
   );
 }
 
+function toExerciseKey(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+}
+
+function ExerciseAvoidModal({
+  visible,
+  onClose,
+  exerciseName,
+  exerciseKey,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  exerciseName: string;
+  exerciseKey: string;
+}) {
+  const Colors = useColors();
+  const feedbackMutation = useExerciseFeedback();
+
+  const handleChoice = async (avoid: boolean) => {
+    try {
+      await feedbackMutation.mutateAsync({
+        exerciseKey,
+        exerciseName,
+        status: avoid ? "avoided" : "disliked",
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      onClose();
+    } catch {
+      Alert.alert("Error", "Could not save preference");
+    }
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.5)" }}>
+        <View style={{ backgroundColor: Colors.surface, borderRadius: 16, padding: 20, width: "85%" }}>
+          <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: Colors.text, marginBottom: 4 }}>
+            {exerciseName}
+          </Text>
+          <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: Colors.textSecondary, marginBottom: 20 }}>
+            How would you like to handle this exercise?
+          </Text>
+          <Pressable
+            onPress={() => handleChoice(false)}
+            disabled={feedbackMutation.isPending}
+            style={({ pressed }) => ({
+              paddingVertical: 14, paddingHorizontal: 16, borderRadius: 10,
+              backgroundColor: Colors.surfaceElevated, marginBottom: 10, opacity: pressed ? 0.7 : 1,
+            })}
+          >
+            <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.text }}>Just Dislike</Text>
+            <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textSecondary, marginTop: 2 }}>
+              May still appear, but AI will be informed
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => handleChoice(true)}
+            disabled={feedbackMutation.isPending}
+            style={({ pressed }) => ({
+              paddingVertical: 14, paddingHorizontal: 16, borderRadius: 10,
+              backgroundColor: "#FF6B6B18", marginBottom: 10, opacity: pressed ? 0.7 : 1,
+            })}
+          >
+            <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#FF6B6B" }}>Avoid Completely</Text>
+            <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textSecondary, marginTop: 2 }}>
+              This exercise will never appear again
+            </Text>
+          </Pressable>
+          <Pressable onPress={onClose} style={({ pressed }) => ({ paddingVertical: 12, alignItems: "center" as const, opacity: pressed ? 0.6 : 1 })}>
+            <Text style={{ fontSize: 14, fontFamily: "Inter_500Medium", color: Colors.textSecondary }}>Cancel</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function ExerciseLikeDislike({ exerciseName }: { exerciseName: string }) {
+  const Colors = useColors();
+  const feedbackMutation = useExerciseFeedback();
+  const deleteMutation = useDeleteExercisePreferenceByKey();
+  const { data: exercisePrefs } = useExercisePreferences();
+  const [localOverride, setLocalOverride] = useState<"none" | "liked" | "disliked" | null>(null);
+  const [showAvoidModal, setShowAvoidModal] = useState(false);
+  const exerciseKey = toExerciseKey(exerciseName);
+
+  const serverState = useMemo<"none" | "liked" | "disliked">(() => {
+    if (!exercisePrefs) return "none";
+    if (exercisePrefs.liked?.some((e: any) => e.exerciseKey === exerciseKey)) return "liked";
+    if (exercisePrefs.disliked?.some((e: any) => e.exerciseKey === exerciseKey)) return "disliked";
+    if (exercisePrefs.avoided?.some((e: any) => e.exerciseKey === exerciseKey)) return "disliked";
+    return "none";
+  }, [exercisePrefs, exerciseKey]);
+
+  const state = localOverride !== null ? localOverride : serverState;
+
+  const handleLike = async () => {
+    if (state === "liked") {
+      try { await deleteMutation.mutateAsync(exerciseKey); setLocalOverride("none"); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+      return;
+    }
+    try {
+      await feedbackMutation.mutateAsync({ exerciseKey, exerciseName, status: "liked" });
+      setLocalOverride("liked");
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch { Alert.alert("Error", "Could not save preference"); }
+  };
+
+  const handleDislike = () => {
+    if (state === "disliked") {
+      deleteMutation.mutateAsync(exerciseKey).then(() => { setLocalOverride("none"); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }).catch(() => {});
+      return;
+    }
+    setShowAvoidModal(true);
+  };
+
+  const loading = feedbackMutation.isPending || deleteMutation.isPending;
+
+  return (
+    <>
+      <View style={{ flexDirection: "row" }}>
+        <TouchableOpacity onPress={handleLike} disabled={loading} activeOpacity={0.5} style={{ opacity: loading ? 0.4 : 1, paddingHorizontal: 8, paddingVertical: 6 }}>
+          <Ionicons name={state === "liked" ? "thumbs-up" : "thumbs-up-outline"} size={16} color={state === "liked" ? "#30D158" : Colors.textTertiary} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleDislike} disabled={loading} activeOpacity={0.5} style={{ opacity: loading ? 0.4 : 1, paddingHorizontal: 8, paddingVertical: 6 }}>
+          <Ionicons name={state === "disliked" ? "thumbs-down" : "thumbs-down-outline"} size={16} color={state === "disliked" ? "#FF6B6B" : Colors.textTertiary} />
+        </TouchableOpacity>
+      </View>
+      <ExerciseAvoidModal
+        visible={showAvoidModal}
+        onClose={() => { setShowAvoidModal(false); setLocalOverride("disliked"); }}
+        exerciseName={exerciseName}
+        exerciseKey={exerciseKey}
+      />
+    </>
+  );
+}
+
 function WorkoutItem({
   workout,
   rawWorkout,
   onToggle,
+  dateLabel,
 }: {
   workout: Workout;
   rawWorkout?: any;
   onToggle: () => void;
+  dateLabel: string;
 }) {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
-  const [expanded, setExpanded] = useState(false);
 
   const raw = rawWorkout || workout.rawWorkout;
   const warmup = Array.isArray(raw?.warmup) ? raw.warmup : [];
   const mainExercises = Array.isArray(raw?.main) ? raw.main : [];
   const coolDown = Array.isArray(raw?.coolDown) ? raw.coolDown : [];
+  const finisher = raw?.finisher;
   const coachingTips = Array.isArray(raw?.coachingTips)
     ? raw.coachingTips
     : typeof raw?.coachingTips === "string"
     ? [raw.coachingTips]
     : [];
   const difficulty = raw?.difficulty;
-  const exerciseCount = mainExercises.length;
-
-  const hasDetails = warmup.length > 0 || mainExercises.length > 0 || coolDown.length > 0 || coachingTips.length > 0;
+  const workoutType = raw?.workoutType || raw?.type || workout.type || "";
+  const summary = raw?.summary || raw?.description || "";
+  const duration = raw?.estimatedDuration || raw?.duration || workout.duration;
+  const focusArea = raw?.focusArea || raw?.focus || "";
 
   const getDifficultyColor = (d: string) => {
     const lower = d.toLowerCase();
@@ -235,170 +380,164 @@ function WorkoutItem({
     return Colors.textSecondary;
   };
 
-  return (
-    <View style={[styles.expandableCard, expanded && styles.expandableCardExpanded]}>
-      <View style={styles.expandableCardRow}>
-        <Pressable
-          onPress={(e) => {
-            e.stopPropagation();
-            onToggle();
-          }}
-          style={[styles.checkbox, styles.checkboxWorkout, workout.completed && styles.checkboxCheckedWorkout]}
-          hitSlop={8}
-        >
-          {workout.completed && <Ionicons name="checkmark" size={14} color="#fff" />}
-        </Pressable>
+  const formatBulletItem = (item: any): string => {
+    if (typeof item === "string") return item;
+    return item.name || item.exercise || item.text || JSON.stringify(item);
+  };
 
-        <Pressable
-          style={styles.expandableCardBody}
-          onPress={() => hasDetails && setExpanded(!expanded)}
-        >
-          <View style={styles.expandableCardTop}>
-            <View style={styles.workoutBadgeRow}>
-              {difficulty && (
-                <View style={[styles.typePill, { backgroundColor: getDifficultyColor(difficulty) + "20" }]}>
-                  <Text style={[styles.typePillText, { color: getDifficultyColor(difficulty) }]}>
-                    {difficulty}
-                  </Text>
-                </View>
-              )}
-            </View>
-            {hasDetails && (
-              <Ionicons
-                name={expanded ? "chevron-up" : "chevron-down"}
-                size={16}
-                color={Colors.textTertiary}
-              />
-            )}
+  const formatFinisher = (f: any): string[] => {
+    if (!f) return [];
+    if (typeof f === "string") return [f];
+    if (Array.isArray(f)) return f.map(formatBulletItem);
+    if (f.name || f.text || f.description) return [f.name || f.text || f.description];
+    return [];
+  };
+
+  const finisherItems = formatFinisher(finisher);
+
+  return (
+    <View style={styles.wkCard}>
+      <View style={styles.wkHeader}>
+        <View style={styles.wkHeaderLeft}>
+          <View style={[styles.wkIconCircle, { backgroundColor: Colors.primary + "18" }]}>
+            <Ionicons name="fitness" size={22} color={Colors.primary} />
           </View>
-          <Text style={[styles.expandableCardName, workout.completed && styles.itemNameCompleted]}>
-            {workout.name}
-          </Text>
-          <View style={styles.workoutMetaRow}>
-            {workout.type && (
-              <View style={styles.workoutMetaChip}>
-                <Ionicons name="barbell-outline" size={12} color={Colors.textSecondary} />
-                <Text style={styles.workoutMetaText}>{workout.type}</Text>
-              </View>
-            )}
-            {workout.duration && (
-              <View style={styles.workoutMetaChip}>
-                <Ionicons name="time-outline" size={12} color={Colors.textSecondary} />
-                <Text style={styles.workoutMetaText}>{workout.duration} min</Text>
-              </View>
-            )}
-            {exerciseCount > 0 && (
-              <View style={styles.workoutMetaChip}>
-                <Ionicons name="list-outline" size={12} color={Colors.textSecondary} />
-                <Text style={styles.workoutMetaText}>{exerciseCount} exercise{exerciseCount !== 1 ? "s" : ""}</Text>
-              </View>
-            )}
+          <View style={{ flex: 1 }}>
+            <Text style={styles.wkTitle}>Daily Workout — {dateLabel}</Text>
+            {summary ? <Text style={styles.wkSummary} numberOfLines={2}>{summary}</Text> : null}
           </View>
-        </Pressable>
+        </View>
+        <View style={styles.wkHeaderRight}>
+          <Pressable
+            onPress={onToggle}
+            style={[styles.wkCheckbox, workout.completed && styles.wkCheckboxChecked]}
+            hitSlop={8}
+          >
+            {workout.completed && <Ionicons name="checkmark" size={14} color="#fff" />}
+          </Pressable>
+        </View>
       </View>
 
-      {expanded && hasDetails && (
-        <View style={styles.expandedContent}>
-          {warmup.length > 0 && (
-            <View style={styles.detailSection}>
-              <View style={styles.workoutSectionHeader}>
-                <Ionicons name="walk-outline" size={14} color={Colors.warning} />
-                <Text style={[styles.detailSectionTitle, { color: Colors.warning }]}>WARM-UP</Text>
-              </View>
-              {warmup.map((item: any, i: number) => {
-                const label = typeof item === "string" ? item : item.name || item.exercise || JSON.stringify(item);
-                return (
-                  <View key={i} style={styles.bulletRow}>
-                    <Text style={styles.dashBullet}>-</Text>
-                    <Text style={styles.bulletText}>{label}</Text>
-                  </View>
-                );
-              })}
-            </View>
-          )}
+      <View style={styles.wkMetaRow}>
+        {workoutType ? (
+          <View style={styles.wkMetaTag}>
+            <Text style={styles.wkMetaText}>{workoutType}</Text>
+          </View>
+        ) : null}
+        {difficulty ? (
+          <View style={[styles.wkMetaTag, { backgroundColor: getDifficultyColor(difficulty) + "18" }]}>
+            <Ionicons name="speedometer-outline" size={12} color={getDifficultyColor(difficulty)} />
+            <Text style={[styles.wkMetaText, { color: getDifficultyColor(difficulty) }]}>{difficulty}</Text>
+          </View>
+        ) : null}
+        {duration ? (
+          <View style={styles.wkMetaTag}>
+            <Ionicons name="time-outline" size={12} color={Colors.textSecondary} />
+            <Text style={styles.wkMetaText}>{duration} min</Text>
+          </View>
+        ) : null}
+      </View>
 
-          {mainExercises.length > 0 && (
-            <View style={styles.detailSection}>
-              <View style={styles.workoutSectionHeader}>
-                <Ionicons name="barbell-outline" size={14} color={Colors.primary} />
-                <Text style={[styles.detailSectionTitle, { color: Colors.primary }]}>MAIN WORKOUT</Text>
+      {warmup.length > 0 && (
+        <View style={styles.wkSection}>
+          <Text style={styles.wkSectionTitle}>WARM-UP</Text>
+          <View style={styles.wkSectionBody}>
+            {warmup.map((item: any, i: number) => (
+              <View key={i} style={styles.wkBulletRow}>
+                <Text style={styles.wkBulletDot}>•</Text>
+                <Text style={styles.wkBulletText}>{formatBulletItem(item)}</Text>
               </View>
-              {mainExercises.map((ex: any, i: number) => {
-                const name = ex.name || ex.exercise || `Exercise ${i + 1}`;
-                const exType = ex.type || "";
-                const sets = ex.sets;
-                const reps = ex.reps;
-                const rest = ex.rest || ex.restBetweenSets;
-                const note = ex.note || ex.tip || ex.notes;
-                const setsRepsLabel = sets && reps ? `${sets} x ${reps}` : sets ? `${sets} sets` : reps ? `${reps} reps` : "";
+            ))}
+          </View>
+        </View>
+      )}
 
-                return (
-                  <View key={i} style={styles.exerciseItem}>
-                    <View style={styles.exerciseHeader}>
-                      <View style={[styles.stepNumber, { backgroundColor: Colors.primary + "20" }]}>
-                        <Text style={[styles.stepNumberText, { color: Colors.primary }]}>{i + 1}</Text>
-                      </View>
-                      <View style={styles.exerciseNameArea}>
-                        <Text style={styles.exerciseName}>{name}</Text>
-                        <View style={styles.exerciseMetaRow}>
-                          {exType ? (
-                            <View style={[styles.miniPill, { backgroundColor: Colors.primary + "15" }]}>
-                              <Text style={[styles.miniPillText, { color: Colors.primary }]}>{exType}</Text>
-                            </View>
-                          ) : null}
-                          {setsRepsLabel ? (
-                            <Text style={styles.exerciseDetail}>{setsRepsLabel}</Text>
-                          ) : null}
-                          {rest ? (
-                            <Text style={styles.exerciseDetail}>Rest: {rest}</Text>
-                          ) : null}
+      {mainExercises.length > 0 && (
+        <View style={styles.wkSection}>
+          <Text style={styles.wkSectionTitle}>EXERCISES</Text>
+          <View style={styles.wkExerciseList}>
+            {mainExercises.map((ex: any, i: number) => {
+              const name = ex.name || ex.exercise || `Exercise ${i + 1}`;
+              const exType = ex.type || "";
+              const sets = ex.sets;
+              const reps = ex.reps;
+              const rest = ex.rest || ex.restBetweenSets;
+              const note = ex.note || ex.tip || ex.notes;
+              const setsRepsLabel = sets && reps ? `${sets} × ${reps}` : sets ? `${sets} sets` : reps ? `${reps} reps` : "";
+
+              return (
+                <View key={i} style={styles.wkExerciseCard}>
+                  <View style={styles.wkExerciseTop}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.wkExerciseName}>{name}</Text>
+                      {exType ? (
+                        <View style={[styles.wkCategoryBadge, {
+                          backgroundColor: exType.toLowerCase() === "cardio" ? "#FF9F0A15" : Colors.primary + "15",
+                        }]}>
+                          <Text style={[styles.wkCategoryText, {
+                            color: exType.toLowerCase() === "cardio" ? "#FF9F0A" : Colors.primary,
+                          }]}>{exType}</Text>
                         </View>
-                      </View>
+                      ) : null}
                     </View>
-                    {note && (
-                      <Text style={styles.exerciseNote}>{note}</Text>
-                    )}
+                    <View style={styles.wkExerciseRight}>
+                      {setsRepsLabel ? <Text style={styles.wkExerciseDetail}>{setsRepsLabel}</Text> : null}
+                      {rest ? (
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+                          <Ionicons name="time-outline" size={11} color={Colors.textSecondary} />
+                          <Text style={styles.wkExerciseDetail}>{rest}</Text>
+                        </View>
+                      ) : null}
+                      <ExerciseLikeDislike exerciseName={name} />
+                    </View>
                   </View>
-                );
-              })}
-            </View>
-          )}
+                  {note ? <Text style={styles.wkExerciseNote}>{note}</Text> : null}
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      )}
 
-          {coolDown.length > 0 && (
-            <View style={styles.detailSection}>
-              <View style={styles.workoutSectionHeader}>
-                <Ionicons name="snow-outline" size={14} color="#4ECDC4" />
-                <Text style={[styles.detailSectionTitle, { color: "#4ECDC4" }]}>COOL-DOWN</Text>
+      {finisherItems.length > 0 && (
+        <View style={styles.wkSection}>
+          <Text style={styles.wkSectionTitle}>FINISHER</Text>
+          <View style={styles.wkSectionBody}>
+            {finisherItems.map((item, i) => (
+              <View key={i} style={styles.wkBulletRow}>
+                <Text style={styles.wkBulletDot}>•</Text>
+                <Text style={styles.wkBulletText}>{item}</Text>
               </View>
-              {coolDown.map((item: any, i: number) => {
-                const label = typeof item === "string" ? item : item.name || item.exercise || JSON.stringify(item);
-                return (
-                  <View key={i} style={styles.bulletRow}>
-                    <Text style={styles.dashBullet}>-</Text>
-                    <Text style={styles.bulletText}>{label}</Text>
-                  </View>
-                );
-              })}
-            </View>
-          )}
+            ))}
+          </View>
+        </View>
+      )}
 
-          {coachingTips.length > 0 && (
-            <View style={styles.detailSection}>
-              <View style={styles.workoutSectionHeader}>
-                <Ionicons name="bulb-outline" size={14} color={Colors.warning} />
-                <Text style={[styles.detailSectionTitle, { color: Colors.warning }]}>COACHING TIPS</Text>
+      {coolDown.length > 0 && (
+        <View style={styles.wkSection}>
+          <Text style={styles.wkSectionTitle}>COOL-DOWN</Text>
+          <View style={styles.wkSectionBody}>
+            {coolDown.map((item: any, i: number) => (
+              <View key={i} style={styles.wkBulletRow}>
+                <Text style={styles.wkBulletDot}>•</Text>
+                <Text style={styles.wkBulletText}>{formatBulletItem(item)}</Text>
               </View>
-              {coachingTips.map((tip: any, i: number) => {
-                const label = typeof tip === "string" ? tip : tip.text || tip.tip || JSON.stringify(tip);
-                return (
-                  <View key={i} style={styles.tipRow}>
-                    <Ionicons name="star" size={10} color={Colors.warning} style={{ marginTop: 4 }} />
-                    <Text style={styles.tipText}>{label}</Text>
-                  </View>
-                );
-              })}
-            </View>
-          )}
+            ))}
+          </View>
+        </View>
+      )}
+
+      {coachingTips.length > 0 && (
+        <View style={styles.wkSection}>
+          <Text style={styles.wkSectionTitle}>COACHING CUES</Text>
+          <View style={styles.wkSectionBody}>
+            {coachingTips.map((tip: any, i: number) => {
+              const label = typeof tip === "string" ? tip : tip.text || tip.tip || JSON.stringify(tip);
+              return (
+                <Text key={i} style={styles.wkCoachingCue}>"{label}"</Text>
+              );
+            })}
+          </View>
         </View>
       )}
     </View>
@@ -780,13 +919,6 @@ export default function DailyDetailScreen() {
 
           {workouts.length > 0 && (
             <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Ionicons name="fitness" size={18} color={Colors.primary} />
-                <Text style={styles.sectionTitle}>Workouts</Text>
-                <Text style={styles.sectionCount}>
-                  {workouts.filter((w) => w.completed).length}/{workouts.length}
-                </Text>
-              </View>
               <View style={styles.itemsList}>
                 {workouts.map((workout) => (
                   <WorkoutItem
@@ -794,6 +926,7 @@ export default function DailyDetailScreen() {
                     workout={workout}
                     rawWorkout={dayData?.rawWorkout}
                     onToggle={() => handleToggle("workout", workout, workout.completed)}
+                    dateLabel={dateLabel}
                   />
                 ))}
               </View>
@@ -1415,5 +1548,169 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     fontSize: 12,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
+  },
+  wkCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  wkHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    padding: 16,
+    paddingBottom: 10,
+    gap: 12,
+  },
+  wkHeaderLeft: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  wkIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  wkTitle: {
+    fontSize: 15,
+    fontFamily: "Inter_700Bold",
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  wkSummary: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textSecondary,
+    lineHeight: 17,
+  },
+  wkHeaderRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  wkCheckbox: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 2,
+    borderColor: Colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  wkCheckboxChecked: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  wkMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+    flexWrap: "wrap",
+  },
+  wkMetaTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: Colors.surfaceElevated,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  wkMetaText: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: Colors.textSecondary,
+  },
+  wkSection: {
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+    padding: 16,
+  },
+  wkSectionTitle: {
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
+    color: Colors.textSecondary,
+    letterSpacing: 0.8,
+    marginBottom: 10,
+  },
+  wkSectionBody: {
+    gap: 6,
+  },
+  wkBulletRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  wkBulletDot: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textTertiary,
+    lineHeight: 20,
+  },
+  wkBulletText: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.text,
+    flex: 1,
+    lineHeight: 20,
+  },
+  wkExerciseList: {
+    gap: 0,
+  },
+  wkExerciseCard: {
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+  },
+  wkExerciseTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 10,
+  },
+  wkExerciseName: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.text,
+    marginBottom: 4,
+  },
+  wkCategoryBadge: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  wkCategoryText: {
+    fontSize: 10,
+    fontFamily: "Inter_700Bold",
+  },
+  wkExerciseRight: {
+    alignItems: "flex-end",
+    gap: 2,
+  },
+  wkExerciseDetail: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textSecondary,
+  },
+  wkExerciseNote: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textSecondary,
+    marginTop: 4,
+  },
+  wkCoachingCue: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.text,
+    fontStyle: "italic",
+    lineHeight: 20,
+    marginBottom: 4,
   },
 });
