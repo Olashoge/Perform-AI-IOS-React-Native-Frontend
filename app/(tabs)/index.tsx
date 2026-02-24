@@ -513,7 +513,7 @@ export default function DashboardScreen() {
           <Text style={styles.activePlanLabel}>ACTIVE PLAN</Text>
           <Text style={styles.activePlanName} numberOfLines={1}>{activeWellness.title || activeWellness.name || "General Fitness"}</Text>
           <View style={{ flex: 1 }} />
-          <Pressable onPress={() => router.push("/(tabs)/performance")}>
+          <Pressable onPress={(e) => { e.stopPropagation(); router.push("/(tabs)/performance"); }}>
             <Text style={styles.viewProgressLink}>View Progress</Text>
           </Pressable>
         </Pressable>
