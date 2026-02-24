@@ -183,10 +183,6 @@ export default function Step1Screen() {
     }
   }, [profile, prefilled]);
 
-  const hasDateConflict =
-    state.startDate &&
-    availability?.allDates?.some((d) => d === state.startDate);
-
   const todayStr = new Date().toISOString().split("T")[0];
   const isDateInvalid =
     state.startDate.length === 10 && state.startDate < todayStr;
@@ -333,15 +329,12 @@ export default function Step1Screen() {
           value={state.startDate}
           onChange={(d) => setState((prev) => ({ ...prev, startDate: d }))}
           Colors={Colors}
+          conflictDates={availability?.allDates || []}
+          planDuration={7}
         />
         {isDateInvalid && (
           <Text style={styles.warningText}>
             Start date cannot be in the past.
-          </Text>
-        )}
-        {hasDateConflict && !isDateInvalid && (
-          <Text style={styles.warningTextYellow}>
-            This date overlaps with an existing plan.
           </Text>
         )}
 

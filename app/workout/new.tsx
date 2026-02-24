@@ -18,7 +18,7 @@ import * as Crypto from "expo-crypto";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 import {
   useProfile,
-  useOccupiedDates,
+  useAvailability,
   useCreateWorkoutPlan,
   ProfileData,
 } from "@/lib/api-hooks";
@@ -104,13 +104,13 @@ function kgToLbs(kg: number): number {
   return Math.round(kg * 2.20462);
 }
 
-function wouldOverlap(startDate: string, occupiedDates: string[]): boolean {
-  const occupied = new Set(occupiedDates);
+function wouldOverlap(startDate: string, conflictDates: string[]): boolean {
+  const conflicts = new Set(conflictDates);
   const start = new Date(startDate + "T12:00:00Z");
   for (let i = 0; i < 7; i++) {
     const d = new Date(start);
     d.setUTCDate(d.getUTCDate() + i);
-    if (occupied.has(d.toISOString().split("T")[0])) return true;
+    if (conflicts.has(d.toISOString().split("T")[0])) return true;
   }
   return false;
 }
@@ -174,7 +174,8 @@ export default function NewWorkoutPlanScreen() {
   const topInset = Platform.OS === "web" ? WEB_TOP_INSET : insets.top;
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
   const { data: profile, isLoading: profileLoading } = useProfile();
-  const { data: occupiedDates } = useOccupiedDates();
+  const { data: availability } = useAvailability();
+  const workoutConflictDates = availability?.workoutDates || [];
   const createWorkout = useCreateWorkoutPlan();
   const prefilled = useRef(false);
 
@@ -250,7 +251,7 @@ export default function NewWorkoutPlanScreen() {
     );
   }
 
-  const selectedDateConflict = startDate && occupiedDates ? wouldOverlap(startDate, occupiedDates) : false;
+  const selectedDateConflict = startDate && workoutConflictDates.length > 0 ? wouldOverlap(startDate, workoutConflictDates) : false;
 
   const handleFocusToggle = (area: string) => {
     Haptics.selectionAsync();
@@ -482,13 +483,13 @@ export default function NewWorkoutPlanScreen() {
         )}
 
         <Text style={styles.sectionTitle}>Start Date</Text>
-        <Text style={styles.sectionHint}>Optional — only Mondays can be selected</Text>
+        <Text style={styles.sectionHint}>Optional — plan runs for 7 days from start</Text>
         <CalendarPickerField
           value={startDate}
           onChange={setStartDate}
           Colors={Colors}
-          mondaysOnly
-          conflictDates={occupiedDates}
+          conflictDates={workoutConflictDates}
+          planDuration={7}
         />
       </ScrollView>
 

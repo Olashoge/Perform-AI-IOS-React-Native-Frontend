@@ -18,7 +18,7 @@ import * as Crypto from "expo-crypto";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 import {
   useProfile,
-  useOccupiedDates,
+  useAvailability,
   useCreateMealPlan,
   ProfileData,
 } from "@/lib/api-hooks";
@@ -93,13 +93,13 @@ function kgToLbs(kg: number): number {
   return Math.round(kg * 2.20462);
 }
 
-function wouldOverlap(startDate: string, occupiedDates: string[]): boolean {
-  const occupied = new Set(occupiedDates);
+function wouldOverlap(startDate: string, conflictDates: string[]): boolean {
+  const conflicts = new Set(conflictDates);
   const start = new Date(startDate + "T12:00:00Z");
   for (let i = 0; i < 7; i++) {
     const d = new Date(start);
     d.setUTCDate(d.getUTCDate() + i);
-    if (occupied.has(d.toISOString().split("T")[0])) return true;
+    if (conflicts.has(d.toISOString().split("T")[0])) return true;
   }
   return false;
 }
@@ -155,7 +155,8 @@ export default function NewMealPlanScreen() {
   const topInset = Platform.OS === "web" ? WEB_TOP_INSET : insets.top;
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
   const { data: profile, isLoading: profileLoading } = useProfile();
-  const { data: occupiedDates } = useOccupiedDates();
+  const { data: availability } = useAvailability();
+  const mealConflictDates = availability?.mealDates || [];
   const createMeal = useCreateMealPlan();
   const prefilled = useRef(false);
 
@@ -218,7 +219,7 @@ export default function NewMealPlanScreen() {
     );
   }
 
-  const selectedDateConflict = startDate && occupiedDates ? wouldOverlap(startDate, occupiedDates) : false;
+  const selectedDateConflict = startDate && mealConflictDates.length > 0 ? wouldOverlap(startDate, mealConflictDates) : false;
 
   const handleDietStyleToggle = (style: string) => {
     Haptics.selectionAsync();
@@ -518,13 +519,13 @@ export default function NewMealPlanScreen() {
         )}
 
         <Text style={styles.sectionTitle}>Start Date</Text>
-        <Text style={styles.sectionHint}>Optional — only Mondays can be selected</Text>
+        <Text style={styles.sectionHint}>Optional — plan runs for 7 days from start</Text>
         <CalendarPickerField
           value={startDate}
           onChange={setStartDate}
           Colors={Colors}
-          mondaysOnly
-          conflictDates={occupiedDates}
+          conflictDates={mealConflictDates}
+          planDuration={7}
         />
       </ScrollView>
 

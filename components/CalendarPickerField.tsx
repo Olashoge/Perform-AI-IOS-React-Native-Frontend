@@ -18,18 +18,33 @@ function getMonthGrid(year: number, month: number): (number | null)[] {
   return cells;
 }
 
+function getDateStr(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+function blockHasConflict(dateStr: string, conflictSet: Set<string>, planDuration: number): boolean {
+  if (planDuration <= 1) return conflictSet.has(dateStr);
+  const start = new Date(dateStr + "T12:00:00Z");
+  for (let i = 0; i < planDuration; i++) {
+    const d = new Date(start);
+    d.setUTCDate(d.getUTCDate() + i);
+    if (conflictSet.has(getDateStr(d))) return true;
+  }
+  return false;
+}
+
 export default function CalendarPickerField({
   value,
   onChange,
   Colors,
-  mondaysOnly,
   conflictDates,
+  planDuration = 7,
 }: {
   value: string;
   onChange: (date: string) => void;
   Colors: ThemeColors;
-  mondaysOnly?: boolean;
   conflictDates?: string[];
+  planDuration?: number;
 }) {
   const [showModal, setShowModal] = useState(false);
   const today = new Date();
@@ -56,7 +71,7 @@ export default function CalendarPickerField({
 
   const displayLabel = value
     ? new Date(value + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })
-    : mondaysOnly ? "Select a Monday (optional)" : "Select a date (optional)";
+    : "Select a start date (optional)";
 
   return (
     <>
@@ -132,10 +147,8 @@ export default function CalendarPickerField({
                 const isToday = dateStr === todayStr;
                 const isSelected = dateStr === value;
                 const isPast = dateStr < todayStr;
-                const dayOfWeek = new Date(Date.UTC(viewYear, viewMonth, day)).getUTCDay();
-                const isMonday = dayOfWeek === 1;
-                const disabled = isPast || (mondaysOnly && !isMonday);
-                const isConflict = conflictSet.has(dateStr);
+                const isConflict = blockHasConflict(dateStr, conflictSet, planDuration);
+                const disabled = isPast || isConflict;
 
                 return (
                   <View key={dateStr} style={{ width: "14.28%", height: 38, justifyContent: "center", alignItems: "center" }}>
@@ -153,7 +166,7 @@ export default function CalendarPickerField({
                         justifyContent: "center",
                         alignItems: "center",
                         backgroundColor: isSelected ? Colors.primary : isToday ? Colors.border : "transparent",
-                        ...(isConflict && !isSelected ? { borderWidth: 1.5, borderColor: Colors.error } : {}),
+                        ...(isConflict && !isPast && !isSelected ? { borderWidth: 1.5, borderColor: Colors.error } : {}),
                       }}
                     >
                       <Text
@@ -171,9 +184,9 @@ export default function CalendarPickerField({
               })}
             </View>
 
-            {mondaysOnly && (
+            {conflictDates && conflictDates.length > 0 && (
               <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textTertiary, textAlign: "center", marginTop: 8 }}>
-                Only Mondays can be selected as start dates
+                Dates with existing plans are unavailable
               </Text>
             )}
 
