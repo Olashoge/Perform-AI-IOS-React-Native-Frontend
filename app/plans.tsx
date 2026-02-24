@@ -52,18 +52,37 @@ function formatDateRange(start: string | undefined, end: string | undefined): st
   }
 }
 
-function StatusBadge({ status, Colors }: { status: string; Colors: ThemeColors }) {
+function StatusBadge({ status, hasDate, Colors }: { status: string; hasDate?: boolean; Colors: ThemeColors }) {
   const isActive = status === "ready" || status === "active";
   const isScheduled = status === "scheduled" || status === "generating" || status === "pending";
-  const bgColor = isActive ? "#30D15820" : isScheduled ? Colors.primary + "18" : Colors.surfaceElevated;
-  const textColor = isActive ? "#30D158" : isScheduled ? Colors.primary : Colors.textSecondary;
-  const icon = isActive ? "sparkles" : isScheduled ? "calendar-outline" : "ellipsis-horizontal";
+
+  let label = status.charAt(0).toUpperCase() + status.slice(1);
+  let bgColor = Colors.surfaceElevated;
+  let textColor = Colors.textSecondary;
+  let icon: keyof typeof Ionicons.glyphMap = "ellipsis-horizontal";
+
+  if (isActive) {
+    label = "Active";
+    bgColor = "#30D15820";
+    textColor = "#30D158";
+    icon = "sparkles";
+  } else if (isScheduled) {
+    label = "Scheduled";
+    bgColor = Colors.primary + "18";
+    textColor = Colors.primary;
+    icon = "calendar-outline";
+  } else if (!isActive && !isScheduled && !hasDate) {
+    label = "Unscheduled";
+    bgColor = Colors.surfaceElevated;
+    textColor = Colors.textSecondary;
+    icon = "time-outline";
+  }
 
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: bgColor, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
       <Ionicons name={icon as any} size={10} color={textColor} />
       <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: textColor }}>
-        {status === "ready" ? "Active" : status.charAt(0).toUpperCase() + status.slice(1)}
+        {label}
       </Text>
     </View>
   );
@@ -153,7 +172,7 @@ function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: {
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
             <Text style={styles.wellnessCardTitle} numberOfLines={1}>{name}</Text>
             {goal ? <GoalBadge goal={goal} Colors={Colors} /> : null}
-            <StatusBadge status={status} Colors={Colors} />
+            <StatusBadge status={status} hasDate={!!startDate} Colors={Colors} />
           </View>
           {startDate && (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
@@ -265,7 +284,7 @@ function MealPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () => v
       <View style={{ flex: 1, gap: 4 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
           <Text style={styles.simplePlanName} numberOfLines={2}>{name}</Text>
-          <StatusBadge status={status} Colors={Colors} />
+          <StatusBadge status={status} hasDate={!!startDate} Colors={Colors} />
         </View>
         {startDate && (
           <Text style={styles.simplePlanDate}>{formatDateRange(startDate, endDate)}</Text>
@@ -310,7 +329,7 @@ function WorkoutPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () =
       <View style={{ flex: 1, gap: 4 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
           <Text style={styles.simplePlanName} numberOfLines={2}>{name}</Text>
-          <StatusBadge status={status} Colors={Colors} />
+          <StatusBadge status={status} hasDate={!!startDate} Colors={Colors} />
         </View>
         {startDate && (
           <Text style={styles.simplePlanDate}>
