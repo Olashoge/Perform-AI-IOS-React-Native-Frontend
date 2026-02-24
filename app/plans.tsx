@@ -141,7 +141,7 @@ function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: {
     <View style={styles.wellnessCard}>
       <View style={styles.wellnessCardHeader}>
         <View style={styles.wellnessIconCircle}>
-          <Ionicons name="heart" size={20} color="#FF6B6B" />
+          <Ionicons name="heart-outline" size={20} color="#FF6B6B" />
         </View>
         <View style={{ flex: 1, gap: 4 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
