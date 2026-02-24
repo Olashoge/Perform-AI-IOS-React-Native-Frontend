@@ -162,7 +162,7 @@ export default function SettingsScreen() {
               style={styles.editProfileButton}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push("/(tabs)/profile");
+                router.push("/profile");
               }}
             >
               <Text style={styles.editProfileText}>Edit</Text>

@@ -70,6 +70,13 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="profile"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
+      <Stack.Screen
         name="settings"
         options={{
           headerShown: false,
