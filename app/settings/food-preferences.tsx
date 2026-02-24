@@ -155,13 +155,11 @@ export default function MealPreferencesScreen() {
   const avoidIngredients = data?.avoidIngredients ?? [];
 
   const likedCount = likedMeals.length + preferIngredients.length;
-  const dislikedCount = dislikedMeals.length;
-  const avoidedCount = avoidIngredients.length;
+  const dislikedCount = dislikedMeals.length + avoidIngredients.length;
 
   const tabs: { key: Tab; label: string; count: number; icon: keyof typeof Ionicons.glyphMap }[] = [
     { key: "liked", label: "Liked", count: likedCount, icon: "thumbs-up-outline" },
     { key: "disliked", label: "Disliked", count: dislikedCount, icon: "thumbs-down-outline" },
-    { key: "avoided", label: "Avoided", count: avoidedCount, icon: "ban-outline" },
   ];
 
   return (
@@ -243,36 +241,29 @@ export default function MealPreferencesScreen() {
 
           {activeTab === "disliked" && (
             <>
-              {dislikedMeals.length > 0 ? (
-                dislikedMeals.map((meal) => (
-                  <MealCard
-                    key={meal.id}
-                    meal={meal}
-                    onDelete={() => deleteMeal.mutate(meal.id)}
-                    Colors={Colors}
-                  />
-                ))
-              ) : (
-                <EmptyState tab="disliked" Colors={Colors} />
+              {dislikedMeals.length > 0 && dislikedMeals.map((meal) => (
+                <MealCard
+                  key={meal.id}
+                  meal={meal}
+                  onDelete={() => deleteMeal.mutate(meal.id)}
+                  Colors={Colors}
+                />
+              ))}
+              {avoidIngredients.length > 0 && (
+                <>
+                  {dislikedMeals.length > 0 && <Text style={styles.sectionLabel}>Avoided Ingredients</Text>}
+                  {avoidIngredients.map((ing) => (
+                    <IngredientCard
+                      key={ing.id}
+                      ingredient={ing}
+                      onDelete={() => deleteIngredient.mutate(ing.id)}
+                      Colors={Colors}
+                      type="avoid"
+                    />
+                  ))}
+                </>
               )}
-            </>
-          )}
-
-          {activeTab === "avoided" && (
-            <>
-              {avoidIngredients.length > 0 ? (
-                avoidIngredients.map((ing) => (
-                  <IngredientCard
-                    key={ing.id}
-                    ingredient={ing}
-                    onDelete={() => deleteIngredient.mutate(ing.id)}
-                    Colors={Colors}
-                    type="avoid"
-                  />
-                ))
-              ) : (
-                <EmptyState tab="avoided" Colors={Colors} />
-              )}
+              {dislikedCount === 0 && <EmptyState tab="disliked" Colors={Colors} />}
             </>
           )}
         </ScrollView>
