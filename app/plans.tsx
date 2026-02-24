@@ -23,209 +23,323 @@ import {
   useDeleteMealPlan,
   useDeleteWorkoutPlan,
   useUpdateGoalPlan,
+  useBudget,
 } from "@/lib/api-hooks";
 
 const WEB_TOP_INSET = 67;
-const TABS = ["Wellness", "Meals", "Workouts"] as const;
+const TABS = ["Wellness", "Nutrition", "Training"] as const;
 type Tab = (typeof TABS)[number];
 
-function formatDate(dateStr: string | undefined): string {
-  if (!dateStr) return "—";
+function formatDateRange(start: string | undefined, end: string | undefined): string {
+  if (!start) return "";
+  try {
+    const fmt = (s: string) => {
+      const d = new Date(s + "T12:00:00Z");
+      return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+    };
+    const fmtShort = (s: string) => {
+      const d = new Date(s + "T12:00:00Z");
+      return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+    };
+    if (end) {
+      const ds = new Date(start + "T12:00:00Z");
+      const de = new Date(end + "T12:00:00Z");
+      if (ds.getUTCFullYear() === de.getUTCFullYear()) {
+        return `${fmtShort(start)} – ${fmtShort(end)}, ${ds.getUTCFullYear()}`;
+      }
+      return `${fmt(start)} – ${fmt(end)}`;
+    }
+    return fmt(start);
+  } catch {
+    return start || "";
+  }
+}
+
+function formatShortDate(dateStr: string | undefined): string {
+  if (!dateStr) return "";
   try {
     const d = new Date(dateStr + "T12:00:00Z");
-    return d.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      timeZone: "UTC",
-    });
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
   } catch {
     return dateStr;
   }
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const Colors = useColors();
-  const color =
-    status === "ready" || status === "active"
-      ? Colors.accent
-      : status === "generating" || status === "pending"
-        ? Colors.warning
-        : Colors.textSecondary;
+function StatusBadge({ status, Colors }: { status: string; Colors: ThemeColors }) {
+  const isActive = status === "ready" || status === "active";
+  const isScheduled = status === "scheduled" || status === "generating" || status === "pending";
+  const bgColor = isActive ? "#30D15820" : isScheduled ? Colors.primary + "18" : Colors.surfaceElevated;
+  const textColor = isActive ? "#30D158" : isScheduled ? Colors.primary : Colors.textSecondary;
+  const icon = isActive ? "sparkles" : isScheduled ? "calendar-outline" : "ellipsis-horizontal";
+
   return (
-    <View style={[statusBadgeStyles.statusBadge, { backgroundColor: color + "20" }]}>
-      <View style={[statusBadgeStyles.statusDot, { backgroundColor: color }]} />
-      <Text style={[statusBadgeStyles.statusText, { color }]}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: bgColor, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+      <Ionicons name={icon as any} size={10} color={textColor} />
+      <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: textColor }}>
+        {status === "ready" ? "Active" : status.charAt(0).toUpperCase() + status.slice(1)}
       </Text>
     </View>
   );
 }
 
-const statusBadgeStyles = StyleSheet.create({
-  statusBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  statusText: {
-    fontSize: 10,
-    fontFamily: "Inter_500Medium",
-  },
-});
+function GoalBadge({ goal, Colors }: { goal: string; Colors: ThemeColors }) {
+  return (
+    <View style={{ backgroundColor: Colors.text, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+      <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: Colors.background }}>
+        {goal}
+      </Text>
+    </View>
+  );
+}
 
-function PlanCard({
-  plan,
-  type,
-  onDelete,
-  onMoveDate,
-  onPress,
-}: {
-  plan: any;
-  type: "wellness" | "meal" | "workout";
-  onDelete: () => void;
-  onMoveDate?: () => void;
-  onPress: () => void;
-}) {
-  const Colors = useColors();
+function BudgetCard({ Colors }: { Colors: ThemeColors }) {
+  const { data } = useBudget();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
-  const [showActions, setShowActions] = useState(false);
-  const icon: any =
-    type === "wellness"
-      ? "sparkles"
-      : type === "meal"
-        ? "restaurant"
-        : "fitness";
-  const iconColor =
-    type === "wellness"
-      ? Colors.primary
-      : type === "meal"
-        ? Colors.accent
-        : "#FF6B6B";
 
-  const title =
-    plan.name ||
-    plan.title ||
-    (type === "wellness"
-      ? "Wellness Plan"
-      : type === "meal"
-        ? "Meal Plan"
-        : "Workout Plan");
+  const mealSwaps = data?.mealSwaps ?? { used: 0, total: 0 };
+  const dayRegens = data?.dayRegens ?? { used: 0, total: 0 };
+  const planRegens = data?.planRegens ?? { used: 0, total: 0 };
 
+  return (
+    <View style={styles.budgetCard}>
+      <View style={styles.budgetHeader}>
+        <Ionicons name="sparkles" size={14} color={Colors.primary} />
+        <Text style={styles.budgetTitle}>Today's Budget</Text>
+      </View>
+      <View style={styles.budgetGrid}>
+        <View style={styles.budgetItem}>
+          <Ionicons name="swap-horizontal-outline" size={13} color={Colors.textSecondary} />
+          <Text style={styles.budgetLabel}>Meal Swaps</Text>
+          <Text style={styles.budgetValue}>{mealSwaps.used}/{mealSwaps.total}</Text>
+        </View>
+        <View style={styles.budgetItem}>
+          <Ionicons name="time-outline" size={13} color={Colors.textSecondary} />
+          <Text style={styles.budgetLabel}>Day Regens</Text>
+          <Text style={styles.budgetValue}>{dayRegens.used}/{dayRegens.total}</Text>
+        </View>
+      </View>
+      <View style={styles.budgetItemFull}>
+        <Ionicons name="refresh-outline" size={13} color={Colors.textSecondary} />
+        <Text style={styles.budgetLabel}>Plan Regens</Text>
+        <Text style={styles.budgetValue}>{planRegens.used}/{planRegens.total}</Text>
+      </View>
+    </View>
+  );
+}
+
+function WellnessPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () => void; Colors: ThemeColors }) {
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+  const name = plan.name || plan.title || "Wellness Plan";
   const status = plan.status || plan.generationStatus || "active";
   const startDate = plan.startDate || plan.start_date;
   const endDate = plan.endDate || plan.end_date;
+  const goal = plan.primaryGoal || "";
+  const planType = plan.planType || "both";
+  const mealPlanName = plan.mealPlan?.name || plan.mealPlanName || "";
+  const workoutPlanName = plan.workoutPlan?.name || plan.workoutPlanName || "";
+  const id = plan._id || plan.id;
+  const shortDate = formatShortDate(startDate);
+  const headerLabel = shortDate ? `${name.split(" ").slice(0, 3).join(" ")} · ${shortDate}` : name;
 
   return (
-    <Pressable
-      style={styles.planCard}
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        onPress();
-      }}
-      testID={`plan-card-${plan._id || plan.id}`}
-    >
-      <View style={styles.cardHeader}>
-        <View style={[styles.iconCircle, { backgroundColor: iconColor + "20" }]}>
-          <Ionicons name={icon} size={20} color={iconColor} />
+    <View style={styles.wellnessCard}>
+      <View style={styles.wellnessCardHeader}>
+        <View style={styles.wellnessIconCircle}>
+          <Ionicons name="sync-circle" size={28} color={Colors.primary} />
         </View>
-        <View style={styles.cardHeaderText}>
-          <Text style={styles.cardTitle} numberOfLines={1}>
-            {title}
-          </Text>
-          {plan.primaryGoal && (
-            <Text style={styles.cardSubtitle} numberOfLines={1}>
-              {plan.primaryGoal}
-            </Text>
-          )}
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text style={styles.wellnessCardTitle} numberOfLines={1}>{headerLabel}</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            {goal ? <GoalBadge goal={goal} Colors={Colors} /> : null}
+            <StatusBadge status={status} Colors={Colors} />
+          </View>
         </View>
         <Pressable
-          style={styles.menuButton}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setShowActions(!showActions);
+            onDelete();
           }}
-          testID={`plan-menu-${plan._id || plan.id}`}
+          hitSlop={10}
+          style={{ padding: 6 }}
         >
-          <Ionicons
-            name="ellipsis-horizontal"
-            size={20}
-            color={Colors.textSecondary}
-          />
+          <Ionicons name="trash-outline" size={18} color={Colors.textTertiary} />
         </Pressable>
       </View>
 
-      <View style={styles.cardMeta}>
-        <StatusBadge status={status} />
-        {startDate && (
-          <View style={styles.dateRow}>
-            <Ionicons
-              name="calendar-outline"
-              size={14}
-              color={Colors.textSecondary}
-            />
-            <Text style={styles.dateText}>
-              {formatDate(startDate)}
-              {endDate ? ` – ${formatDate(endDate)}` : ""}
-            </Text>
-          </View>
-        )}
-      </View>
-
-      {plan.planType && (
-        <View style={styles.planTypeRow}>
-          <Text style={styles.planTypeLabel}>Type:</Text>
-          <Text style={styles.planTypeValue}>
-            {plan.planType === "both"
-              ? "Meal & Workout"
-              : plan.planType === "meal"
-                ? "Meal Only"
-                : "Workout Only"}
+      {startDate && (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 12 }}>
+          <Ionicons name="calendar-outline" size={12} color={Colors.textSecondary} />
+          <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textSecondary }}>
+            {formatDateRange(startDate, endDate)}
           </Text>
         </View>
       )}
 
-      {showActions && (
-        <View style={styles.actionsPanel}>
-          {type === "wellness" && onMoveDate && (
-            <Pressable
-              style={styles.actionRow}
-              onPress={() => {
-                setShowActions(false);
-                onMoveDate();
-              }}
-            >
-              <Ionicons
-                name="calendar-outline"
-                size={18}
-                color={Colors.primary}
-              />
-              <Text style={styles.actionText}>Change Start Date</Text>
+      <View style={styles.linkedPlansRow}>
+        <Pressable
+          style={styles.linkedPlanBox}
+          onPress={() => {
+            if (plan.mealPlan?.id || plan.mealPlanId) {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push(`/plan/meal/${plan.mealPlan?.id || plan.mealPlanId}` as any);
+            }
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
+            <Ionicons name="restaurant" size={14} color={Colors.textSecondary} />
+            <Text style={styles.linkedPlanLabel}>Meal Plan</Text>
+            {(plan.mealPlan?.id || plan.mealPlanId) && (
+              <Ionicons name="open-outline" size={12} color={Colors.textTertiary} />
+            )}
+          </View>
+          {mealPlanName ? (
+            <Text style={styles.linkedPlanName} numberOfLines={2}>{mealPlanName}</Text>
+          ) : (
+            <Pressable style={styles.linkButton}>
+              <Ionicons name="link-outline" size={14} color={Colors.textTertiary} />
+              <Text style={styles.linkButtonText}>Link Meal Plan</Text>
             </Pressable>
           )}
-          <Pressable
-            style={styles.actionRow}
-            onPress={() => {
-              setShowActions(false);
-              onDelete();
-            }}
-          >
-            <Ionicons name="trash-outline" size={18} color={Colors.error} />
-            <Text style={[styles.actionText, { color: Colors.error }]}>
-              Delete Plan
-            </Text>
-          </Pressable>
-        </View>
-      )}
+        </Pressable>
+
+        <Pressable
+          style={styles.linkedPlanBox}
+          onPress={() => {
+            if (plan.workoutPlan?.id || plan.workoutPlanId) {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push(`/plan/workout/${plan.workoutPlan?.id || plan.workoutPlanId}` as any);
+            }
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
+            <Ionicons name="barbell" size={14} color={Colors.textSecondary} />
+            <Text style={styles.linkedPlanLabel}>Workout Plan</Text>
+            {(plan.workoutPlan?.id || plan.workoutPlanId) && (
+              <Ionicons name="open-outline" size={12} color={Colors.textTertiary} />
+            )}
+          </View>
+          {workoutPlanName ? (
+            <Text style={styles.linkedPlanName} numberOfLines={2}>{workoutPlanName}</Text>
+          ) : (
+            <Pressable style={styles.linkButton}>
+              <Ionicons name="link-outline" size={14} color={Colors.textTertiary} />
+              <Text style={styles.linkButtonText}>Link Workout Plan</Text>
+            </Pressable>
+          )}
+        </Pressable>
+      </View>
+
+      <Pressable
+        style={styles.checkInsButton}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          router.push(`/plan/wellness/${id}` as any);
+        }}
+      >
+        <Text style={styles.checkInsText}>Weekly Check-ins</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function MealPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () => void; Colors: ThemeColors }) {
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+  const name = plan.name || plan.title || "Meal Plan";
+  const status = plan.status || plan.generationStatus || "active";
+  const startDate = plan.startDate || plan.start_date;
+  const endDate = plan.endDate || plan.end_date;
+  const id = plan._id || plan.id;
+
+  return (
+    <Pressable
+      style={styles.simplePlanCard}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        router.push(`/plan/meal/${id}` as any);
+      }}
+    >
+      <View style={[styles.simplePlanIcon, { backgroundColor: "#FF9F0A20" }]}>
+        <Ionicons name="restaurant" size={20} color="#FF9F0A" />
+      </View>
+      <View style={{ flex: 1, gap: 4 }}>
+        <Text style={styles.simplePlanName} numberOfLines={2}>{name}</Text>
+        <StatusBadge status={status} Colors={Colors} />
+        {startDate && (
+          <Text style={styles.simplePlanDate}>{formatDateRange(startDate, endDate)}</Text>
+        )}
+      </View>
+      <Pressable
+        onPress={(e) => {
+          e.stopPropagation?.();
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onDelete();
+        }}
+        hitSlop={10}
+        style={{ padding: 6 }}
+      >
+        <Ionicons name="trash-outline" size={18} color={Colors.textTertiary} />
+      </Pressable>
+      <Ionicons name="chevron-forward" size={18} color={Colors.textTertiary} />
     </Pressable>
+  );
+}
+
+function WorkoutPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () => void; Colors: ThemeColors }) {
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+  const name = plan.name || plan.title || "Workout Plan";
+  const status = plan.status || plan.generationStatus || "active";
+  const startDate = plan.startDate || plan.start_date;
+  const endDate = plan.endDate || plan.end_date;
+  const planType = plan.planType || plan.type || "";
+  const id = plan._id || plan.id;
+
+  return (
+    <Pressable
+      style={styles.simplePlanCard}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        router.push(`/plan/workout/${id}` as any);
+      }}
+    >
+      <View style={[styles.simplePlanIcon, { backgroundColor: "#30D15820" }]}>
+        <Ionicons name="barbell" size={20} color="#30D158" />
+      </View>
+      <View style={{ flex: 1, gap: 4 }}>
+        <Text style={styles.simplePlanName} numberOfLines={2}>{name}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          <StatusBadge status={status} Colors={Colors} />
+        </View>
+        {startDate && (
+          <Text style={styles.simplePlanDate}>
+            {formatDateRange(startDate, endDate)}
+            {planType ? `  ${planType.charAt(0).toUpperCase() + planType.slice(1)}` : ""}
+          </Text>
+        )}
+      </View>
+      <Pressable
+        onPress={(e) => {
+          e.stopPropagation?.();
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onDelete();
+        }}
+        hitSlop={10}
+        style={{ padding: 6 }}
+      >
+        <Ionicons name="trash-outline" size={18} color={Colors.textTertiary} />
+      </Pressable>
+      <Ionicons name="chevron-forward" size={18} color={Colors.textTertiary} />
+    </Pressable>
+  );
+}
+
+function EmptyState({ type, Colors }: { type: string; Colors: ThemeColors }) {
+  const styles = useMemo(() => createStyles(Colors), [Colors]);
+  return (
+    <View style={styles.emptyState}>
+      <Ionicons name="document-text-outline" size={40} color={Colors.textTertiary} />
+      <Text style={styles.emptyTitle}>No {type} Plans</Text>
+      <Text style={styles.emptySubtitle}>Create a new plan to get started.</Text>
+    </View>
   );
 }
 
@@ -244,15 +358,8 @@ export default function PlansHubScreen() {
   const deleteGoalPlan = useDeleteGoalPlan();
   const deleteMealPlan = useDeleteMealPlan();
   const deleteWorkoutPlan = useDeleteWorkoutPlan();
-  const updateGoalPlan = useUpdateGoalPlan();
 
-  const activeQuery =
-    activeTab === "Wellness"
-      ? wellnessQuery
-      : activeTab === "Meals"
-        ? mealQuery
-        : workoutQuery;
-
+  const activeQuery = activeTab === "Wellness" ? wellnessQuery : activeTab === "Nutrition" ? mealQuery : workoutQuery;
   const plans = activeQuery.data || [];
   const isLoading = activeQuery.isLoading;
 
@@ -263,13 +370,7 @@ export default function PlansHubScreen() {
   }, []);
 
   const confirmDelete = (id: string, type: "wellness" | "meal" | "workout") => {
-    const mutation =
-      type === "wellness"
-        ? deleteGoalPlan
-        : type === "meal"
-          ? deleteMealPlan
-          : deleteWorkoutPlan;
-
+    const mutation = type === "wellness" ? deleteGoalPlan : type === "meal" ? deleteMealPlan : deleteWorkoutPlan;
     Alert.alert("Delete Plan", "Are you sure you want to delete this plan?", [
       { text: "Cancel", style: "cancel" },
       {
@@ -283,109 +384,59 @@ export default function PlansHubScreen() {
     ]);
   };
 
-  const promptMoveDate = (plan: any) => {
-    const planId = plan._id || plan.id;
-    Alert.alert(
-      "Change Start Date",
-      "Enter a new start date in YYYY-MM-DD format.\n\nCurrent: " +
-        (plan.startDate || plan.start_date || "Not set"),
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Move to Next Monday",
-          onPress: () => {
-            const today = new Date();
-            const day = today.getUTCDay();
-            const diff = day === 0 ? 1 : day === 1 ? 7 : 8 - day;
-            const nextMon = new Date(
-              Date.UTC(
-                today.getUTCFullYear(),
-                today.getUTCMonth(),
-                today.getUTCDate() + diff,
-              ),
-            );
-            const dateStr = nextMon.toISOString().split("T")[0];
-            Haptics.impactAsync();
-            updateGoalPlan.mutate({ id: planId, data: { startDate: dateStr } });
-          },
-        },
-      ],
-    );
-  };
+  const activeWellnessPlan = (wellnessQuery.data || []).find((p: any) => {
+    const s = p.status || p.generationStatus || "";
+    return s === "active" || s === "ready";
+  });
 
-  const getTabCount = (tab: Tab) => {
-    if (tab === "Wellness") return wellnessQuery.data?.length || 0;
-    if (tab === "Meals") return mealQuery.data?.length || 0;
-    return workoutQuery.data?.length || 0;
+  const tabConfig = {
+    Wellness: { title: "Wellness Plans", subtitle: "", btnLabel: "New Wellness Plan", btnIcon: "add" as const, createType: "wellness" },
+    Nutrition: { title: "Nutrition", subtitle: "Meal plans aligned with your goal", btnLabel: "New Meal Plan", btnIcon: "sparkles" as const, createType: "meal" },
+    Training: { title: "Training", subtitle: "Workout plans for progressive results", btnLabel: "New Workout Plan", btnIcon: "sparkles" as const, createType: "workout" },
   };
+  const cfg = tabConfig[activeTab];
 
   return (
     <View style={[styles.container, { paddingTop: topInset }]}>
-      <View style={styles.header}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() => router.back()}
-          testID="plans-back"
-        >
-          <Ionicons name="chevron-back" size={24} color={Colors.text} />
-        </Pressable>
-        <Text style={styles.headerTitle}>My Plans</Text>
-        <Pressable
-          style={styles.createButton}
-          onPress={() => {
-            Haptics.impactAsync();
-            router.push("/(tabs)/create");
-          }}
-          testID="plans-create"
-        >
-          <Ionicons name="add" size={24} color={Colors.primary} />
-        </Pressable>
-      </View>
+      {activeWellnessPlan && (
+        <View style={styles.activePlanBanner}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1 }}>
+            <Ionicons name="ellipse" size={8} color={Colors.primary} />
+            <Text style={styles.activePlanBannerLabel}>ACTIVE PLAN</Text>
+            <Text style={styles.activePlanBannerName} numberOfLines={1}>
+              {activeWellnessPlan.primaryGoal || activeWellnessPlan.name || "Wellness"}
+            </Text>
+            {activeWellnessPlan.targetDate && (
+              <Text style={styles.activePlanBannerDate}>
+                Target: {formatShortDate(activeWellnessPlan.targetDate)}
+              </Text>
+            )}
+          </View>
+        </View>
+      )}
 
       <View style={styles.tabBar}>
         {TABS.map((tab) => {
-          const count = getTabCount(tab);
           const isActive = activeTab === tab;
           return (
             <Pressable
               key={tab}
               style={[styles.tab, isActive && styles.tabActive]}
-              onPress={() => setActiveTab(tab)}
-              testID={`plans-tab-${tab.toLowerCase()}`}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setActiveTab(tab);
+              }}
             >
-              <Text
-                style={[styles.tabText, isActive && styles.tabTextActive]}
-              >
-                {tab}
-              </Text>
-              {count > 0 && (
-                <View
-                  style={[
-                    styles.tabBadge,
-                    isActive && styles.tabBadgeActive,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.tabBadgeText,
-                      isActive && styles.tabBadgeTextActive,
-                    ]}
-                  >
-                    {count}
-                  </Text>
-                </View>
-              )}
+              <Text style={[styles.tabText, isActive && styles.tabTextActive]}>{tab}</Text>
             </Pressable>
           );
         })}
       </View>
 
       <ScrollView
-        style={styles.listContainer}
-        contentContainerStyle={[
-          styles.listContent,
-          { paddingBottom: bottomInset + 20 },
-        ]}
+        style={{ flex: 1 }}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInset + 20 }]}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={activeQuery.isFetching && !activeQuery.isLoading}
@@ -394,64 +445,72 @@ export default function PlansHubScreen() {
           />
         }
       >
+        <View style={styles.sectionHeader}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.sectionTitle}>{cfg.title}</Text>
+            {cfg.subtitle ? <Text style={styles.sectionSubtitle}>{cfg.subtitle}</Text> : null}
+          </View>
+          <Pressable style={{ padding: 8 }} onPress={() => {}}>
+            <Ionicons name="swap-vertical" size={18} color={Colors.textSecondary} />
+          </Pressable>
+          <Pressable
+            style={styles.newPlanButton}
+            onPress={() => {
+              Haptics.impactAsync();
+              router.push("/(tabs)/create" as any);
+            }}
+          >
+            <Ionicons name={cfg.btnIcon as any} size={14} color="#fff" />
+            <Text style={styles.newPlanButtonText}>{cfg.btnLabel}</Text>
+          </Pressable>
+        </View>
+
+        {(activeTab === "Nutrition" || activeTab === "Training") && (
+          <BudgetCard Colors={Colors} />
+        )}
+
         {isLoading ? (
           <View style={styles.emptyState}>
             <ActivityIndicator size="large" color={Colors.primary} />
           </View>
         ) : plans.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Ionicons
-              name="document-text-outline"
-              size={48}
-              color={Colors.textTertiary}
-            />
-            <Text style={styles.emptyTitle}>No {activeTab} Plans</Text>
-            <Text style={styles.emptySubtitle}>
-              Create a new plan to get started with your fitness journey.
-            </Text>
-            <Pressable
-              style={styles.emptyCreateButton}
-              onPress={() => {
-                Haptics.impactAsync();
-                router.push("/(tabs)/create");
-              }}
-            >
-              <Ionicons name="add-circle" size={20} color={Colors.text} />
-              <Text style={styles.emptyCreateText}>Create Plan</Text>
-            </Pressable>
-          </View>
+          <EmptyState type={activeTab} Colors={Colors} />
         ) : (
-          plans.map((plan: any, index: number) => {
-            const id = plan._id || plan.id;
-            const planType: "wellness" | "meal" | "workout" =
-              activeTab === "Wellness"
-                ? "wellness"
-                : activeTab === "Meals"
-                  ? "meal"
-                  : "workout";
-            return (
-              <PlanCard
-                key={id || index}
-                plan={plan}
-                type={planType}
-                onDelete={() => confirmDelete(id, planType)}
-                onMoveDate={
-                  planType === "wellness"
-                    ? () => promptMoveDate(plan)
-                    : undefined
-                }
-                onPress={() => {
-                  if (planType === "meal") {
-                    router.push(`/plan/meal/${id}`);
-                  } else if (planType === "workout") {
-                    router.push(`/plan/workout/${id}`);
-                  } else {
-                    router.push(`/plan/wellness/${id}`);
-                  }
-                }}
-              />
-            );
-          })
+          <>
+            {(activeTab === "Nutrition" || activeTab === "Training") && (
+              <Text style={styles.activePlansLabel}>ACTIVE PLANS</Text>
+            )}
+
+            {activeTab === "Wellness" &&
+              plans.map((plan: any, i: number) => (
+                <WellnessPlanCard
+                  key={plan._id || plan.id || i}
+                  plan={plan}
+                  onDelete={() => confirmDelete(plan._id || plan.id, "wellness")}
+                  Colors={Colors}
+                />
+              ))}
+
+            {activeTab === "Nutrition" &&
+              plans.map((plan: any, i: number) => (
+                <MealPlanCard
+                  key={plan._id || plan.id || i}
+                  plan={plan}
+                  onDelete={() => confirmDelete(plan._id || plan.id, "meal")}
+                  Colors={Colors}
+                />
+              ))}
+
+            {activeTab === "Training" &&
+              plans.map((plan: any, i: number) => (
+                <WorkoutPlanCard
+                  key={plan._id || plan.id || i}
+                  plan={plan}
+                  onDelete={() => confirmDelete(plan._id || plan.id, "workout")}
+                  Colors={Colors}
+                />
+              ))}
+          </>
         )}
       </ScrollView>
     </View>
@@ -463,54 +522,46 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  header: {
+  activePlanBanner: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
+  activePlanBannerLabel: {
+    fontSize: 9,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.textSecondary,
+    letterSpacing: 0.5,
   },
-  headerTitle: {
-    fontSize: 17,
+  activePlanBannerName: {
+    fontSize: 12,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
+    flexShrink: 1,
   },
-  createButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
+  activePlanBannerDate: {
+    fontSize: 10,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textSecondary,
   },
   tabBar: {
     flexDirection: "row",
     paddingHorizontal: 16,
-    gap: 8,
-    marginBottom: 8,
+    gap: 4,
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
   },
   tab: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: Colors.surface,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 8,
   },
   tabActive: {
-    backgroundColor: Colors.primary + "20",
-    borderWidth: 1,
-    borderColor: Colors.primary + "40",
+    backgroundColor: Colors.primary + "18",
   },
   tabText: {
     fontSize: 12,
@@ -521,159 +572,216 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     color: Colors.primary,
     fontFamily: "Inter_600SemiBold",
   },
-  tabBadge: {
-    backgroundColor: Colors.surfaceElevated,
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    minWidth: 20,
-    alignItems: "center",
-  },
-  tabBadgeActive: {
-    backgroundColor: Colors.primary + "30",
-  },
-  tabBadgeText: {
-    fontSize: 9,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.textSecondary,
-  },
-  tabBadgeTextActive: {
-    color: Colors.primary,
-  },
-  listContainer: {
-    flex: 1,
-  },
-  listContent: {
+  scrollContent: {
     paddingHorizontal: 16,
     gap: 12,
-    paddingTop: 8,
+    paddingTop: 16,
   },
-  planCard: {
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 4,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontFamily: "Inter_700Bold",
+    color: Colors.text,
+  },
+  sectionSubtitle: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  newPlanButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: Colors.text,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 10,
+  },
+  newPlanButtonText: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.background,
+  },
+  budgetCard: {
     backgroundColor: Colors.surface,
-    borderRadius: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 14,
+    gap: 10,
+  },
+  budgetHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 2,
+  },
+  budgetTitle: {
+    fontSize: 13,
+    fontFamily: "Inter_700Bold",
+    color: Colors.text,
+  },
+  budgetGrid: {
+    flexDirection: "row",
+    gap: 16,
+  },
+  budgetItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  budgetItemFull: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  budgetLabel: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textSecondary,
+  },
+  budgetValue: {
+    fontSize: 12,
+    fontFamily: "Inter_700Bold",
+    color: Colors.text,
+    marginLeft: 2,
+  },
+  activePlansLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_700Bold",
+    color: Colors.textSecondary,
+    letterSpacing: 0.8,
+    marginTop: 4,
+  },
+  wellnessCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
     padding: 16,
+  },
+  wellnessCardHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    marginBottom: 8,
+  },
+  wellnessIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.primary + "15",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  wellnessCardTitle: {
+    fontSize: 13,
+    fontFamily: "Inter_700Bold",
+    color: Colors.text,
+  },
+  linkedPlansRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 12,
+  },
+  linkedPlanBox: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 12,
+  },
+  linkedPlanLabel: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.text,
+  },
+  linkedPlanName: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textSecondary,
+    lineHeight: 16,
+  },
+  linkButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: Colors.surfaceElevated,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  cardHeader: {
+  linkButtonText: {
+    fontSize: 11,
+    fontFamily: "Inter_500Medium",
+    color: Colors.textSecondary,
+  },
+  checkInsButton: {
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  checkInsText: {
+    fontSize: 11,
+    fontFamily: "Inter_500Medium",
+    color: Colors.text,
+  },
+  simplePlanCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 14,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    marginBottom: 12,
   },
-  iconCircle: {
+  simplePlanIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
   },
-  cardHeaderText: {
-    flex: 1,
-  },
-  cardTitle: {
-    fontSize: 14,
+  simplePlanName: {
+    fontSize: 13,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
   },
-  cardSubtitle: {
-    fontSize: 11,
+  simplePlanDate: {
+    fontSize: 10,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
-    marginTop: 2,
-  },
-  menuButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.surfaceElevated,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cardMeta: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 8,
-  },
-  dateRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  dateText: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    color: Colors.textSecondary,
-  },
-  planTypeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingTop: 4,
-  },
-  planTypeLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    color: Colors.textSecondary,
-  },
-  planTypeValue: {
-    fontSize: 11,
-    fontFamily: "Inter_500Medium",
-    color: Colors.text,
-  },
-  actionsPanel: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    gap: 4,
-  },
-  actionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 4,
-  },
-  actionText: {
-    fontSize: 13,
-    fontFamily: "Inter_500Medium",
-    color: Colors.text,
   },
   emptyState: {
     alignItems: "center",
     justifyContent: "center",
-    paddingTop: 80,
-    gap: 12,
+    paddingTop: 60,
+    gap: 10,
   },
   emptyTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: "Inter_600SemiBold",
     color: Colors.textSecondary,
-    marginTop: 8,
   },
   emptySubtitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
     color: Colors.textTertiary,
     textAlign: "center",
     paddingHorizontal: 32,
-    lineHeight: 18,
-  },
-  emptyCreateButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginTop: 12,
-  },
-  emptyCreateText: {
-    fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.text,
   },
 });
