@@ -170,3 +170,7 @@ Toggle mutations use optimistic updates on day-data, then invalidate:
 - 2026-02-23: Updated all normalization functions to preserve rich meal/workout data and normalize API field names (protein_g→protein, etc.)
 - 2026-02-23: Rebuilt Calendar with inline meal names (colored BRE/LUN/DIN/SNK pills), workout descriptions, completion dots, today highlight, weekly score/adherence stats
 - 2026-02-23: Rebuilt Daily Detail with expandable meal cards (ingredients, steps, macros) and workout cards (warm-up, main exercises with sets/reps/rest, cool-down, coaching tips)
+- 2026-02-24: Rebuilt Meal Preferences screen (app/settings/food-preferences.tsx) with 3-tab layout (Liked/Disliked/Avoided), fetches from GET /api/preferences, shows meal cards with cuisine tags and delete, ingredient cards for prefer/avoid
+- 2026-02-24: Rebuilt Exercise Preferences screen (app/settings/exercise-preferences.tsx) with 3-tab layout (Liked/Disliked/Avoided), fetches from GET /api/preferences/exercise, shows exercise cards with delete
+- 2026-02-24: Added API hooks: useMealPreferences, useExercisePreferences, useDeleteMealPreference, useDeleteIngredientPreference, useDeleteExercisePreference
+- 2026-02-24: Added proxy routes for GET /api/preferences, GET /api/preferences/exercise, DELETE /api/preferences/meal/:id, DELETE /api/preferences/ingredient/:id, DELETE /api/preferences/exercise/:id
