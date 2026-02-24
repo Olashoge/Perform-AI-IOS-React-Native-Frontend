@@ -52,26 +52,51 @@ function formatDateRange(start: string | undefined, end: string | undefined): st
   }
 }
 
-function StatusBadge({ status, hasDate, Colors }: { status: string; hasDate?: boolean; Colors: ThemeColors }) {
-  const isActive = status === "ready" || status === "active";
-  const isScheduled = status === "scheduled" || status === "generating" || status === "pending";
+function getWeekRange(): { weekStart: string; weekEnd: string } {
+  const now = new Date();
+  const day = now.getUTCDay();
+  const diff = day === 0 ? 6 : day - 1;
+  const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - diff));
+  const sunday = new Date(monday);
+  sunday.setUTCDate(monday.getUTCDate() + 6);
+  const fmt = (d: Date) => d.toISOString().split("T")[0];
+  return { weekStart: fmt(monday), weekEnd: fmt(sunday) };
+}
 
-  let label = status.charAt(0).toUpperCase() + status.slice(1);
-  let bgColor = Colors.surfaceElevated;
-  let textColor = Colors.textSecondary;
-  let icon: keyof typeof Ionicons.glyphMap = "ellipsis-horizontal";
+function computePlanStatus(startDate?: string, endDate?: string, backendStatus?: string): "active" | "scheduled" | "unscheduled" | "generating" {
+  if (backendStatus === "generating" || backendStatus === "pending") return "generating";
+  if (!startDate) return "unscheduled";
+  const { weekStart, weekEnd } = getWeekRange();
+  const planEnd = endDate || startDate;
+  if (startDate <= weekEnd && planEnd >= weekStart) return "active";
+  if (startDate > weekEnd) return "scheduled";
+  return "active";
+}
 
-  if (isActive) {
+function StatusBadge({ startDate, endDate, backendStatus, Colors }: { startDate?: string; endDate?: string; backendStatus?: string; Colors: ThemeColors }) {
+  const computed = computePlanStatus(startDate, endDate, backendStatus);
+
+  let label: string;
+  let bgColor: string;
+  let textColor: string;
+  let icon: keyof typeof Ionicons.glyphMap;
+
+  if (computed === "active") {
     label = "Active";
     bgColor = "#30D15820";
     textColor = "#30D158";
     icon = "sparkles";
-  } else if (isScheduled) {
+  } else if (computed === "scheduled") {
     label = "Scheduled";
     bgColor = Colors.primary + "18";
     textColor = Colors.primary;
     icon = "calendar-outline";
-  } else if (!isActive && !isScheduled && !hasDate) {
+  } else if (computed === "generating") {
+    label = "Generating";
+    bgColor = Colors.primary + "18";
+    textColor = Colors.primary;
+    icon = "hourglass-outline";
+  } else {
     label = "Unscheduled";
     bgColor = Colors.surfaceElevated;
     textColor = Colors.textSecondary;
@@ -172,7 +197,7 @@ function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: {
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
             <Text style={styles.wellnessCardTitle} numberOfLines={1}>{name}</Text>
             {goal ? <GoalBadge goal={goal} Colors={Colors} /> : null}
-            <StatusBadge status={status} hasDate={!!startDate} Colors={Colors} />
+            <StatusBadge startDate={startDate} endDate={endDate} backendStatus={status} Colors={Colors} />
           </View>
           {startDate && (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
@@ -284,7 +309,7 @@ function MealPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () => v
       <View style={{ flex: 1, gap: 4 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
           <Text style={styles.simplePlanName} numberOfLines={2}>{name}</Text>
-          <StatusBadge status={status} hasDate={!!startDate} Colors={Colors} />
+          <StatusBadge startDate={startDate} endDate={endDate} backendStatus={status} Colors={Colors} />
         </View>
         {startDate && (
           <Text style={styles.simplePlanDate}>{formatDateRange(startDate, endDate)}</Text>
@@ -329,7 +354,7 @@ function WorkoutPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () =
       <View style={{ flex: 1, gap: 4 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
           <Text style={styles.simplePlanName} numberOfLines={2}>{name}</Text>
-          <StatusBadge status={status} hasDate={!!startDate} Colors={Colors} />
+          <StatusBadge startDate={startDate} endDate={endDate} backendStatus={status} Colors={Colors} />
         </View>
         {startDate && (
           <Text style={styles.simplePlanDate}>
