@@ -106,7 +106,7 @@ export default function MoreScreen() {
       title: "PLANS",
       items: [
         {
-          icon: "heart-outline",
+          icon: "nutrition-outline",
           iconColor: "#FF6B6B",
           label: "Wellness Plans",
           onPress: () => router.push({ pathname: "/plans", params: { tab: "wellness" } }),
