@@ -69,11 +69,17 @@ function StatusBadge({ status, Colors }: { status: string; Colors: ThemeColors }
   );
 }
 
+function formatGoalLabel(goal: string): string {
+  return goal
+    .replace(/[_-]/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function GoalBadge({ goal, Colors }: { goal: string; Colors: ThemeColors }) {
   return (
     <View style={{ backgroundColor: Colors.text, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
       <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: Colors.background }}>
-        {goal}
+        {formatGoalLabel(goal)}
       </Text>
     </View>
   );
