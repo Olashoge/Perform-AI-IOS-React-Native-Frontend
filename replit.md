@@ -1,179 +1,37 @@
 # Perform AI - Mobile App
 
 ## Overview
-Perform AI is a React Native (Expo) mobile app for meal and workout tracking. It uses JWT authentication and connects to both a local Express server (data) and an external backend (auth).
+Perform AI is a React Native (Expo) mobile application designed for comprehensive meal and workout tracking. It aims to provide users with tools for logging daily activities, managing their fitness and nutrition plans, and visualizing their progress. The project's vision is to offer a seamless and intuitive mobile experience for health-conscious individuals, leveraging AI for personalized insights and plan generation.
 
-## Architecture
-- **Frontend**: Expo Router (file-based routing) with React Native
-- **Auth Backend**: External API at `https://mealplanai.replit.app` (login, token refresh)
-- **Data Backend**: Local Express server on port 5000 (weekly-summary, week-data, day-data, completions)
-- **Database**: PostgreSQL (Neon) with drizzle-orm — stores completion states
-- **Auth**: JWT tokens stored in expo-secure-store, auto-refresh on 401
-- **State**: React Query for server state, React Context for auth state
-- **HTTP Clients**: 
-  - `apiClient` (axios) → external auth backend
-  - `dataClient` (axios) → local Express server for data routes
+## User Preferences
+I prefer clear and concise communication. When suggesting changes, please provide a brief overview of the impact. For complex features or architectural decisions, I appreciate detailed explanations. I prefer an iterative development approach, focusing on core functionalities first. Please ensure the application's responsiveness and a smooth user experience.
 
-## Key Files
-- `lib/api-client.ts` - Axios instances (apiClient for auth, dataClient for data) with JWT interceptors
-- `lib/auth-context.tsx` - Auth context provider (login, logout, auto-refresh)
-- `lib/api-hooks.ts` - React Query hooks for data fetching (uses dataClient)
-- `lib/api-log.ts` - In-memory API call log (last 5 calls)
-- `lib/query-client.ts` - React Query client config
-- `lib/week-start-context.tsx` - Week start preference context (Sunday/Monday, AsyncStorage)
-- `lib/theme-context.tsx` - Theme mode context (Light/Dark/System, AsyncStorage)
-- `lib/theme.ts` - Light and dark color token definitions
-- `server/routes.ts` - Express API routes with JWT decode middleware
-- `server/schedule-service.ts` - Deterministic schedule generation + DB-backed completions
-- `server/db.ts` - Drizzle/Neon database connection
-- `shared/schema.ts` - Database schema (users, completions tables)
-- `app/login.tsx` - Login screen
-- `app/(tabs)/index.tsx` - Dashboard with weekly summary
-- `app/(tabs)/calendar.tsx` - Week view calendar
-- `app/(tabs)/performance.tsx` - Performance tab (adherence %, 4-week trend, meal/workout split, streak, AI insight banner)
-- `app/(tabs)/settings.tsx` - Settings tab (profile card, preferences, week start, theme, sign out)
-- `app/(tabs)/profile.tsx` - User profile editing (accessible from Settings)
-- `app/daily/[date].tsx` - Daily detail view with completion toggles + "Plan This Day" generation
-- `app/diagnostics.tsx` - Developer diagnostics (API config, auth state, call log)
+## System Architecture
+The application is built with React Native and Expo Router for file-based navigation. It utilizes a hybrid backend approach:
+- **Frontend**: Expo Router with React Native.
+- **Auth Backend**: External API for user authentication and token management.
+- **Data Backend**: A local Express.js server handles core data operations and acts as a proxy for certain external backend calls, merging data with local completion states.
+- **Database**: PostgreSQL (Neon) with Drizzle ORM for storing user-specific completion states and other dynamic data.
+- **Authentication**: JWT tokens stored in `expo-secure-store`, with an automatic refresh mechanism upon 401 errors.
+- **State Management**: React Query manages server-side data caching and synchronization, while React Context handles global authentication and theme-related states.
+- **HTTP Clients**: Axios instances (`apiClient` for authentication, `dataClient` for data operations) are configured with JWT interceptors for seamless token handling.
+- **UI/UX**: Features dynamic theming (Light, Dark, System modes) using `ThemeProvider` and `useColors()` hook for reactive color schemes, defined in `lib/theme.ts`. It uses the Inter font and supports iOS 26 liquid glass tab bar. Week computations are consistently ISO 8601, Monday-based, and UTC-driven across client and server.
+- **Core Features**:
+    - User authentication and profile management.
+    - Dashboard with weekly summaries and performance metrics (adherence, trends, streaks, AI insights).
+    - Calendar view for daily and weekly activity tracking.
+    - Daily detail view for meal and workout completion toggles, with "Plan This Day" generation.
+    - Comprehensive plan management for Wellness, Meals, and Workouts, including creation wizards and detailed plan views.
+    - Settings with profile, preferences (food, exercise), week start, and theme customization.
+    - Developer diagnostics screen for monitoring API calls and application state.
+- **Completion Toggle Architecture**: PATCH requests for meal/workout completions are handled locally, updating a PostgreSQL database. GET requests for data (weekly-summary, week-data, day-data) merge external backend data with local completion states. Optimistic updates are used with React Query, invalidating relevant caches on success.
+- **Plan Detail Architecture**: Dedicated screens for meal, workout, and wellness plan details, providing rich content like recipes, exercise routines, and goal overviews.
 
-## API Endpoints
-
-### Auth (external backend: mealplanai.replit.app)
-- POST `/api/auth/token-login` - Login with email/password → JWT tokens
-- POST `/api/auth/refresh` - Refresh access token
-
-### Data (local Express server: port 5000)
-- GET `/api/weekly-summary` - Weekly adherence score, meal/workout counts
-- GET `/api/week-data?weekStart=YYYY-MM-DD` - 7-day schedule array
-- GET `/api/day-data/:date` - Single day meals + workouts + score
-- PATCH `/api/meals/:id` - Toggle meal completion
-- PATCH `/api/workouts/:id` - Toggle workout completion
-- POST `/api/daily-meals` - Create daily meal (body: { date, mealsPerDay })
-- POST `/api/daily-workouts` - Create daily workout (body: { date })
-- GET `/api/daily-coverage` - Check which dates have daily items
-
-All data routes require `Authorization: Bearer <token>` header.
-JWT is decoded (not verified) to extract userId.
-
-## React Query Keys
-- `["weekly-summary"]` - Dashboard weekly score
-- `["week-data", weekStart]` - Calendar week data
-- `["day-data", date]` - Daily detail data
-
-## Cache Invalidation
-Toggle mutations use optimistic updates on day-data, then invalidate:
-- `["day-data", date]` (exact)
-- `["week-data", computedWeekStart]` (exact)
-- `["weekly-summary"]`
-
-## Database Schema
-- `users` - id (uuid), username, password
-- `completions` - id (item id like "meal-2026-02-22-0"), userId, itemType, completed
-
-## Theme
-- Dynamic theming: Light, Dark, and System modes via ThemeProvider
-- All screens use `useColors()` hook from `lib/theme-context.tsx` for reactive colors
-- Color tokens defined in `lib/theme.ts` (darkColors, lightColors)
-- No screen imports static `Colors` from `constants/colors.ts` — all use dynamic hook
-- StyleSheet pattern: `const createStyles = (Colors: ThemeColors) => StyleSheet.create({...})` with `useMemo`
-- Sub-components call `useColors()` directly (no prop drilling)
-- Dark: electric blue (#0A84FF) primary, black background
-- Light: system blue (#007AFF) primary, light gray (#F2F2F7) background
-- Font: Inter (Google Fonts)
-- iOS 26 liquid glass tab bar support
-
-## Week Computation
-- All week boundaries use ISO 8601: Monday-based, UTC
-- Shared utility: `lib/week-utils.ts` (getWeekStartUTC, getWeekEndUTC, computeWeekStartForDate)
-- Server-side equivalent in `server/routes.ts` (getWeekStartISO, getWeekEndISO)
-- Both client and server use UTC to avoid timezone-dependent discrepancies
-
-## Mobile Dev Connectivity
-
-### How it works
-- The Expo dev server runs on port 8081 (internal) → mapped to external port 80 via Replit proxy
-- Expo Go connects via `exp://<REPLIT_DEV_DOMAIN>` which routes through the Replit proxy to Metro
-- The Express backend runs on port 5000 (internal) → mapped to external port 5000
-
-### Troubleshooting: "Could not connect to the server" on iPhone
-1. **Disable iCloud Private Relay**: Settings → Apple ID → iCloud → Private Relay → OFF. Private Relay blocks dev domain connections.
-2. **Disable VPN/DNS blockers**: AdGuard, 1Blocker, NextDNS, Pi-hole can block `*.replit.dev` domains. Temporarily disable them.
-3. **Check Wi-Fi captive portal**: Some networks (hotel, corporate) block non-standard ports. Try mobile data instead.
-4. **Restart Expo Go**: Force-close and reopen the app, then scan the QR code again.
-5. **Restart the frontend workflow**: The dev server may have gone idle. Restart it from the Replit workspace.
-6. **Verify backend health**: Visit `https://<REPLIT_DEV_DOMAIN>/health` in a browser to confirm the server is responding.
-7. **Web fallback**: If Expo Go won't connect, use the web version at port 8081 for development and testing.
-
-### Backend health endpoint
-- `GET /health` → `{ status: "ok", uptime, timestamp }`
-
-## Completion Toggle Architecture
-- PATCH /api/meals/:id and /api/workouts/:id are handled **locally** (not proxied)
-- Completions saved to PostgreSQL `completions` table with columns: id, userId, itemType, completed
-- GET endpoints (weekly-summary, week-data, day-data) proxy to external backend then **merge** local completion state
-- Mutation uses optimistic updates on day-data, then onSuccess invalidates ["day-data", date], ["week-data"], ["weekly-summary"]
-- staleTime is 30 seconds (not Infinity) to ensure queries refresh after navigation
-- Mutation throws on error (not swallowed) so onError properly rolls back optimistic updates
-
-## Plan Detail Architecture
-- Plan detail screens live at `app/plan/{type}/[id].tsx` (meal, workout, wellness)
-- Meal detail: Shows 7 days of meals with expandable recipe cards (ingredients, instructions, macros), nutrition notes, grocery list
-- Workout detail: Shows 7 days with workout sessions (exercises, sets, reps, rest) and rest days
-- Wellness detail: Shows goal plan overview with tappable linked meal/workout plan cards
-- All detail screens use the corresponding hooks: `useMealPlan(id)`, `useWorkoutPlan(id)`, `useGoalPlan(id)`
-- Generating screens navigate to detail view on completion (not Plans Hub)
-- Plan cards in Plans Hub are tappable → navigate to `/plan/{type}/{id}`
-- Detail screens handle "generating" status with spinner + refresh option
-
-## Recent Changes
-- 2026-02-22: Initial build - Auth flow, Dashboard, Calendar, Daily Detail, Profile screens
-- 2026-02-22: Added diagnostics screen and API call logging
-- 2026-02-22: Fixed React Query cache invalidation with optimistic updates
-- 2026-02-22: Implemented local Express API routes (weekly-summary, week-data, day-data, completions)
-- 2026-02-22: Split API clients - auth goes to external backend, data goes to local server
-- 2026-02-22: Aligned week computation - shared UTC-based Monday-start utility (lib/week-utils.ts)
-- 2026-02-22: Added GET /api/meta and GET /api/week-bounds endpoints to local Express server
-- 2026-02-22: Enhanced Diagnostics screen with timezone, week bounds, computed URLs, server meta
-- 2026-02-22: Added /api/meta footer to web landing page
-- 2026-02-22: Fixed SecureStore web compatibility with localStorage fallback
-- 2026-02-22: Fixed cache invalidation - staleTime 30s, broad ["week-data"] invalidation, PATCH in CORS
-- 2026-02-22: Implemented local completion storage (PostgreSQL) - PATCH no longer proxied to external backend
-- 2026-02-22: GET routes now merge local completion state with external backend data
-- 2026-02-22: Added server/db.ts for Drizzle/PostgreSQL connection
-- 2026-02-23: Added Performance tab with adherence %, 4-week trend chart, meal/workout split, streak, AI insight banner
-- 2026-02-23: Web proxy preserves external API format (object meals, singular workout) for client-side normalization
-- 2026-02-23: Rebuilt Profile tab as full editable form (5 sections, pill selectors, GET/PUT /api/profile)
-- 2026-02-23: Synced Profile with web spec: correct enums (primaryGoal, activityLevel, spicePreference, workoutLocation), feet/inches height input, categorized equipment accordion with auto-preselect, tag inputs for healthConstraints and allergiesIntolerances, legacy field copying on submission
-- 2026-02-23: Added plan creation flow: Create CTA on Dashboard, floating FAB on Calendar, /create plan type picker
-- 2026-02-23: Built 4-step Wellness Plan Wizard (app/wellness/step1-4): goal, nutrition, training, review+submit
-- 2026-02-23: Added generating screen (polls status) and ready screen (celebration + navigation)
-- 2026-02-23: WellnessProvider context for wizard state, profile prefill, LOCATION_PRESETS for equipment
-- 2026-02-23: Built Plans Hub (app/plans.tsx) with 3-tab layout (Wellness, Meals, Workouts), plan cards with status badges, 3-dot action menu (change date, delete), empty states
-- 2026-02-23: Added plan management hooks: useWellnessPlans, useMealPlans, useWorkoutPlans, useUpdateGoalPlan, useDelete* with cache invalidation
-- 2026-02-23: Added proxy routes for GET /api/goal-plans, /api/plans, /api/workouts; PATCH/DELETE mutations
-- 2026-02-23: Added "View My Plans" link on Dashboard and Ready screen navigation to Plans Hub
-- 2026-02-23: Built plan detail screens: meal (7-day with expandable recipes, grocery list), workout (sessions, exercises, rest days), wellness (overview with linked plan cards)
-- 2026-02-23: Made plan cards tappable in Plans Hub → navigates to detail views
-- 2026-02-23: Generating screens now navigate to plan detail view on completion (not just Plans Hub)
-- 2026-02-23: Built Settings tab replacing Profile in tab bar (profile still accessible via Edit link)
-- 2026-02-23: Settings includes: profile card, active wellness plan, food/exercise prefs, week start, theme, sign out
-- 2026-02-23: Added WeekStartProvider (Sunday/Monday, AsyncStorage) - calendar respects preference
-- 2026-02-23: Added ThemeProvider (Light/Dark/System, AsyncStorage) with light/dark color tokens
-- 2026-02-23: Built food preferences screen (favorites, foods to avoid, allergies)
-- 2026-02-23: Built exercise preferences screen (training capacity, equipment, constraints)
-- 2026-02-23: Implemented dynamic theming - all 30 screens converted from static Colors to useColors() hook, Light/Dark/System modes now fully functional
-- 2026-02-23: Added Daily Meal + Daily Workout generation: "Plan This Day" bottom sheet in daily detail, polling for generation, daily normalization in api-hooks
-- 2026-02-23: Enabled Daily Meal / Daily Workout in Create screens with navigation to daily detail + auto-generate trigger
-- 2026-02-23: Added proxy routes for daily-meals, daily-workouts, daily-coverage endpoints
-- 2026-02-23: Expanded Meal interface to include ingredients, steps, nutritionEstimateRange, servings, prepTime, note, description
-- 2026-02-23: Expanded Workout interface to include rawWorkout (full session object with warmup, main, coolDown, coachingTips)
-- 2026-02-23: Updated all normalization functions to preserve rich meal/workout data and normalize API field names (protein_g→protein, etc.)
-- 2026-02-23: Rebuilt Calendar with inline meal names (colored BRE/LUN/DIN/SNK pills), workout descriptions, completion dots, today highlight, weekly score/adherence stats
-- 2026-02-23: Rebuilt Daily Detail with expandable meal cards (ingredients, steps, macros) and workout cards (warm-up, main exercises with sets/reps/rest, cool-down, coaching tips)
-- 2026-02-24: Rebuilt Meal Preferences screen (app/settings/food-preferences.tsx) with 3-tab layout (Liked/Disliked/Avoided), fetches from GET /api/preferences, shows meal cards with cuisine tags and delete, ingredient cards for prefer/avoid
-- 2026-02-24: Rebuilt Exercise Preferences screen (app/settings/exercise-preferences.tsx) with 3-tab layout (Liked/Disliked/Avoided), fetches from GET /api/preferences/exercise, shows exercise cards with delete
-- 2026-02-24: Added API hooks: useMealPreferences, useExercisePreferences, useDeleteMealPreference, useDeleteIngredientPreference, useDeleteExercisePreference
-- 2026-02-24: Added proxy routes for GET /api/preferences, GET /api/preferences/exercise, DELETE /api/preferences/meal/:id, DELETE /api/preferences/ingredient/:id, DELETE /api/preferences/exercise/:id
-- 2026-02-24: Rebuilt Plans Hub (app/plans.tsx) with 3 redesigned tabs matching web app: Wellness Plans (plan cards with linked Meal/Workout sub-cards, goal badges, Weekly Check-ins), Nutrition (Today's Budget card, Active Plans with meal cards), Training (Today's Budget card, Active Plans with workout cards)
-- 2026-02-24: Added budget API hook (useBudget) and proxy route GET /api/budget for Today's Budget card (Meal Swaps, Day Regens, Plan Regens)
-- 2026-02-24: Active Plan banner shows at top of Plans Hub when an active wellness plan exists
+## External Dependencies
+- **Auth Service**: `https://mealplanai.replit.app` (for user login and token refresh).
+- **Database**: PostgreSQL (Neon) accessed via Drizzle ORM.
+- **HTTP Client**: Axios.
+- **State Management**: React Query.
+- **Secure Storage**: `expo-secure-store`.
+- **UI Framework**: React Native, Expo.
+- **Font**: Google Fonts (Inter).
