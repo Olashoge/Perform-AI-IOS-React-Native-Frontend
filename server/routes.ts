@@ -295,7 +295,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/availability", proxyToExternal);
   app.get("/api/budget", proxyToExternal);
-  app.post("/api/goal-plans/generate", proxyToExternal);
+  app.post("/api/goal-plans/generate", (req: any, res: any) => {
+    console.log("[Goal Plan] POST /api/goal-plans/generate payload:", JSON.stringify(req.body, null, 2));
+    const targetUrl = new URL(req.originalUrl, EXTERNAL_BACKEND);
+    const bodyStr = JSON.stringify(req.body);
+    const options: https.RequestOptions = {
+      hostname: targetUrl.hostname,
+      port: 443,
+      path: targetUrl.pathname + targetUrl.search,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(bodyStr),
+        ...(req.headers.authorization ? { Authorization: req.headers.authorization } : {}),
+      },
+    };
+    const proxyReq = https.request(options, (proxyRes) => {
+      let responseBody = "";
+      proxyRes.on("data", (chunk: any) => { responseBody += chunk; });
+      proxyRes.on("end", () => {
+        console.log(`[Goal Plan] Response ${proxyRes.statusCode}:`, responseBody.substring(0, 500));
+        res.status(proxyRes.statusCode || 500);
+        Object.entries(proxyRes.headers).forEach(([key, value]) => {
+          if (key.toLowerCase() !== "transfer-encoding" && key.toLowerCase() !== "access-control-allow-origin") {
+            res.setHeader(key, value as string);
+          }
+        });
+        res.send(responseBody);
+      });
+    });
+    proxyReq.on("error", (err) => {
+      console.error("[Goal Plan] Proxy error:", err.message);
+      res.status(502).json({ error: "Backend proxy error", message: err.message });
+    });
+    proxyReq.write(bodyStr);
+    proxyReq.end();
+  });
   app.get("/api/goal-plans/:id/generation-status", proxyToExternal);
   app.get("/api/goal-plans", proxyToExternal);
   app.get("/api/goal-plans/:id", proxyToExternal);

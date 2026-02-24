@@ -31,10 +31,18 @@ type GenerationStages = {
   FINALIZING: string;
 };
 
-function getStageIcon(status: string, Colors: ThemeColors): {
+function normalizeStageStatus(status: string): string {
+  const s = status.toUpperCase();
+  if (s === "DONE" || s === "COMPLETED") return "completed";
+  if (s === "RUNNING" || s === "IN_PROGRESS") return "in_progress";
+  return "pending";
+}
+
+function getStageIcon(rawStatus: string, Colors: ThemeColors): {
   name: keyof typeof Ionicons.glyphMap;
   color: string;
 } {
+  const status = normalizeStageStatus(rawStatus);
   if (status === "completed")
     return { name: "checkmark-circle", color: Colors.accent };
   if (status === "in_progress")
@@ -42,7 +50,8 @@ function getStageIcon(status: string, Colors: ThemeColors): {
   return { name: "ellipse-outline", color: Colors.textSecondary };
 }
 
-function getStageLabel(status: string): string {
+function getStageLabel(rawStatus: string): string {
+  const status = normalizeStageStatus(rawStatus);
   if (status === "completed") return "Completed";
   if (status === "in_progress") return "In progress";
   return "Pending";
@@ -63,6 +72,8 @@ export default function GeneratingScreen() {
       setEnabled(false);
       resetWizard();
       router.replace(`/wellness/ready?goalPlanId=${goalPlanId}`);
+    } else if (data?.status === "failed") {
+      setEnabled(false);
     }
   }, [data?.status]);
 
@@ -117,9 +128,10 @@ export default function GeneratingScreen() {
 
           <View style={styles.stagesContainer}>
             {STAGES.map((stage) => {
-              const status = stageStatuses?.[stage.key] ?? "pending";
-              const icon = getStageIcon(status, Colors);
-              const label = getStageLabel(status);
+              const rawStatus = stageStatuses?.[stage.key] ?? "pending";
+              const normalized = normalizeStageStatus(rawStatus);
+              const icon = getStageIcon(rawStatus, Colors);
+              const label = getStageLabel(rawStatus);
               return (
                 <View key={stage.key} style={styles.stageRow}>
                   <Ionicons name={icon.name} size={24} color={icon.color} />
@@ -127,8 +139,8 @@ export default function GeneratingScreen() {
                   <Text
                     style={[
                       styles.stageStatus,
-                      status === "completed" && { color: Colors.accent },
-                      status === "in_progress" && { color: Colors.primary },
+                      normalized === "completed" && { color: Colors.accent },
+                      normalized === "in_progress" && { color: Colors.primary },
                     ]}
                   >
                     {label}

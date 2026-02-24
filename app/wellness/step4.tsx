@@ -86,13 +86,14 @@ export default function Step4Screen() {
     };
 
     if (showMeal) {
-      payload.mealPlanConfig = {
+      const mealSlots = state.mealForm.mealSlots;
+      payload.mealPreferences = {
         goal: mapGoalForMeal(state.goalType),
         dietStyles: state.mealForm.dietStyles.length > 0 ? state.mealForm.dietStyles : ["No Preference"],
         foodsToAvoid: state.mealForm.foodsToAvoid,
-        allergies: state.mealForm.allergies,
+        allergies: state.mealForm.allergies || undefined,
         mealsPerDay: state.mealForm.mealsPerDay,
-        mealSlots: state.mealForm.mealSlots,
+        mealSlots: mealSlots && mealSlots.length > 0 ? mealSlots : undefined,
         prepStyle: state.mealForm.prepStyle,
         budgetMode: state.mealForm.budgetMode,
         cookingTime: state.mealForm.cookingTime,
@@ -103,27 +104,39 @@ export default function Step4Screen() {
     }
 
     if (showWorkout) {
-      payload.workoutPlanConfig = {
+      const validSessionLengths = [20, 30, 45, 60];
+      const sessionLen = validSessionLengths.includes(state.workoutForm.sessionLength)
+        ? state.workoutForm.sessionLength
+        : 45;
+      payload.workoutPreferences = {
         goal: mapGoalForWorkout(state.goalType),
-        location: state.workoutForm.location,
+        location: state.workoutForm.location || "gym",
         trainingMode: state.workoutForm.trainingMode,
-        focusAreas: state.workoutForm.focusAreas,
-        daysOfWeek: state.workoutForm.daysOfWeek,
-        sessionLength: state.workoutForm.sessionLength,
+        focusAreas: state.workoutForm.focusAreas.length > 0 ? state.workoutForm.focusAreas : ["Full Body"],
+        daysOfWeek: state.workoutForm.daysOfWeek.length > 0 ? state.workoutForm.daysOfWeek : ["Mon", "Wed", "Fri"],
+        sessionLength: sessionLen,
         experienceLevel: state.workoutForm.experienceLevel,
-        limitations: state.workoutForm.limitations,
+        limitations: state.workoutForm.limitations || undefined,
         equipmentAvailable: state.workoutForm.equipmentAvailable,
       };
     }
 
     try {
+      console.log("[Wellness] Submitting goal plan:", JSON.stringify(payload, null, 2));
       const data = await generateMutation.mutateAsync(payload);
-      router.replace(`/wellness/generating?goalPlanId=${data.goalPlanId}` as any);
+      console.log("[Wellness] Generation started:", JSON.stringify(data));
+      const planId = data?.goalPlanId || data?.id;
+      if (!planId) {
+        throw new Error("No goalPlanId returned from server");
+      }
+      router.replace(`/wellness/generating?goalPlanId=${planId}` as any);
     } catch (err: any) {
-      Alert.alert(
-        "Error",
-        err?.response?.data?.message || err?.message || "Failed to generate plan. Please try again."
-      );
+      console.error("[Wellness] Generation error:", err?.response?.status, JSON.stringify(err?.response?.data));
+      const msg = err?.response?.data?.error
+        || err?.response?.data?.message
+        || err?.message
+        || "Failed to generate plan. Please try again.";
+      Alert.alert("Error", msg);
     } finally {
       setSubmitting(false);
     }
