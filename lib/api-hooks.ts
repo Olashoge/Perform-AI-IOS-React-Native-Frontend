@@ -1124,10 +1124,10 @@ export function useMealFeedback() {
 export function useResolveIngredientProposal() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (params: { proposalId: string; chosenIngredients: string[]; action?: string }) => {
+    mutationFn: async (params: { proposalId: string; chosenIngredients: string[]; action?: "accepted" | "declined" }) => {
       const response = await apiClient.post(`/api/ingredient-proposals/${params.proposalId}/resolve`, {
         chosenIngredients: params.chosenIngredients,
-        action: params.action || "avoid",
+        action: params.action || "accepted",
       });
       logApiCall("POST", `/api/ingredient-proposals/${params.proposalId}/resolve`, response.status);
       return response.data;

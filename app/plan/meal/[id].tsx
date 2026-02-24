@@ -41,7 +41,7 @@ function IngredientProposalModal({
   const handleSubmit = async () => {
     const selectedList = Object.keys(selected).filter((k) => selected[k]);
     try {
-      await resolveMutation.mutateAsync({ proposalId, chosenIngredients: selectedList, action: "avoid" });
+      await resolveMutation.mutateAsync({ proposalId, chosenIngredients: selectedList, action: "accepted" });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       onClose();
     } catch {
