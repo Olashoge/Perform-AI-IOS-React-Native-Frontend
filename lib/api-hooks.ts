@@ -1419,3 +1419,41 @@ export function useDayRegen(planId: string | null) {
     },
   });
 }
+
+export function useWorkoutSwap(workoutId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ dayIndex, exerciseIndex }: { dayIndex: number; exerciseIndex: number }) => {
+      const response = await apiClient.post(`/api/workout/${workoutId}/swap`, { dayIndex, exerciseIndex });
+      logApiCall("POST", `/api/workout/${workoutId}/swap`, response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workout-plan", workoutId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
+    },
+    onError: (error: any) => {
+      const msg = error?.response?.data?.message || "Could not swap exercise";
+      Alert.alert("Swap Failed", msg);
+    },
+  });
+}
+
+export function useWorkoutDayRegen(workoutId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ dayIndex }: { dayIndex: number }) => {
+      const response = await apiClient.post(`/api/workout/${workoutId}/regenerate-day`, { dayIndex });
+      logApiCall("POST", `/api/workout/${workoutId}/regenerate-day`, response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workout-plan", workoutId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
+    },
+    onError: (error: any) => {
+      const msg = error?.response?.data?.message || "Could not regenerate workout day";
+      Alert.alert("Regen Failed", msg);
+    },
+  });
+}
