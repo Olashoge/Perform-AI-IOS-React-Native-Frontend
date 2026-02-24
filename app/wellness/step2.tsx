@@ -7,6 +7,7 @@ import {
   Pressable,
   Platform,
   TextInput,
+  KeyboardAvoidingView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -224,7 +225,11 @@ export default function Step2Screen() {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+    >
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
@@ -235,6 +240,7 @@ export default function Step2Screen() {
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
       >
         <View style={styles.headerRow}>
           <Pressable
@@ -524,7 +530,7 @@ export default function Step2Screen() {
           <Ionicons name="arrow-forward" size={18} color="#fff" />
         </Pressable>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

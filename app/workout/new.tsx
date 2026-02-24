@@ -9,6 +9,7 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -333,7 +334,11 @@ export default function NewWorkoutPlanScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: topInset }]}>
+    <KeyboardAvoidingView
+      style={[styles.container, { paddingTop: topInset }]}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+    >
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={24} color={Colors.text} />
@@ -347,6 +352,7 @@ export default function NewWorkoutPlanScreen() {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInset + 100 }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
       >
         <ProfileSummaryCard profile={profile} />
 
@@ -509,7 +515,7 @@ export default function NewWorkoutPlanScreen() {
           )}
         </Pressable>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
