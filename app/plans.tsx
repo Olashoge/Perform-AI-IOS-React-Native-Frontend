@@ -79,6 +79,17 @@ function GoalBadge({ goal, Colors }: { goal: string; Colors: ThemeColors }) {
   );
 }
 
+function sortPlansByDate(plans: any[]): any[] {
+  return [...plans].sort((a, b) => {
+    const dateA = a.startDate || a.start_date || a.planStartDate || "";
+    const dateB = b.startDate || b.start_date || b.planStartDate || "";
+    if (!dateA && !dateB) return 0;
+    if (!dateA) return 1;
+    if (!dateB) return -1;
+    return dateA.localeCompare(dateB);
+  });
+}
+
 function BudgetCard({ Colors }: { Colors: ThemeColors }) {
   const { data } = useBudget();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
@@ -334,7 +345,7 @@ function WellnessPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
   const mealQuery = useMealPlans();
   const workoutQuery = useWorkoutPlans();
   const deleteGoalPlan = useDeleteGoalPlan();
-  const plans = wellnessQuery.data || [];
+  const plans = sortPlansByDate(wellnessQuery.data || []);
   const isLoading = wellnessQuery.isLoading;
 
   const onRefresh = useCallback(() => {
@@ -416,7 +427,7 @@ function WellnessPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
 function NutritionPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) {
   const mealQuery = useMealPlans();
   const deleteMealPlan = useDeleteMealPlan();
-  const plans = mealQuery.data || [];
+  const plans = sortPlansByDate(mealQuery.data || []);
   const isLoading = mealQuery.isLoading;
 
   const confirmDelete = (id: string) => {
@@ -494,7 +505,7 @@ function NutritionPage({ Colors, styles }: { Colors: ThemeColors; styles: any })
 function TrainingPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) {
   const workoutQuery = useWorkoutPlans();
   const deleteWorkoutPlan = useDeleteWorkoutPlan();
-  const plans = workoutQuery.data || [];
+  const plans = sortPlansByDate(workoutQuery.data || []);
   const isLoading = workoutQuery.isLoading;
 
   const confirmDelete = (id: string) => {
