@@ -942,6 +942,110 @@ export function useDeleteWorkoutPlan() {
   });
 }
 
+export interface MealPreference {
+  id: string;
+  mealName: string;
+  cuisineTag?: string;
+  mealFingerprint?: string;
+  feedback: "like" | "dislike";
+  createdAt?: string;
+}
+
+export interface IngredientPreference {
+  id: string;
+  ingredientKey: string;
+  preference: "prefer" | "avoid";
+  source?: string;
+  createdAt?: string;
+}
+
+export interface MealPreferencesData {
+  likedMeals: MealPreference[];
+  dislikedMeals: MealPreference[];
+  avoidIngredients: IngredientPreference[];
+  preferIngredients: IngredientPreference[];
+}
+
+export interface ExercisePreference {
+  id: string;
+  exerciseName?: string;
+  name?: string;
+  type?: string;
+  feedback?: string;
+  status?: string;
+  createdAt?: string;
+}
+
+export interface ExercisePreferencesData {
+  liked: ExercisePreference[];
+  disliked: ExercisePreference[];
+  avoided: ExercisePreference[];
+}
+
+export function useMealPreferences() {
+  return useQuery<MealPreferencesData>({
+    queryKey: ["meal-preferences"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/preferences");
+      logApiCall("GET", "/api/preferences", response.status);
+      return response.data;
+    },
+  });
+}
+
+export function useExercisePreferences() {
+  return useQuery<ExercisePreferencesData>({
+    queryKey: ["exercise-preferences"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/preferences/exercise");
+      logApiCall("GET", "/api/preferences/exercise", response.status);
+      return response.data;
+    },
+  });
+}
+
+export function useDeleteMealPreference() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiClient.delete(`/api/preferences/meal/${id}`);
+      logApiCall("DELETE", `/api/preferences/meal/${id}`, response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["meal-preferences"] });
+    },
+  });
+}
+
+export function useDeleteIngredientPreference() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiClient.delete(`/api/preferences/ingredient/${id}`);
+      logApiCall("DELETE", `/api/preferences/ingredient/${id}`, response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["meal-preferences"] });
+    },
+  });
+}
+
+export function useDeleteExercisePreference() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await apiClient.delete(`/api/preferences/exercise/${id}`);
+      logApiCall("DELETE", `/api/preferences/exercise/${id}`, response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["exercise-preferences"] });
+    },
+  });
+}
+
 function generateMockWeekData(weekStart: string): DayData[] {
   const start = new Date(weekStart + "T12:00:00Z");
   const days: DayData[] = [];
