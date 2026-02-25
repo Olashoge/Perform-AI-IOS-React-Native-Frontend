@@ -21,7 +21,7 @@ export default function SignUpScreen() {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
-  const { login } = useAuth();
+  const { signup } = useAuth();
   const { isDark } = useTheme();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -55,16 +55,21 @@ export default function SignUpScreen() {
     setError("");
 
     try {
-      await login(trimmedEmail, trimmedPassword);
+      await signup(trimmedName, trimmedEmail, trimmedPassword);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/");
     } catch (err: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      const message =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        err.message ||
-        "Account creation failed. Please try again.";
+      const status = err.response?.status;
+      const serverMsg = err.response?.data?.message || err.response?.data?.error;
+      let message: string;
+      if (status === 409 || (serverMsg && /already|exists|duplicate|registered/i.test(serverMsg))) {
+        message = "An account with this email already exists. Try signing in.";
+      } else if (serverMsg) {
+        message = serverMsg;
+      } else {
+        message = "Account creation failed. Please try again.";
+      }
       setError(message);
     } finally {
       setIsSubmitting(false);

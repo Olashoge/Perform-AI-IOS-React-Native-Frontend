@@ -25,16 +25,16 @@ export default function Welcome() {
       <View style={styles.buttons}>
         <Pressable
           style={[styles.primaryButton, { backgroundColor: Colors.text }]}
-          onPress={() => router.push('/auth/sign-in')}
+          onPress={() => router.push('/auth/sign-up')}
         >
-          <Text style={[styles.primaryButtonText, { color: Colors.background }]}>Sign In</Text>
+          <Text style={[styles.primaryButtonText, { color: Colors.background }]}>Create Account</Text>
         </Pressable>
 
         <Pressable
           style={[styles.secondaryButton, { borderColor: Colors.border }]}
-          onPress={() => router.push('/auth/sign-up')}
+          onPress={() => router.push('/auth/sign-in')}
         >
-          <Text style={[styles.secondaryButtonText, { color: Colors.text }]}>Create Account</Text>
+          <Text style={[styles.secondaryButtonText, { color: Colors.text }]}>Sign In</Text>
         </Pressable>
 
         <Text style={[styles.legalText, { color: Colors.textTertiary }]}>
