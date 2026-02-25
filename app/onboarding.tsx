@@ -68,7 +68,7 @@ function PillButton({
         style={{
           fontSize: 14,
           fontWeight: selected ? "600" : "500",
-          color: selected ? Colors.background : Colors.text,
+          color: selected ? "#FFFFFF" : Colors.text,
         }}
       >
         {label}
@@ -102,7 +102,7 @@ function PillGroup({
         onSelect([...arr, opt]);
       }
     } else {
-      onSelect(opt);
+      onSelect(selected === opt ? "" : opt);
     }
   };
 
