@@ -1,9 +1,13 @@
 export interface ThemeColors {
   primary: string;
   primaryDark: string;
+  primarySoft: string;
+  primaryMuted: string;
   accent: string;
   warning: string;
+  warningSoft: string;
   error: string;
+  errorSoft: string;
   background: string;
   surface: string;
   surfaceElevated: string;
@@ -20,54 +24,68 @@ export interface ThemeColors {
   scoreGreen: string;
   scoreYellow: string;
   scoreRed: string;
+  trackBackground: string;
+  successSoft: string;
 }
 
 export const darkColors: ThemeColors = {
-  primary: '#0A84FF',
-  primaryDark: '#0066CC',
-  accent: '#30D158',
-  warning: '#FF9F0A',
-  error: '#FF453A',
-  background: '#000000',
-  surface: '#1C1C1E',
-  surfaceElevated: '#2C2C2E',
-  surfaceTertiary: '#3A3A3C',
-  text: '#FFFFFF',
-  textSecondary: '#8E8E93',
-  textTertiary: '#636366',
-  border: '#38383A',
-  inputBg: '#1C1C1E',
-  cardBg: '#1C1C1E',
-  tabBar: '#000000',
-  tabIconDefault: '#636366',
-  tabIconSelected: '#0A84FF',
-  scoreGreen: '#30D158',
-  scoreYellow: '#FF9F0A',
-  scoreRed: '#FF453A',
+  primary: '#8BA4C8',
+  primaryDark: '#1C2433',
+  primarySoft: '#2E3A59',
+  primaryMuted: '#3A4666',
+  accent: '#5E8C61',
+  warning: '#C6A75E',
+  warningSoft: '#2A2518',
+  error: '#C05A5A',
+  errorSoft: '#2A1818',
+  background: '#0D1017',
+  surface: '#161B24',
+  surfaceElevated: '#1E2530',
+  surfaceTertiary: '#2E3A59',
+  text: '#E8ECF1',
+  textSecondary: '#8E96A3',
+  textTertiary: '#5A6270',
+  border: '#2E3A4A',
+  inputBg: '#161B24',
+  cardBg: '#161B24',
+  tabBar: '#0D1017',
+  tabIconDefault: '#5A6270',
+  tabIconSelected: '#8BA4C8',
+  scoreGreen: '#5E8C61',
+  scoreYellow: '#C6A75E',
+  scoreRed: '#C05A5A',
+  trackBackground: '#1E2530',
+  successSoft: '#1A2A1B',
 };
 
 export const lightColors: ThemeColors = {
-  primary: '#007AFF',
-  primaryDark: '#0056B3',
-  accent: '#34C759',
-  warning: '#FF9500',
-  error: '#FF3B30',
-  background: '#F2F2F7',
+  primary: '#1C2433',
+  primaryDark: '#111827',
+  primarySoft: '#2E3A59',
+  primaryMuted: '#3A4666',
+  accent: '#5E8C61',
+  warning: '#C6A75E',
+  warningSoft: '#F3EBD8',
+  error: '#C05A5A',
+  errorSoft: '#F6E3E3',
+  background: '#F7F8FA',
   surface: '#FFFFFF',
-  surfaceElevated: '#F2F2F7',
-  surfaceTertiary: '#E5E5EA',
-  text: '#000000',
-  textSecondary: '#8E8E93',
-  textTertiary: '#AEAEB2',
-  border: '#C6C6C8',
+  surfaceElevated: '#F0F1F4',
+  surfaceTertiary: '#E6E8EC',
+  text: '#111318',
+  textSecondary: '#6B7280',
+  textTertiary: '#9CA3AF',
+  border: '#E6E8EC',
   inputBg: '#FFFFFF',
   cardBg: '#FFFFFF',
-  tabBar: '#F8F8F8',
-  tabIconDefault: '#8E8E93',
-  tabIconSelected: '#007AFF',
-  scoreGreen: '#34C759',
-  scoreYellow: '#FF9500',
-  scoreRed: '#FF3B30',
+  tabBar: '#FAFBFC',
+  tabIconDefault: '#9CA3AF',
+  tabIconSelected: '#1C2433',
+  scoreGreen: '#5E8C61',
+  scoreYellow: '#C6A75E',
+  scoreRed: '#C05A5A',
+  trackBackground: '#E5E7EB',
+  successSoft: '#E6F0E8',
 };
 
 export function getThemeColors(isDark: boolean): ThemeColors {

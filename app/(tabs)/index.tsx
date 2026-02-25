@@ -24,9 +24,9 @@ const DAYS_SHORT_SUN = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const DAYS_SHORT_MON = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 
 function getScoreColor(score: number, Colors: ThemeColors) {
-  if (score >= 80) return Colors.scoreGreen;
-  if (score >= 50) return Colors.scoreYellow;
-  return Colors.scoreRed;
+  if (score >= 50) return Colors.primary;
+  if (score >= 35) return Colors.warning;
+  return Colors.error;
 }
 
 function formatWeekRange(weekStart: string): string {

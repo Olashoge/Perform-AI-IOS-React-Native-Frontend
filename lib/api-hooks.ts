@@ -1325,6 +1325,24 @@ export interface GrocerySection {
   items: GrocerySectionItem[];
 }
 
+export interface AllowanceData {
+  mealSwaps: { used: number; limit: number };
+  dayRegens: { used: number; limit: number };
+  planRegens: { used: number; limit: number };
+  cooldown?: { active: boolean; endsAt?: string };
+}
+
+export function useAllowance() {
+  return useQuery<AllowanceData>({
+    queryKey: ["allowance"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/allowance/current");
+      logApiCall("GET", "/api/allowance/current", response.status);
+      return response.data;
+    },
+  });
+}
+
 export interface GroceryListData {
   groceryList: { sections: GrocerySection[] };
   ownedItems: Record<string, boolean>;
@@ -1412,9 +1430,10 @@ export function useMealSwap(planId: string | null) {
       }
       queryClient.refetchQueries({ queryKey: ["meal-plan", planId] });
       queryClient.invalidateQueries({ queryKey: ["/api/plan", planId, "grocery"] });
+      queryClient.invalidateQueries({ queryKey: ["allowance"] });
     },
     onError: (error: any) => {
-      const msg = error?.response?.data?.message || "Could not swap meal";
+      const msg = error?.response?.data?.message || error?.response?.data?.error || "Could not swap meal";
       Alert.alert("Swap Failed", msg);
     },
   });
@@ -1434,9 +1453,10 @@ export function useDayRegen(planId: string | null) {
       }
       queryClient.refetchQueries({ queryKey: ["meal-plan", planId] });
       queryClient.invalidateQueries({ queryKey: ["/api/plan", planId, "grocery"] });
+      queryClient.invalidateQueries({ queryKey: ["allowance"] });
     },
     onError: (error: any) => {
-      const msg = error?.response?.data?.message || "Could not regenerate day";
+      const msg = error?.response?.data?.message || error?.response?.data?.error || "Could not regenerate day";
       Alert.alert("Regen Failed", msg);
     },
   });

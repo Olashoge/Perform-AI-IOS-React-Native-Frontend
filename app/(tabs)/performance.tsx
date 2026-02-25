@@ -212,7 +212,7 @@ function AdaptiveCoaching({ performanceState, wellnessPlanId }: { performanceSta
   const weekStart = getWeekStartUTC(0);
 
   return (
-    <View style={[styles.coachingCard, { borderLeftColor: stateColor }]}>
+    <View style={[styles.coachingCard, { backgroundColor: stateColor + "0D" }]}>
       <View style={styles.coachingHeader}>
         <View style={[styles.coachingIconBg, { backgroundColor: stateColor + "1A" }]}>
           <Ionicons name={config.icon} size={22} color={stateColor} />

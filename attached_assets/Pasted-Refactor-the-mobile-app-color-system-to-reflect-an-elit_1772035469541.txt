@@ -1,0 +1,80 @@
+Refactor the mobile app color system to reflect an elite structured performance theme.
+
+We are NOT redesigning layout.
+We are updating global color tokens and replacing existing bright colors with a controlled palette.
+
+Create or update a centralized theme file (e.g., theme/colors.ts) and refactor all color usage to reference these tokens instead of hardcoded values.
+
+-----------------------------------
+NEW BRAND PALETTE
+-----------------------------------
+
+Primary Brand (Performance Navy)
+brandPrimary: #1C2433
+brandPrimarySoft: #2E3A59
+brandPrimaryMuted: #3A4666
+
+Neutral System
+background: #F7F8FA
+cardBackground: #FFFFFF
+borderSubtle: #E6E8EC
+textPrimary: #111318
+textSecondary: #6B7280
+trackBackground: #E5E7EB
+
+State Colors (Muted)
+
+Success (Muted Sage)
+success: #5E8C61
+successSoft: #E6F0E8
+
+Warning (Muted Amber)
+warning: #C6A75E
+warningSoft: #F3EBD8
+
+Critical (Soft Crimson — use sparingly)
+critical: #C05A5A
+criticalSoft: #F6E3E3
+
+-----------------------------------
+REPLACEMENT RULES
+-----------------------------------
+
+1. Replace all bright red score rings with:
+   - brandPrimary by default
+   - warning if score < 50%
+   - critical only if score < 35%
+
+2. Replace bright green progress bars with success.
+
+3. Replace bright orange workout bars with warning.
+
+4. Remove colored left border strips on cards (e.g., recovery card).
+   Replace with subtle background tint using successSoft or warningSoft.
+
+5. Make all progress bars:
+   - slightly thinner
+   - track color = trackBackground
+   - fill = appropriate muted state color
+
+6. Buttons:
+   - Primary button background = brandPrimary
+   - Text = white
+   - Remove bright gradients
+
+7. Selected tab icon:
+   - brandPrimary
+   - Remove bright glow effects
+
+8. Score ring:
+   - Base track = trackBackground
+   - Fill = dynamic state color based on thresholds
+   - Do NOT use bright red as default
+
+-----------------------------------
+
+Do not change layout.
+Do not modify logic.
+Do not add new features.
+
+Only refactor color tokens and their usage across the app.

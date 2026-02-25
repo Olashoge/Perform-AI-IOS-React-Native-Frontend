@@ -816,9 +816,9 @@ export default function DailyDetailScreen() {
   }, [date, createDailyWorkout]);
 
   function getScoreColor(s: number) {
-    if (s >= 80) return Colors.scoreGreen;
-    if (s >= 50) return Colors.scoreYellow;
-    return Colors.scoreRed;
+    if (s >= 50) return Colors.primary;
+    if (s >= 35) return Colors.warning;
+    return s > 0 ? Colors.error : Colors.textTertiary;
   }
 
   const dateLabel = `${dayName}, ${monthName} ${dayNum}`;

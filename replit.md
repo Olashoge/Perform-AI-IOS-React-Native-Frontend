@@ -28,6 +28,8 @@ The application is built with React Native and Expo Router for file-based naviga
     - Adaptive Plan placeholder screen (`app/adaptive-plan.tsx`) for future AI-driven plan adjustments.
 - **Completion Toggle Architecture**: PATCH requests for meal/workout completions are handled locally, updating a PostgreSQL database. GET requests for data (weekly-summary, week-data, day-data) merge external backend data with local completion states. Optimistic updates are used with React Query, invalidating relevant caches on success.
 - **Plan Detail Architecture**: Dedicated screens for meal, workout, and wellness plan details, providing rich content like recipes, exercise routines, and goal overviews.
+- **Budget/Allowance System**: `useAllowance()` hook fetches daily limits from `GET /api/allowance/current`. Meal plan detail screen shows a "Today's Budget" card with remaining swaps, day regens, and plan regens. Swap/regen buttons check budget before proceeding and disable when exhausted. On swap/regen success, the allowance query is invalidated to refresh counts. 403 errors from the backend are surfaced via Alert. Query key: `["allowance"]`.
+- **Meal Swap / Day Regen**: `useMealSwap(planId)` calls `POST /api/plan/:id/swap` with `{ dayIndex, mealType }`. `useDayRegen(planId)` calls `POST /api/plan/:id/regenerate-day` with `{ dayIndex }`. Both invalidate plan, grocery, and allowance queries on success.
 
 ## External Dependencies
 - **Auth Service**: `https://mealplanai.replit.app` (for user login and token refresh).

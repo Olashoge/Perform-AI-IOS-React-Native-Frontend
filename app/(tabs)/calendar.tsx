@@ -49,9 +49,9 @@ function DayCard({ day, isToday, Colors }: { day: DayData; isToday: boolean; Col
   const completedItems = mealsCompleted + workoutsCompleted;
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return Colors.scoreGreen;
-    if (score >= 50) return Colors.scoreYellow;
-    return Colors.scoreRed;
+    if (score >= 50) return Colors.primary;
+    if (score >= 35) return Colors.warning;
+    return Colors.error;
   };
 
   const hasContent = totalItems > 0;
@@ -168,9 +168,9 @@ export default function CalendarScreen() {
   const workoutPct = weekStats.workoutsTotal > 0 ? Math.round((weekStats.workoutsCompleted / weekStats.workoutsTotal) * 100) : 0;
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return Colors.scoreGreen;
-    if (score >= 50) return Colors.scoreYellow;
-    return Colors.scoreRed;
+    if (score >= 50) return Colors.primary;
+    if (score >= 35) return Colors.warning;
+    return Colors.error;
   };
 
   return (
