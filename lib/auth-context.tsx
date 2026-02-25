@@ -49,6 +49,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await clearTokens();
           setIsAuthenticated(false);
         }
+      } else {
+        setIsAuthenticated(true);
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          if (payload.email) setUser({ email: payload.email });
+        } catch {}
       }
     } catch {
       setIsAuthenticated(false);

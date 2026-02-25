@@ -118,7 +118,11 @@ apiClient.interceptors.response.use(
       try {
         const refreshToken = await getRefreshToken();
         if (!refreshToken) {
-          throw new Error('No refresh token');
+          onRefreshComplete.forEach((cb) => cb(null));
+          onRefreshComplete = [];
+          isRefreshing = false;
+          await clearTokens();
+          return Promise.reject(error);
         }
 
         const response = await axios.post(`${EFFECTIVE_BASE_URL}/api/auth/refresh`, {
@@ -139,7 +143,7 @@ apiClient.interceptors.response.use(
         onRefreshComplete = [];
         isRefreshing = false;
         await clearTokens();
-        return Promise.reject(refreshError);
+        return Promise.reject(error);
       }
     }
 
