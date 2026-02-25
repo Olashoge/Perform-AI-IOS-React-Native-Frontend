@@ -294,6 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/ingredient-proposals/:id/resolve", proxyToExternal);
 
   app.get("/api/availability", proxyToExternal);
+  app.post("/api/performance/apply-recovery-week", proxyToExternal);
   app.post("/api/goal-plans/generate", (req: any, res: any) => {
     console.log("[Goal Plan] POST /api/goal-plans/generate payload:", JSON.stringify(req.body, null, 2));
     const targetUrl = new URL(req.originalUrl, EXTERNAL_BACKEND);

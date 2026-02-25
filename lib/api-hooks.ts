@@ -704,6 +704,25 @@ export function usePerformanceData() {
   return { data, isLoading };
 }
 
+export function useApplyRecoveryWeek() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { weekStart: string; wellnessPlanId?: string; weekType: string }) => {
+      const response = await apiClient.post("/api/performance/apply-recovery-week", payload);
+      logApiCall("POST", "/api/performance/apply-recovery-week", response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["week-data"] });
+      queryClient.invalidateQueries({ queryKey: ["wellness-plans"] });
+      queryClient.invalidateQueries({ queryKey: ["meal-plans"] });
+      queryClient.invalidateQueries({ queryKey: ["workout-plans"] });
+      queryClient.invalidateQueries({ queryKey: ["availability"] });
+    },
+  });
+}
+
 export interface AvailabilityData {
   mealDates: string[];
   workoutDates: string[];

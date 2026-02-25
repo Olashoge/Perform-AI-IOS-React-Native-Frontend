@@ -12,7 +12,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useColors, ThemeColors } from "@/lib/theme-context";
-import { usePerformanceData, WeekScore, PerformanceState, PerformanceStateKey } from "@/lib/api-hooks";
+import { usePerformanceData, WeekScore, PerformanceState, PerformanceStateKey, useWellnessPlans } from "@/lib/api-hooks";
+import { getWeekStartUTC } from "@/lib/week-utils";
 
 const STATE_CONFIG: Record<PerformanceStateKey, {
   icon: keyof typeof Ionicons.glyphMap;
@@ -201,13 +202,14 @@ function PerformanceDrivers({ mealPct, workoutPct }: { mealPct: number; workoutP
   );
 }
 
-function AdaptiveCoaching({ performanceState }: { performanceState: PerformanceState }) {
+function AdaptiveCoaching({ performanceState, wellnessPlanId }: { performanceState: PerformanceState; wellnessPlanId?: string }) {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const router = useRouter();
   const config = STATE_CONFIG[performanceState.key];
   const stateColor = getStateColor(performanceState.key, Colors);
   const reasons = performanceState.explanation.slice(0, 3);
+  const weekStart = getWeekStartUTC(0);
 
   return (
     <View style={[styles.coachingCard, { borderLeftColor: stateColor }]}>
@@ -232,7 +234,16 @@ function AdaptiveCoaching({ performanceState }: { performanceState: PerformanceS
       )}
       <Pressable
         style={({ pressed }) => [styles.coachingCta, { backgroundColor: stateColor }, pressed && { opacity: 0.85 }]}
-        onPress={() => router.push("/adaptive-plan" as any)}
+        onPress={() => router.push({
+          pathname: "/adaptive-plan",
+          params: {
+            weekType: config.weekType,
+            stateKey: performanceState.key,
+            weekStart,
+            wellnessPlanId: wellnessPlanId || "",
+            reasons: JSON.stringify(reasons),
+          },
+        } as any)}
       >
         <Text style={styles.coachingCtaText}>Adjust Next Week Plan</Text>
         <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
@@ -276,7 +287,13 @@ export default function PerformanceScreen() {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
   const { data, isLoading } = usePerformanceData();
+  const { data: wellnessPlans } = useWellnessPlans();
   const webTopInset = Platform.OS === "web" ? 67 : 0;
+
+  const activeWellnessPlanId = useMemo(() => {
+    if (!wellnessPlans || wellnessPlans.length === 0) return undefined;
+    return wellnessPlans[0]?.id;
+  }, [wellnessPlans]);
 
   if (isLoading || !data) {
     return (
@@ -311,7 +328,7 @@ export default function PerformanceScreen() {
 
       <PerformanceDrivers mealPct={data.mealPct} workoutPct={data.workoutPct} />
 
-      <AdaptiveCoaching performanceState={data.performanceState} />
+      <AdaptiveCoaching performanceState={data.performanceState} wellnessPlanId={activeWellnessPlanId} />
 
       <StreakConsistency streak={data.streak} last14DaysRate={data.last14DaysRate} />
     </ScrollView>
