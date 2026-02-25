@@ -294,14 +294,13 @@ function MealCard({ mealType, meal, completed, onSwap, swapDisabled, isSwapping 
   const allInstructions = meal.instructions || meal.steps || [];
 
   const quickInfoParts: { icon: string; value: string; iconColor?: string }[] = [];
-  if (meal.prepTime) quickInfoParts.push({ icon: "time-outline", value: `${meal.prepTime}m` });
   if (meal.servings) quickInfoParts.push({ icon: "people-outline", value: `${meal.servings}` });
   if (calDisplay) quickInfoParts.push({ icon: "flame-outline", value: `${calDisplay} cal`, iconColor: Colors.warning });
+  if (proteinDisplay) quickInfoParts.push({ icon: "barbell-outline", value: `P ${proteinDisplay}g` });
+  if (carbsDisplay) quickInfoParts.push({ icon: "leaf-outline", value: `C ${carbsDisplay}g` });
+  if (fatDisplay) quickInfoParts.push({ icon: "water-outline", value: `F ${fatDisplay}g` });
 
   const macroLine: string[] = [];
-  if (proteinDisplay) macroLine.push(`${proteinDisplay} P`);
-  if (carbsDisplay) macroLine.push(`${carbsDisplay} C`);
-  if (fatDisplay) macroLine.push(`${fatDisplay} F`);
 
   return (
     <View style={styles.mealCard}>
