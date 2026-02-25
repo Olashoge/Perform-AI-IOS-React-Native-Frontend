@@ -161,6 +161,7 @@ export default function WorkoutPlanDetailScreen() {
   const days = plan?.days ?? [];
   const title = plan?.title ?? "Workout Plan";
   const summary = plan?.summary ?? "";
+  const workoutStartDate = data?.planStartDate || data?.startDate || plan?.startDate || plan?.planStartDate;
 
   return (
     <View style={[styles.container, { paddingTop: topInset }]}>
@@ -245,6 +246,7 @@ export default function WorkoutPlanDetailScreen() {
             key={idx}
             day={day}
             dayIndex={idx}
+            startDate={workoutStartDate}
             expanded={!!expandedSessions[idx]}
             onToggle={() => toggleSession(idx)}
             onDayRegen={() => handleDayRegen(idx)}
@@ -511,9 +513,28 @@ function LikeDislikeButtons({ exerciseName }: { exerciseName: string }) {
   );
 }
 
+const WEEKDAYS_W = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const MONTHS_SHORT_W = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function formatWorkoutDayDate(startDate: string | undefined, dayIndex: number): { dayOfWeek: string; dateStr: string } {
+  if (!startDate) return { dayOfWeek: "", dateStr: "" };
+  try {
+    const d = new Date(startDate + "T12:00:00");
+    d.setDate(d.getDate() + dayIndex);
+    const dayOfWeek = WEEKDAYS_W[d.getDay()];
+    const month = MONTHS_SHORT_W[d.getMonth()];
+    const day = d.getDate();
+    const year = d.getFullYear();
+    return { dayOfWeek, dateStr: `${month} ${day}, ${year}` };
+  } catch {
+    return { dayOfWeek: "", dateStr: "" };
+  }
+}
+
 function DayCard({
   day,
   dayIndex,
+  startDate,
   expanded,
   onToggle,
   onDayRegen,
@@ -525,6 +546,7 @@ function DayCard({
 }: {
   day: any;
   dayIndex: number;
+  startDate?: string;
   expanded: boolean;
   onToggle: () => void;
   onDayRegen?: () => void;
@@ -538,17 +560,22 @@ function DayCard({
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const isWorkout = day.isWorkoutDay;
   const session = day.session;
-  const dayLabel = day.dayLabel ?? `Day ${day.dayIndex ?? dayIndex + 1}`;
+  const dayNum = day.dayIndex ?? dayIndex + 1;
+  const dayLabel = day.dayLabel ?? `Day ${dayNum}`;
+  const { dayOfWeek, dateStr } = formatWorkoutDayDate(startDate, dayIndex);
+  const dayType = isWorkout ? "Workout Day" : "Rest Day";
 
   if (!isWorkout) {
     return (
       <View style={styles.dayCard}>
         <View style={styles.dayHeaderRow}>
           <View style={styles.dayLabelContainer}>
-            <Text style={styles.dayLabel}>{dayLabel}</Text>
-            <View style={[styles.dayTypeBadge, { backgroundColor: Colors.surfaceElevated }]}>
-              <Text style={styles.dayTypeBadgeText}>Rest Day</Text>
-            </View>
+            <Text>
+              <Text style={styles.dayLabel}>
+                {dayLabel}{dayOfWeek ? ` - ${dayOfWeek}` : ""} ({dayType})
+              </Text>
+              {dateStr ? <Text style={styles.dayDateInline}>{"  "}{dateStr}</Text> : null}
+            </Text>
           </View>
         </View>
         <View style={styles.restDayContent}>
@@ -571,12 +598,12 @@ function DayCard({
     <View style={styles.dayCard}>
       <Pressable onPress={onToggle} style={styles.dayHeaderRow}>
         <View style={styles.dayLabelContainer}>
-          <Text style={styles.dayLabel}>{dayLabel}</Text>
-          <View style={[styles.dayTypeBadge, { backgroundColor: `${WORKOUT_ACCENT}20` }]}>
-            <Text style={[styles.dayTypeBadgeText, { color: WORKOUT_ACCENT }]}>
-              Workout
+          <Text>
+            <Text style={styles.dayLabel}>
+              {dayLabel}{dayOfWeek ? ` - ${dayOfWeek}` : ""} ({dayType})
             </Text>
-          </View>
+            {dateStr ? <Text style={styles.dayDateInline}>{"  "}{dateStr}</Text> : null}
+          </Text>
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           {onDayRegen && (
@@ -967,9 +994,14 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 10,
   },
   dayLabel: {
-    fontSize: 14,
-    fontWeight: "600" as const,
+    fontSize: 15,
+    fontWeight: "700" as const,
     color: Colors.text,
+  },
+  dayDateInline: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    fontWeight: "400" as const,
   },
   dayTypeBadge: {
     paddingHorizontal: 10,
