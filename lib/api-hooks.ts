@@ -1391,6 +1391,10 @@ export function useMealSwap(planId: string | null) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["meal-plan", planId] });
       queryClient.invalidateQueries({ queryKey: ["/api/plan", planId, "grocery"] });
+      queryClient.setQueryData<AllowanceData>(["/api/allowance/current"], (old) => {
+        if (!old) return old;
+        return { ...old, today: { ...old.today, mealSwapsUsed: old.today.mealSwapsUsed + 1 } };
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
     },
     onError: (error: any) => {
@@ -1411,6 +1415,10 @@ export function useDayRegen(planId: string | null) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["meal-plan", planId] });
       queryClient.invalidateQueries({ queryKey: ["/api/plan", planId, "grocery"] });
+      queryClient.setQueryData<AllowanceData>(["/api/allowance/current"], (old) => {
+        if (!old) return old;
+        return { ...old, today: { ...old.today, mealRegensUsed: old.today.mealRegensUsed + 1 } };
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
     },
     onError: (error: any) => {
@@ -1430,6 +1438,10 @@ export function useWorkoutSwap(workoutId: string | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workout-plan", workoutId] });
+      queryClient.setQueryData<AllowanceData>(["/api/allowance/current"], (old) => {
+        if (!old) return old;
+        return { ...old, today: { ...old.today, workoutSwapsUsed: old.today.workoutSwapsUsed + 1 } };
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
     },
     onError: (error: any) => {
@@ -1449,6 +1461,10 @@ export function useWorkoutDayRegen(workoutId: string | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workout-plan", workoutId] });
+      queryClient.setQueryData<AllowanceData>(["/api/allowance/current"], (old) => {
+        if (!old) return old;
+        return { ...old, today: { ...old.today, workoutRegensUsed: old.today.workoutRegensUsed + 1 } };
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
     },
     onError: (error: any) => {
