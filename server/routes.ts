@@ -294,7 +294,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/ingredient-proposals/:id/resolve", proxyToExternal);
 
   app.get("/api/availability", proxyToExternal);
-  app.get("/api/budget", proxyToExternal);
   app.post("/api/goal-plans/generate", (req: any, res: any) => {
     console.log("[Goal Plan] POST /api/goal-plans/generate payload:", JSON.stringify(req.body, null, 2));
     const targetUrl = new URL(req.originalUrl, EXTERNAL_BACKEND);
@@ -364,7 +363,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/plan/:id/grocery/owned", proxyToExternal);
   app.post("/api/plan/:id/grocery/regenerate", proxyToExternal);
 
-  app.get("/api/allowance/current", proxyToExternal);
   app.post("/api/plan/:id/swap", proxyToExternal);
   app.post("/api/plan/:id/regenerate-day", proxyToExternal);
 

@@ -20,15 +20,13 @@ const WEB_TOP_INSET = 67;
 const STAGES = [
   { key: "building", label: "Building your meal plan" },
   { key: "grocery", label: "Compiling grocery list" },
-  { key: "pricing", label: "Estimating prices" },
   { key: "finalizing", label: "Finalizing" },
 ];
 
 function getSimulatedStage(elapsed: number): number {
   if (elapsed < 8) return 0;
-  if (elapsed < 20) return 1;
-  if (elapsed < 35) return 2;
-  return 3;
+  if (elapsed < 25) return 1;
+  return 2;
 }
 
 export default function MealGeneratingScreen() {

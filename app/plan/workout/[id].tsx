@@ -17,7 +17,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
-import { useWorkoutPlan, useExerciseFeedback, useDeleteExercisePreferenceByKey, useExercisePreferences, useAllowance, useWorkoutSwap, useWorkoutDayRegen } from "@/lib/api-hooks";
+import { useWorkoutPlan, useExerciseFeedback, useDeleteExercisePreferenceByKey, useExercisePreferences, useWorkoutSwap, useWorkoutDayRegen } from "@/lib/api-hooks";
 
 const WEB_TOP_INSET = 67;
 const WORKOUT_ACCENT = "#FF6B6B";
@@ -34,7 +34,6 @@ export default function WorkoutPlanDetailScreen() {
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, isLoading, error, refetch } = useWorkoutPlan(id ?? null);
-  const { data: allowance, refetch: refetchAllowance } = useAllowance();
   const swapMutation = useWorkoutSwap(id ?? null);
   const dayRegenMutation = useWorkoutDayRegen(id ?? null);
   const [expandedSessions, setExpandedSessions] = useState<Record<number, boolean>>({});
@@ -46,24 +45,11 @@ export default function WorkoutPlanDetailScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([refetch(), refetchAllowance()]);
+    await refetch();
     setRefreshing(false);
-  }, [refetch, refetchAllowance]);
-
-  const workoutSwapsRemaining = allowance ? allowance.today.workoutSwapsLimit - allowance.today.workoutSwapsUsed : 0;
-  const dayRegensRemaining = allowance ? allowance.today.workoutRegensLimit - allowance.today.workoutRegensUsed : 0;
-  const planRegensRemaining = allowance ? allowance.plan.regensLimit - allowance.plan.regensUsed : 0;
-  const isCooldownActive = allowance?.cooldown?.active ?? false;
+  }, [refetch]);
 
   const handleExerciseSwap = useCallback((dayIndex: number, exerciseIndex: number, exerciseName: string) => {
-    if (isCooldownActive) {
-      Alert.alert("Cooldown Active", `Please wait ${allowance?.cooldown?.minutesRemaining ?? 0} minutes before swapping again.`);
-      return;
-    }
-    if (workoutSwapsRemaining <= 0) {
-      Alert.alert("No Swaps Left", "You've used all your workout swaps for today. They reset at midnight.");
-      return;
-    }
     Alert.alert(
       "Swap Exercise",
       `Replace "${exerciseName}" with a new exercise?`,
@@ -78,21 +64,9 @@ export default function WorkoutPlanDetailScreen() {
         },
       ]
     );
-  }, [workoutSwapsRemaining, isCooldownActive, allowance, swapMutation]);
+  }, [swapMutation]);
 
   const handleDayRegen = useCallback((dayIndex: number) => {
-    if (isCooldownActive) {
-      Alert.alert("Cooldown Active", `Please wait ${allowance?.cooldown?.minutesRemaining ?? 0} minutes before regenerating.`);
-      return;
-    }
-    if (dayRegensRemaining <= 0) {
-      Alert.alert("No Regens Left", "You've used your day regeneration for today. It resets at midnight.");
-      return;
-    }
-    if (planRegensRemaining <= 0) {
-      Alert.alert("Plan Limit Reached", "You've used all your plan regenerations. This limit does not reset.");
-      return;
-    }
     Alert.alert(
       "Regenerate Session",
       "This will replace all exercises for this day with new ones.",
@@ -108,7 +82,7 @@ export default function WorkoutPlanDetailScreen() {
         },
       ]
     );
-  }, [dayRegensRemaining, planRegensRemaining, isCooldownActive, allowance, dayRegenMutation]);
+  }, [dayRegenMutation]);
 
   const plan = data?.planJson ?? data;
   const status = data?.status;
@@ -203,46 +177,6 @@ export default function WorkoutPlanDetailScreen() {
           </View>
         </View>
 
-        {allowance && (
-          <View style={styles.budgetCard}>
-            <View style={styles.budgetHeader}>
-              <Ionicons name="analytics-outline" size={16} color={Colors.text} />
-              <Text style={styles.budgetTitle}>Today's Budget</Text>
-            </View>
-            <View style={styles.budgetRow}>
-              <View style={styles.budgetItem}>
-                <Ionicons name="swap-horizontal-outline" size={14} color={Colors.textSecondary} />
-                <Text style={styles.budgetLabel}>Swaps</Text>
-                <Text style={[styles.budgetValue, workoutSwapsRemaining === 0 && styles.budgetExhausted]}>
-                  {allowance.today.workoutSwapsUsed}/{allowance.today.workoutSwapsLimit}
-                </Text>
-              </View>
-              <View style={styles.budgetItem}>
-                <Ionicons name="refresh-outline" size={14} color={Colors.textSecondary} />
-                <Text style={styles.budgetLabel}>Day Regens</Text>
-                <Text style={[styles.budgetValue, dayRegensRemaining === 0 && styles.budgetExhausted]}>
-                  {allowance.today.workoutRegensUsed}/{allowance.today.workoutRegensLimit}
-                </Text>
-              </View>
-              <View style={styles.budgetItem}>
-                <Ionicons name="build-outline" size={14} color={Colors.textSecondary} />
-                <Text style={styles.budgetLabel}>Plan Regens</Text>
-                <Text style={[styles.budgetValue, planRegensRemaining === 0 && styles.budgetExhausted]}>
-                  {allowance.plan.regensUsed}/{allowance.plan.regensLimit}
-                </Text>
-              </View>
-            </View>
-            {isCooldownActive && (
-              <View style={styles.cooldownBanner}>
-                <Ionicons name="time-outline" size={13} color="#FF9F0A" />
-                <Text style={styles.cooldownText}>
-                  Cooldown active — {allowance.cooldown.minutesRemaining}m remaining
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
-
         {days.map((day: any, idx: number) => (
           <DayCard
             key={idx}
@@ -253,9 +187,9 @@ export default function WorkoutPlanDetailScreen() {
             onToggle={() => toggleSession(idx)}
             onDayRegen={() => handleDayRegen(idx)}
             dayRegenPending={dayRegenMutation.isPending && dayRegenMutation.variables?.dayIndex === idx}
-            dayRegenDisabled={dayRegensRemaining <= 0 || isCooldownActive || dayRegenMutation.isPending}
+            dayRegenDisabled={dayRegenMutation.isPending}
             onExerciseSwap={(exerciseIndex: number, exerciseName: string) => handleExerciseSwap(idx, exerciseIndex, exerciseName)}
-            swapDisabled={workoutSwapsRemaining <= 0 || isCooldownActive || swapMutation.isPending}
+            swapDisabled={swapMutation.isPending}
             swapPendingIndex={swapMutation.isPending && swapMutation.variables?.dayIndex === idx ? swapMutation.variables?.exerciseIndex : undefined}
           />
         ))}
@@ -881,62 +815,6 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     fontSize: 13,
     fontWeight: "500" as const,
     color: Colors.text,
-  },
-  budgetCard: {
-    marginHorizontal: 16,
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  budgetHeader: {
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    gap: 6,
-    marginBottom: 10,
-  },
-  budgetTitle: {
-    fontSize: 14,
-    fontWeight: "600" as const,
-    color: Colors.text,
-  },
-  budgetRow: {
-    flexDirection: "row" as const,
-    justifyContent: "space-between" as const,
-  },
-  budgetItem: {
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    gap: 4,
-  },
-  budgetLabel: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
-  budgetValue: {
-    fontSize: 13,
-    fontWeight: "700" as const,
-    color: Colors.text,
-    marginLeft: 2,
-  },
-  budgetExhausted: {
-    color: Colors.error || "#FF3B30",
-  },
-  cooldownBanner: {
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    gap: 6,
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 0.5,
-    borderTopColor: Colors.border,
-  },
-  cooldownText: {
-    fontSize: 12,
-    color: "#FF9F0A",
-    fontWeight: "500" as const,
   },
   heroSection: {
     marginHorizontal: 16,

@@ -17,7 +17,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
-import { useMealPlan, useMealFeedback, useResolveIngredientProposal, computeMealFingerprint, useMealPreferences, useGroceryList, useToggleGroceryOwned, useRegenerateGroceryList, useAllowance, useMealSwap, useDayRegen, GrocerySection, GroceryPricingItem } from "@/lib/api-hooks";
+import { useMealPlan, useMealFeedback, useResolveIngredientProposal, computeMealFingerprint, useMealPreferences, useGroceryList, useToggleGroceryOwned, useRegenerateGroceryList, useMealSwap, useDayRegen, GrocerySection } from "@/lib/api-hooks";
 
 function IngredientProposalModal({
   visible,
@@ -482,7 +482,6 @@ export default function MealPlanDetailScreen() {
   const { data: groceryData, isLoading: groceryLoading, refetch: refetchGrocery } = useGroceryList(id ?? null);
   const toggleOwnedMutation = useToggleGroceryOwned(id ?? null);
   const regenerateMutation = useRegenerateGroceryList(id ?? null);
-  const { data: allowance, refetch: refetchAllowance } = useAllowance();
   const swapMutation = useMealSwap(id ?? null);
   const dayRegenMutation = useDayRegen(id ?? null);
   const [refreshing, setRefreshing] = useState(false);
@@ -490,24 +489,11 @@ export default function MealPlanDetailScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([refetch(), refetchGrocery(), refetchAllowance()]);
+    await Promise.all([refetch(), refetchGrocery()]);
     setRefreshing(false);
-  }, [refetch, refetchGrocery, refetchAllowance]);
-
-  const mealSwapsRemaining = allowance ? allowance.today.mealSwapsLimit - allowance.today.mealSwapsUsed : 0;
-  const dayRegensRemaining = allowance ? allowance.today.mealRegensLimit - allowance.today.mealRegensUsed : 0;
-  const planRegensRemaining = allowance ? allowance.plan.regensLimit - allowance.plan.regensUsed : 0;
-  const isCooldownActive = allowance?.cooldown?.active ?? false;
+  }, [refetch, refetchGrocery]);
 
   const handleMealSwap = useCallback((dayIndex: number, mealType: string, mealName: string) => {
-    if (isCooldownActive) {
-      Alert.alert("Cooldown Active", `Please wait ${allowance?.cooldown?.minutesRemaining ?? 0} minutes before swapping again.`);
-      return;
-    }
-    if (mealSwapsRemaining <= 0) {
-      Alert.alert("No Swaps Left", "You've used all your meal swaps for today. They reset at midnight.");
-      return;
-    }
     Alert.alert(
       "Swap Meal",
       `Replace "${mealName}" with a new meal?`,
@@ -522,21 +508,9 @@ export default function MealPlanDetailScreen() {
         },
       ]
     );
-  }, [mealSwapsRemaining, isCooldownActive, allowance, swapMutation]);
+  }, [swapMutation]);
 
   const handleDayRegen = useCallback((dayIndex: number) => {
-    if (isCooldownActive) {
-      Alert.alert("Cooldown Active", `Please wait ${allowance?.cooldown?.minutesRemaining ?? 0} minutes before regenerating.`);
-      return;
-    }
-    if (dayRegensRemaining <= 0) {
-      Alert.alert("No Regens Left", "You've used your day regeneration for today. It resets at midnight.");
-      return;
-    }
-    if (planRegensRemaining <= 0) {
-      Alert.alert("Plan Limit Reached", "You've used all your plan regenerations. This limit does not reset.");
-      return;
-    }
     Alert.alert(
       "Regenerate Day",
       "This will replace all meals for this day with new ones.",
@@ -552,17 +526,7 @@ export default function MealPlanDetailScreen() {
         },
       ]
     );
-  }, [dayRegensRemaining, planRegensRemaining, isCooldownActive, allowance, dayRegenMutation]);
-
-  const pricingMap = useMemo(() => {
-    const map = new Map<string, { min: number; max: number }>();
-    if (groceryData?.pricing?.items) {
-      for (const p of groceryData.pricing.items) {
-        map.set(p.itemKey, p.estimatedRange);
-      }
-    }
-    return map;
-  }, [groceryData?.pricing]);
+  }, [dayRegenMutation]);
 
   const generateItemKey = useCallback((itemName: string) => {
     return itemName.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -680,46 +644,6 @@ export default function MealPlanDetailScreen() {
           </View>
         ) : null}
 
-        {allowance && (
-          <View style={styles.budgetCard}>
-            <View style={styles.budgetHeader}>
-              <Ionicons name="analytics-outline" size={16} color={Colors.text} />
-              <Text style={styles.budgetTitle}>Today's Budget</Text>
-            </View>
-            <View style={styles.budgetRow}>
-              <View style={styles.budgetItem}>
-                <Ionicons name="swap-horizontal-outline" size={14} color={Colors.textSecondary} />
-                <Text style={styles.budgetLabel}>Meal Swaps</Text>
-                <Text style={[styles.budgetValue, mealSwapsRemaining === 0 && styles.budgetExhausted]}>
-                  {allowance.today.mealSwapsUsed}/{allowance.today.mealSwapsLimit}
-                </Text>
-              </View>
-              <View style={styles.budgetItem}>
-                <Ionicons name="refresh-outline" size={14} color={Colors.textSecondary} />
-                <Text style={styles.budgetLabel}>Day Regens</Text>
-                <Text style={[styles.budgetValue, dayRegensRemaining === 0 && styles.budgetExhausted]}>
-                  {allowance.today.mealRegensUsed}/{allowance.today.mealRegensLimit}
-                </Text>
-              </View>
-              <View style={styles.budgetItem}>
-                <Ionicons name="build-outline" size={14} color={Colors.textSecondary} />
-                <Text style={styles.budgetLabel}>Plan Regens</Text>
-                <Text style={[styles.budgetValue, planRegensRemaining === 0 && styles.budgetExhausted]}>
-                  {allowance.plan.regensUsed}/{allowance.plan.regensLimit}
-                </Text>
-              </View>
-            </View>
-            {isCooldownActive && (
-              <View style={styles.cooldownBanner}>
-                <Ionicons name="time-outline" size={13} color="#FF9F0A" />
-                <Text style={styles.cooldownText}>
-                  Cooldown active — {allowance.cooldown.minutesRemaining}m remaining
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
-
         <View style={styles.tabBar}>
           <Pressable
             style={[styles.tab, activeTab === "meals" && styles.tabActive]}
@@ -768,7 +692,7 @@ export default function MealPlanDetailScreen() {
                       style={({ pressed }) => [
                         styles.regenDayBtn,
                         pressed && { opacity: 0.7 },
-                        (dayRegensRemaining <= 0 || isCooldownActive || dayRegenMutation.isPending) && { opacity: 0.4 },
+                        dayRegenMutation.isPending && { opacity: 0.4 },
                       ]}
                       onPress={() => handleDayRegen(dayNum)}
                       disabled={dayRegenMutation.isPending}
@@ -787,7 +711,7 @@ export default function MealPlanDetailScreen() {
                       mealType={mealType}
                       meal={meal as MealData}
                       onSwap={() => handleMealSwap(dayNum, mealType, (meal as MealData).name)}
-                      swapDisabled={mealSwapsRemaining <= 0 || isCooldownActive || swapMutation.isPending}
+                      swapDisabled={swapMutation.isPending}
                       isSwapping={swapMutation.isPending && swapMutation.variables?.mealType === mealType && swapMutation.variables?.dayIndex === dayNum}
                     />
                   ))}
@@ -848,7 +772,6 @@ export default function MealPlanDetailScreen() {
                     {section.items.map((item, i) => {
                       const key = generateItemKey(item.item);
                       const isOwned = !!groceryData.ownedItems?.[key];
-                      const price = pricingMap.get(key);
                       return (
                         <Pressable
                           key={i}
@@ -878,11 +801,6 @@ export default function MealPlanDetailScreen() {
                               {item.quantity}
                             </Text>
                           </View>
-                          {price ? (
-                            <Text style={styles.groceryPrice}>
-                              ${price.min.toFixed(2)}–${price.max.toFixed(2)}
-                            </Text>
-                          ) : null}
                         </Pressable>
                       );
                     })}
@@ -1014,61 +932,6 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   },
   dailyTargetsBold: {
     fontWeight: "600" as const,
-  },
-  budgetCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  budgetHeader: {
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    gap: 6,
-    marginBottom: 10,
-  },
-  budgetTitle: {
-    fontSize: 14,
-    fontWeight: "600" as const,
-    color: Colors.text,
-  },
-  budgetRow: {
-    flexDirection: "row" as const,
-    justifyContent: "space-between" as const,
-  },
-  budgetItem: {
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    gap: 4,
-  },
-  budgetLabel: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
-  budgetValue: {
-    fontSize: 13,
-    fontWeight: "700" as const,
-    color: Colors.text,
-    marginLeft: 2,
-  },
-  budgetExhausted: {
-    color: Colors.error || "#FF3B30",
-  },
-  cooldownBanner: {
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    gap: 6,
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 0.5,
-    borderTopColor: Colors.border,
-  },
-  cooldownText: {
-    fontSize: 12,
-    color: "#FF9F0A",
-    fontWeight: "500" as const,
   },
   tabBar: {
     flexDirection: "row" as const,
@@ -1439,11 +1302,6 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     fontSize: 11,
     color: Colors.textSecondary,
     marginTop: 2,
-  },
-  groceryPrice: {
-    fontSize: 12,
-    fontWeight: "500" as const,
-    color: Colors.textTertiary,
   },
   emptyGrocery: {
     alignItems: "center" as const,

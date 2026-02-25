@@ -830,25 +830,6 @@ export function useWorkoutPlanStatus(planId: string | null, enabled: boolean) {
   });
 }
 
-export interface BudgetData {
-  mealSwaps?: { used: number; total: number };
-  dayRegens?: { used: number; total: number };
-  planRegens?: { used: number; total: number };
-}
-
-export function useBudget() {
-  return useQuery<BudgetData>({
-    queryKey: ["budget"],
-    queryFn: async () => {
-      const response = await apiClient.get("/api/budget");
-      logApiCall("GET", "/api/budget", response.status);
-      return response.data;
-    },
-    staleTime: 30000,
-    retry: 1,
-  });
-}
-
 function normalizePlanRecord(p: any): any {
   const pj = p.planJson ? (typeof p.planJson === "string" ? JSON.parse(p.planJson) : p.planJson) : null;
   const name = p.name || p.title || pj?.title || pj?.planName || "Plan";
@@ -1238,26 +1219,9 @@ export interface GrocerySection {
   items: GrocerySectionItem[];
 }
 
-export interface GroceryPricingItem {
-  itemKey: string;
-  displayName: string;
-  unitHint: string;
-  confidence: string;
-  estimatedRange: { min: number; max: number };
-}
-
-export interface GroceryTotals {
-  totalMin: number;
-  totalMax: number;
-  ownedAdjustedMin: number;
-  ownedAdjustedMax: number;
-}
-
 export interface GroceryListData {
   groceryList: { sections: GrocerySection[] };
-  pricing?: { items: GroceryPricingItem[]; currency: string; assumptions?: any } | null;
   ownedItems: Record<string, boolean>;
-  totals?: GroceryTotals | null;
 }
 
 export function useGroceryList(mealPlanId: string | null) {
@@ -1269,10 +1233,6 @@ export function useGroceryList(mealPlanId: string | null) {
       return response.data;
     },
     enabled: !!mealPlanId,
-    refetchInterval: (query) => {
-      // Poll every 4 seconds if pricing is null
-      return !query.state.data?.pricing ? 4000 : false;
-    },
   });
 }
 
@@ -1299,21 +1259,9 @@ export function useToggleGroceryOwned(mealPlanId: string | null) {
           delete newOwned[itemKey];
         }
 
-        let newTotals = previousData.totals;
-        if (previousData.totals && previousData.pricing?.items) {
-          let adjMin = 0, adjMax = 0;
-          for (const p of previousData.pricing.items) {
-            if (!newOwned[p.itemKey]) {
-              adjMin += p.estimatedRange.min;
-              adjMax += p.estimatedRange.max;
-            }
-          }
-          newTotals = { ...previousData.totals, ownedAdjustedMin: adjMin, ownedAdjustedMax: adjMax };
-        }
-
         queryClient.setQueryData<GroceryListData>(
           ["/api/plan", mealPlanId, "grocery"],
-          { ...previousData, ownedItems: newOwned, totals: newTotals }
+          { ...previousData, ownedItems: newOwned }
         );
       }
 
@@ -1344,43 +1292,6 @@ export function useRegenerateGroceryList(mealPlanId: string | null) {
   });
 }
 
-export interface AllowanceData {
-  goalPlanId: string;
-  allowanceId: string;
-  today: {
-    mealSwapsUsed: number;
-    mealSwapsLimit: number;
-    workoutSwapsUsed: number;
-    workoutSwapsLimit: number;
-    mealRegensUsed: number;
-    mealRegensLimit: number;
-    workoutRegensUsed: number;
-    workoutRegensLimit: number;
-  };
-  plan: {
-    regensUsed: number;
-    regensLimit: number;
-  };
-  cooldown: {
-    active: boolean;
-    minutesRemaining: number;
-  };
-  flexTokensAvailable: number;
-  coachInsight: string | null;
-}
-
-export function useAllowance() {
-  return useQuery<AllowanceData>({
-    queryKey: ["/api/allowance/current"],
-    queryFn: async () => {
-      const response = await apiClient.get("/api/allowance/current");
-      logApiCall("GET", "/api/allowance/current", response.status);
-      return response.data;
-    },
-    refetchInterval: 60000,
-  });
-}
-
 export function useMealSwap(planId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -1395,13 +1306,6 @@ export function useMealSwap(planId: string | null) {
       }
       queryClient.refetchQueries({ queryKey: ["meal-plan", planId] });
       queryClient.invalidateQueries({ queryKey: ["/api/plan", planId, "grocery"] });
-      queryClient.setQueryData<AllowanceData>(["/api/allowance/current"], (old) => {
-        if (!old) return old;
-        return { ...old, today: { ...old.today, mealSwapsUsed: old.today.mealSwapsUsed + 1 } };
-      });
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
-      }, 500);
     },
     onError: (error: any) => {
       const msg = error?.response?.data?.message || "Could not swap meal";
@@ -1424,17 +1328,6 @@ export function useDayRegen(planId: string | null) {
       }
       queryClient.refetchQueries({ queryKey: ["meal-plan", planId] });
       queryClient.invalidateQueries({ queryKey: ["/api/plan", planId, "grocery"] });
-      queryClient.setQueryData<AllowanceData>(["/api/allowance/current"], (old) => {
-        if (!old) return old;
-        return {
-          ...old,
-          today: { ...old.today, mealRegensUsed: old.today.mealRegensUsed + 1 },
-          plan: { ...old.plan, regensUsed: old.plan.regensUsed + 1 },
-        };
-      });
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
-      }, 500);
     },
     onError: (error: any) => {
       const msg = error?.response?.data?.message || "Could not regenerate day";
@@ -1456,13 +1349,6 @@ export function useWorkoutSwap(workoutId: string | null) {
         queryClient.setQueryData(["workout-plan", workoutId], data);
       }
       queryClient.refetchQueries({ queryKey: ["workout-plan", workoutId] });
-      queryClient.setQueryData<AllowanceData>(["/api/allowance/current"], (old) => {
-        if (!old) return old;
-        return { ...old, today: { ...old.today, workoutSwapsUsed: old.today.workoutSwapsUsed + 1 } };
-      });
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
-      }, 500);
     },
     onError: (error: any) => {
       const msg = error?.response?.data?.message || "Could not swap exercise";
@@ -1484,21 +1370,6 @@ export function useWorkoutDayRegen(workoutId: string | null) {
         queryClient.setQueryData(["workout-plan", workoutId], data);
       }
       queryClient.refetchQueries({ queryKey: ["workout-plan", workoutId] });
-      queryClient.setQueryData<AllowanceData>(["/api/allowance/current"], (old) => {
-        if (!old) return old;
-        return {
-          ...old,
-          today: {
-            ...old.today,
-            mealRegensUsed: old.today.mealRegensUsed + 1,
-            workoutRegensUsed: old.today.workoutRegensUsed + 1,
-          },
-          plan: { ...old.plan, regensUsed: old.plan.regensUsed + 1 },
-        };
-      });
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
-      }, 500);
     },
     onError: (error: any) => {
       const msg = error?.response?.data?.message || "Could not regenerate workout session";

@@ -22,7 +22,6 @@ import {
   useDeleteGoalPlan,
   useDeleteMealPlan,
   useDeleteWorkoutPlan,
-  useBudget,
 } from "@/lib/api-hooks";
 
 const WEB_TOP_INSET = 67;
@@ -147,40 +146,6 @@ function sortPlansByDate(plans: any[]): any[] {
     if (!dateB) return -1;
     return dateA.localeCompare(dateB);
   });
-}
-
-function BudgetCard({ Colors }: { Colors: ThemeColors }) {
-  const { data } = useBudget();
-  const styles = useMemo(() => createStyles(Colors), [Colors]);
-  const mealSwaps = data?.mealSwaps ?? { used: 0, total: 0 };
-  const dayRegens = data?.dayRegens ?? { used: 0, total: 0 };
-  const planRegens = data?.planRegens ?? { used: 0, total: 0 };
-
-  return (
-    <View style={styles.budgetCard}>
-      <View style={styles.budgetHeader}>
-        <Ionicons name="sparkles" size={14} color={Colors.primary} />
-        <Text style={styles.budgetTitle}>Today's Budget</Text>
-      </View>
-      <View style={styles.budgetGrid}>
-        <View style={styles.budgetItem}>
-          <Ionicons name="swap-horizontal-outline" size={13} color={Colors.textSecondary} />
-          <Text style={styles.budgetLabel}>Meal Swaps</Text>
-          <Text style={styles.budgetValue}>{mealSwaps.used}/{mealSwaps.total}</Text>
-        </View>
-        <View style={styles.budgetItem}>
-          <Ionicons name="time-outline" size={13} color={Colors.textSecondary} />
-          <Text style={styles.budgetLabel}>Day Regens</Text>
-          <Text style={styles.budgetValue}>{dayRegens.used}/{dayRegens.total}</Text>
-        </View>
-      </View>
-      <View style={styles.budgetItemFull}>
-        <Ionicons name="refresh-outline" size={13} color={Colors.textSecondary} />
-        <Text style={styles.budgetLabel}>Plan Regens</Text>
-        <Text style={styles.budgetValue}>{planRegens.used}/{planRegens.total}</Text>
-      </View>
-    </View>
-  );
 }
 
 function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: { plan: any; onDelete: () => void; Colors: ThemeColors; mealPlans: any[]; workoutPlans: any[] }) {
@@ -524,8 +489,6 @@ function NutritionPage({ Colors, styles }: { Colors: ThemeColors; styles: any })
         </Pressable>
       </View>
 
-      <BudgetCard Colors={Colors} />
-
       {isLoading ? (
         <View style={styles.emptyState}>
           <ActivityIndicator size="large" color={Colors.primary} />
@@ -601,8 +564,6 @@ function TrainingPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
           <Text style={styles.newPlanButtonText}>New Workout Plan</Text>
         </Pressable>
       </View>
-
-      <BudgetCard Colors={Colors} />
 
       {isLoading ? (
         <View style={styles.emptyState}>
@@ -725,50 +686,6 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     fontSize: 12,
     fontFamily: "Inter_600SemiBold",
     color: Colors.background,
-  },
-  budgetCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-    gap: 10,
-  },
-  budgetHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginBottom: 2,
-  },
-  budgetTitle: {
-    fontSize: 13,
-    fontFamily: "Inter_700Bold",
-    color: Colors.text,
-  },
-  budgetGrid: {
-    flexDirection: "row",
-    gap: 16,
-  },
-  budgetItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  budgetItemFull: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  budgetLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    color: Colors.textSecondary,
-  },
-  budgetValue: {
-    fontSize: 12,
-    fontFamily: "Inter_700Bold",
-    color: Colors.text,
-    marginLeft: 2,
   },
   activePlansLabel: {
     fontSize: 10,
