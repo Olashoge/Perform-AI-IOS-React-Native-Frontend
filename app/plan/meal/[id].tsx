@@ -296,9 +296,9 @@ function MealCard({ mealType, meal, completed, onSwap, swapDisabled, isSwapping 
   const quickInfoParts: { icon: string; value: string; iconColor?: string }[] = [];
   if (meal.servings) quickInfoParts.push({ icon: "people-outline", value: `${meal.servings}` });
   if (calDisplay) quickInfoParts.push({ icon: "flame-outline", value: `${calDisplay} cal`, iconColor: Colors.warning });
-  if (proteinDisplay) quickInfoParts.push({ icon: "barbell-outline", value: `P ${proteinDisplay}g` });
-  if (carbsDisplay) quickInfoParts.push({ icon: "leaf-outline", value: `C ${carbsDisplay}g` });
-  if (fatDisplay) quickInfoParts.push({ icon: "water-outline", value: `F ${fatDisplay}g` });
+  if (proteinDisplay) quickInfoParts.push({ icon: "", value: `P ${proteinDisplay}g` });
+  if (carbsDisplay) quickInfoParts.push({ icon: "", value: `C ${carbsDisplay}g` });
+  if (fatDisplay) quickInfoParts.push({ icon: "", value: `F ${fatDisplay}g` });
 
   const macroLine: string[] = [];
 
@@ -360,7 +360,7 @@ function MealCard({ mealType, meal, completed, onSwap, swapDisabled, isSwapping 
         <View style={styles.mealQuickInfo}>
           {quickInfoParts.map((part, i) => (
             <View key={i} style={styles.quickInfoItem}>
-              <Ionicons name={part.icon as any} size={13} color={part.iconColor || Colors.textTertiary} />
+              {part.icon ? <Ionicons name={part.icon as any} size={13} color={part.iconColor || Colors.textTertiary} /> : null}
               <Text style={styles.quickInfoText}>{part.value}</Text>
               {i < quickInfoParts.length - 1 || macroLine.length > 0 ? (
                 <Text style={styles.quickInfoSep}>|</Text>
