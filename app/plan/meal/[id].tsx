@@ -451,11 +451,10 @@ function formatDayDate(startDate: string | undefined, dayIndex: number): string 
   try {
     const d = new Date(startDate + "T12:00:00");
     d.setDate(d.getDate() + dayIndex - 1);
-    const weekday = WEEKDAYS[d.getDay()];
     const month = MONTHS_SHORT[d.getMonth()];
     const day = d.getDate();
     const year = d.getFullYear();
-    return `${weekday}, ${month} ${day}, ${year}`;
+    return `${month} ${day}, ${year}`;
   } catch {
     return "";
   }
