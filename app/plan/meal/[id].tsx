@@ -633,7 +633,7 @@ export default function MealPlanDetailScreen() {
   const summary = planJson.summary;
   const nutritionNotes = planJson.nutritionNotes;
   const days: DayPlanData[] = planJson.days ?? [];
-  const startDate = plan.startDate || planJson.startDate;
+  const startDate = plan.startDate || plan.planStartDate || planJson.startDate || planJson.planStartDate;
 
   const macroTargets = nutritionNotes?.dailyMacroTargetsRange;
   const dailyTargetStr = macroTargets ? [
