@@ -168,13 +168,6 @@ function MealItem({
 
           {meal.nutritionEstimateRange && (
             <View style={styles.macroBar}>
-              {meal.nutritionEstimateRange.calories && (
-                <View style={styles.macroItem}>
-                  <Ionicons name="flame-outline" size={14} color={Colors.warning} />
-                  <Text style={styles.macroLabel}>Cal</Text>
-                  <Text style={styles.macroValue}>{meal.nutritionEstimateRange.calories}</Text>
-                </View>
-              )}
               {meal.nutritionEstimateRange.protein && (
                 <View style={styles.macroItem}>
                   <View style={[styles.macroDotIndicator, { backgroundColor: "#FF6B6B" }]} />
