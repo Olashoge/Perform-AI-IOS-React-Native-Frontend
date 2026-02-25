@@ -13,7 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
-import { useWeekData, useWellnessPlans, useMealPlans, useWorkoutPlans, DayData, Meal, Workout } from "@/lib/api-hooks";
+import { useWeekData, useMealPlans, useWorkoutPlans, DayData, Meal, Workout } from "@/lib/api-hooks";
 import { getWeekStartUTC, getWeekEndUTC } from "@/lib/week-utils";
 import { useWeekStart } from "@/lib/week-start-context";
 import { useAuth } from "@/lib/auth-context";
@@ -467,7 +467,6 @@ export default function DashboardScreen() {
   );
 
   const { data: weekDays, isLoading } = useWeekData(viewedWeekStart);
-  const { data: wellnessPlans } = useWellnessPlans();
 
   const isCurrentWeek = viewedWeekStart === currentWeekStart;
 
@@ -498,10 +497,6 @@ export default function DashboardScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }, [todayStr]);
 
-  const activeWellness = useMemo(() => {
-    if (!wellnessPlans || !Array.isArray(wellnessPlans)) return null;
-    return wellnessPlans.find((p: any) => p.status === "active" || p.status === "ready") || null;
-  }, [wellnessPlans]);
 
   if (isLoading) {
     return (
@@ -521,20 +516,6 @@ export default function DashboardScreen() {
       contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 12 + webTopInset, paddingBottom: 120 }]}
       showsVerticalScrollIndicator={false}
     >
-      {activeWellness && (
-        <Pressable
-          style={({ pressed }) => [styles.activePlanBanner, pressed && { opacity: 0.8 }]}
-          onPress={() => router.push({ pathname: "/plan/wellness/[id]", params: { id: activeWellness.id } })}
-        >
-          <Ionicons name="settings-outline" size={16} color={Colors.textSecondary} />
-          <Text style={styles.activePlanLabel}>ACTIVE PLAN</Text>
-          <Text style={styles.activePlanName} numberOfLines={1}>{activeWellness.title || activeWellness.name || "General Fitness"}</Text>
-          <View style={{ flex: 1 }} />
-          <Pressable onPress={(e) => { e.stopPropagation(); router.push("/(tabs)/performance"); }}>
-            <Text style={styles.viewProgressLink}>View Progress</Text>
-          </Pressable>
-        </Pressable>
-      )}
 
       <View style={styles.dashboardHeader}>
         <Text style={styles.headerTitle}>Dashboard</Text>
@@ -570,17 +551,6 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   loadingContainer: { flex: 1, backgroundColor: Colors.background, justifyContent: "center", alignItems: "center" },
   scrollContent: { paddingHorizontal: 20 },
 
-  activePlanBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 4,
-    marginBottom: 4,
-  },
-  activePlanLabel: { fontSize: 9, fontFamily: "Inter_600SemiBold", color: Colors.textSecondary, letterSpacing: 0.5 },
-  activePlanName: { fontSize: 12, fontFamily: "Inter_700Bold", color: Colors.text, maxWidth: 160 },
-  viewProgressLink: { fontSize: 11, fontFamily: "Inter_500Medium", color: Colors.primary },
 
   dashboardHeader: { marginBottom: 20 },
   headerTitle: { fontSize: 24, fontFamily: "Inter_700Bold", color: Colors.text },
