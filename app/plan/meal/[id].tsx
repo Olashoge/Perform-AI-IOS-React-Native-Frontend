@@ -721,26 +721,6 @@ export default function MealPlanDetailScreen() {
           </>
         ) : (
           <View style={styles.grocerySection}>
-            {groceryData?.totals && (
-              <View style={styles.totalsCard}>
-                <View style={styles.totalsRow}>
-                  <Text style={styles.totalsLabel}>Estimated Total</Text>
-                  <Text style={styles.totalsValue}>
-                    ${groceryData.totals.totalMin.toFixed(2)} – ${groceryData.totals.totalMax.toFixed(2)}
-                  </Text>
-                </View>
-                <View style={[styles.totalsRow, { marginTop: 6 }]}>
-                  <Text style={styles.totalsLabel}>After Owned Items</Text>
-                  <Text style={[styles.totalsValue, { color: Colors.primary }]}>
-                    ${groceryData.totals.ownedAdjustedMin.toFixed(2)} – ${groceryData.totals.ownedAdjustedMax.toFixed(2)}
-                  </Text>
-                </View>
-                <Text style={styles.totalsDisclaimer}>
-                  Estimates vary by brand, store, and region
-                </Text>
-              </View>
-            )}
-
             <View style={styles.grocerySectionHeader}>
               <Text style={styles.grocerySectionTitle}>Items</Text>
               <Pressable
@@ -1195,35 +1175,6 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   },
   grocerySection: {
     marginBottom: 16,
-  },
-  totalsCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginBottom: 16,
-  },
-  totalsRow: {
-    flexDirection: "row" as const,
-    justifyContent: "space-between" as const,
-    alignItems: "center" as const,
-  },
-  totalsLabel: {
-    fontSize: 14,
-    fontWeight: "500" as const,
-    color: Colors.textSecondary,
-  },
-  totalsValue: {
-    fontSize: 15,
-    fontWeight: "700" as const,
-    color: Colors.text,
-  },
-  totalsDisclaimer: {
-    fontSize: 11,
-    color: Colors.textTertiary,
-    marginTop: 10,
-    textAlign: "center" as const,
   },
   grocerySectionHeader: {
     flexDirection: "row" as const,
