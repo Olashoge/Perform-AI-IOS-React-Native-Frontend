@@ -1,6 +1,6 @@
 import React from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { useColors } from "@/lib/theme";
+import { useColors } from "@/lib/theme-context";
 
 const ICON_MAP = {
   dashboard: "stats-chart-outline",
