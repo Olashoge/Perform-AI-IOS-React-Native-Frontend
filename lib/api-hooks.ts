@@ -1464,8 +1464,8 @@ export function useWorkoutDayRegen(workoutId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ dayIndex }: { dayIndex: number }) => {
-      const response = await apiClient.post(`/api/workout/${workoutId}/regenerate-day`, { dayIndex });
-      logApiCall("POST", `/api/workout/${workoutId}/regenerate-day`, response.status);
+      const response = await apiClient.post(`/api/workout/${workoutId}/regenerate-session`, { dayIndex });
+      logApiCall("POST", `/api/workout/${workoutId}/regenerate-session`, response.status);
       return response.data;
     },
     onSuccess: (data) => {
@@ -1480,7 +1480,7 @@ export function useWorkoutDayRegen(workoutId: string | null) {
       queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
     },
     onError: (error: any) => {
-      const msg = error?.response?.data?.message || "Could not regenerate workout day";
+      const msg = error?.response?.data?.message || "Could not regenerate workout session";
       Alert.alert("Regen Failed", msg);
     },
   });

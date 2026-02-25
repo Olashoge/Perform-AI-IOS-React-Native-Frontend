@@ -347,7 +347,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/workout/:id/status", proxyToExternal);
   app.delete("/api/workouts/:id", proxyToExternal);
   app.post("/api/workout/:id/swap", proxyToExternal);
-  app.post("/api/workout/:id/regenerate-day", proxyToExternal);
+  app.post("/api/workout/:id/regenerate-session", proxyToExternal);
   app.get("/api/calendar/occupied-dates", proxyToExternal);
 
   app.post("/api/daily-meals", proxyToExternal);
