@@ -98,28 +98,10 @@ export default function ReadyScreen() {
             style={styles.primaryButton}
             onPress={() => {
               Haptics.impactAsync();
-              router.replace("/(tabs)/calendar");
-            }}
-          >
-            <Text style={styles.primaryButtonText}>View My Schedule</Text>
-          </Pressable>
-          <Pressable
-            style={styles.secondaryButton}
-            onPress={() => {
-              Haptics.impactAsync();
               router.replace("/plans");
             }}
           >
-            <Text style={styles.secondaryButtonText}>View My Plans</Text>
-          </Pressable>
-          <Pressable
-            style={styles.tertiaryButton}
-            onPress={() => {
-              Haptics.impactAsync();
-              router.replace("/(tabs)");
-            }}
-          >
-            <Text style={styles.tertiaryButtonText}>Go to Dashboard</Text>
+            <Text style={styles.primaryButtonText}>View My Plans</Text>
           </Pressable>
         </View>
       </View>
@@ -212,26 +194,5 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     fontSize: 15,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
-  },
-  secondaryButton: {
-    backgroundColor: Colors.surface,
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: "center",
-  },
-  secondaryButtonText: {
-    fontSize: 15,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.text,
-  },
-  tertiaryButton: {
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: "center",
-  },
-  tertiaryButtonText: {
-    fontSize: 13,
-    fontFamily: "Inter_500Medium",
-    color: Colors.textSecondary,
   },
 });
