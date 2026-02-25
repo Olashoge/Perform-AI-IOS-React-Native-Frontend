@@ -19,11 +19,13 @@ The application is built with React Native and Expo Router for file-based naviga
 - **Core Features**:
     - User authentication and profile management.
     - Dashboard with weekly summaries and performance metrics (adherence, trends, streaks, AI insights).
+    - Performance tab with Intelligent Coaching Layer: Performance Identity Block (score + state label + delta), Momentum Trend (4-week chart + narrative), Performance Drivers (meal/workout split + bottleneck detection), Adaptive Coaching (state-based week type recommendation with CTA), Streak & Consistency (streak + 14-day completion rate). Computed client-side via `computePerformanceState` in `usePerformanceData`.
     - Calendar view for daily and weekly activity tracking.
     - Daily detail view for meal and workout completion toggles, with "Plan This Day" generation.
     - Comprehensive plan management for Wellness, Meals, and Workouts, including creation wizards and detailed plan views.
     - Settings with profile, preferences (food, exercise), week start, and theme customization.
     - Developer diagnostics screen for monitoring API calls and application state.
+    - Adaptive Plan placeholder screen (`app/adaptive-plan.tsx`) for future AI-driven plan adjustments.
 - **Completion Toggle Architecture**: PATCH requests for meal/workout completions are handled locally, updating a PostgreSQL database. GET requests for data (weekly-summary, week-data, day-data) merge external backend data with local completion states. Optimistic updates are used with React Query, invalidating relevant caches on success.
 - **Plan Detail Architecture**: Dedicated screens for meal, workout, and wellness plan details, providing rich content like recipes, exercise routines, and goal overviews.
 

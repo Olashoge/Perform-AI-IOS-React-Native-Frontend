@@ -1,0 +1,52 @@
+Upgrade the Performance tab to “Option B: Intelligent Coaching Layer” using the backend-provided performanceState object.
+
+GOAL
+Make Performance tab distinct from Dashboard:
+- Dashboard = operational summary
+- Performance = coaching + momentum + drivers + adaptive recommendation
+
+UI STRUCTURE (in order)
+
+1) Performance Identity Block (top)
+- Title: “Weekly Performance”
+- Big number: current week score %
+- Show state label from performanceState.label:
+  - On Track / Building Momentum / Recovering / At Risk / Declining
+- Show delta: "+X% vs last week" or "–X% vs last week"
+- Small 1-line framing using explanation[0]
+
+2) Momentum Engine
+- “Momentum Trend” section
+- 4-week chart (already exists)
+- Under chart: 1–2 lines summary generated from performanceState (use explanation items referencing trend)
+
+3) Performance Drivers
+- Rename “Adherence Split” to “What’s Driving Your Score”
+- Show Meals % and Workouts % (existing data)
+- Add “Primary bottleneck” text based on whichever is lower:
+  - If meals < workouts by >= 5 points -> “Nutrition consistency is the bottleneck”
+  - Else if workouts < meals by >= 5 points -> “Training consistency is the bottleneck”
+  - Else -> “Balanced—focus on consistency across both”
+
+4) Adaptive Coaching
+- Section title: “Adaptive Recommendation”
+- Use state:
+  - declining / at_risk -> suggest “Recovery Focus Week”
+  - recovering -> “Stability Week”
+  - building_momentum -> “Momentum Week”
+  - on_track -> “Progression Week”
+- Include 2–3 reason bullets from performanceState.explanation
+- CTA button (non-functional for now if endpoint not built): “Adjust Next Week Plan”
+  - If no backend action exists yet, route to a placeholder screen that says “Adaptive plan adjustments coming next.”
+
+5) Streak + Consistency
+- Keep streak, but smaller and later.
+- Add “Last 14 days completion rate” if data exists; otherwise omit.
+
+DATA
+- Pull performanceState from the weekly summary/performance endpoint.
+- If performanceState missing, render previous UI (graceful fallback).
+
+DELIVERABLES
+- Files changed
+- Confirm Performance tab no longer duplicates Dashboard layout

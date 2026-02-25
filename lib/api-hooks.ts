@@ -523,6 +523,14 @@ export interface WeekScore {
   workoutPct: number;
 }
 
+export type PerformanceStateKey = "on_track" | "building_momentum" | "recovering" | "at_risk" | "declining";
+
+export interface PerformanceState {
+  key: PerformanceStateKey;
+  label: string;
+  explanation: string[];
+}
+
 export interface PerformanceData {
   currentScore: number;
   weekScores: WeekScore[];
@@ -531,6 +539,8 @@ export interface PerformanceData {
   streak: number;
   trend: "up" | "down" | "flat";
   trendDelta: number;
+  performanceState: PerformanceState;
+  last14DaysRate: number | null;
 }
 
 function computeWeekScore(days: DayData[]): { score: number; mealPct: number; workoutPct: number } {
@@ -568,6 +578,77 @@ function computeStreak(allDays: DayData[]): number {
   return streak;
 }
 
+function computePerformanceState(
+  currentScore: number,
+  trendDelta: number,
+  weekScores: WeekScore[],
+  mealPct: number,
+  workoutPct: number,
+  streak: number,
+): PerformanceState {
+  const explanation: string[] = [];
+  let key: PerformanceStateKey;
+  let label: string;
+
+  const isRising = trendDelta > 3;
+  const isFalling = trendDelta < -3;
+  const recentScores = weekScores.slice(-2).map(w => w.score);
+  const avgRecent = recentScores.length > 0 ? recentScores.reduce((a, b) => a + b, 0) / recentScores.length : currentScore;
+
+  if (currentScore >= 80 && !isFalling) {
+    key = "on_track";
+    label = "On Track";
+    explanation.push(`Strong ${currentScore}% completion this week keeps you in the progression zone.`);
+    if (streak >= 5) explanation.push(`${streak}-day streak shows excellent consistency.`);
+    if (mealPct >= 80 && workoutPct >= 80) explanation.push("Both nutrition and training are well-balanced.");
+  } else if (isRising && currentScore >= 50) {
+    key = "building_momentum";
+    label = "Building Momentum";
+    explanation.push(`Score is climbing — up ${trendDelta}% from last week.`);
+    if (currentScore < 80) explanation.push(`At ${currentScore}%, you're approaching the on-track zone.`);
+    if (streak >= 3) explanation.push(`${streak}-day streak supports your upward trend.`);
+  } else if (isFalling && avgRecent < 60) {
+    key = "declining";
+    label = "Declining";
+    explanation.push(`Score dropped ${Math.abs(trendDelta)}% this week — attention needed.`);
+    if (mealPct < workoutPct) explanation.push("Meal consistency is slipping more than workouts.");
+    else if (workoutPct < mealPct) explanation.push("Workout attendance is the main driver of the decline.");
+    explanation.push("A recovery-focused week can help reset your momentum.");
+  } else if (currentScore < 50) {
+    key = "at_risk";
+    label = "At Risk";
+    explanation.push(`${currentScore}% completion is below the consistency threshold.`);
+    if (streak <= 1) explanation.push("No active streak — rebuilding daily habits is the priority.");
+    explanation.push("Focus on completing at least one meal and one workout per day.");
+  } else {
+    key = "recovering";
+    label = "Recovering";
+    explanation.push(`At ${currentScore}%, you're stabilizing after a dip.`);
+    if (!isFalling) explanation.push("The downward trend has stopped — consistency will push you higher.");
+    if (streak >= 2) explanation.push(`Your ${streak}-day streak shows you're getting back on track.`);
+  }
+
+  return { key, label, explanation };
+}
+
+function computeLast14DaysRate(week2Days: DayData[], week3Days: DayData[]): number | null {
+  const allDays = [...week2Days, ...week3Days];
+  const today = new Date();
+  const fourteenAgo = new Date(today);
+  fourteenAgo.setDate(fourteenAgo.getDate() - 14);
+  const relevant = allDays.filter(d => {
+    const dd = new Date(d.date + "T12:00:00Z");
+    return dd >= fourteenAgo && dd <= today;
+  });
+  if (relevant.length === 0) return null;
+  let total = 0, completed = 0;
+  for (const day of relevant) {
+    total += day.meals.length + day.workouts.length;
+    completed += day.meals.filter(m => m.completed).length + day.workouts.filter(w => w.completed).length;
+  }
+  return total > 0 ? Math.round((completed / total) * 100) : null;
+}
+
 function getWeekLabel(weekStart: string): string {
   const d = new Date(weekStart + "T12:00:00Z");
   const month = d.toLocaleString("en-US", { month: "short", timeZone: "UTC" });
@@ -603,14 +684,20 @@ export function usePerformanceData() {
     const streak = computeStreak(allDays);
     const trendDelta = currentStats.score - prevStats.score;
 
+    const trend = trendDelta > 3 ? "up" as const : trendDelta < -3 ? "down" as const : "flat" as const;
+    const performanceState = computePerformanceState(currentStats.score, trendDelta, weekScores, currentStats.mealPct, currentStats.workoutPct, streak);
+    const last14DaysRate = computeLast14DaysRate(week2.data!, week3.data!);
+
     return {
       currentScore: currentStats.score,
       weekScores,
       mealPct: currentStats.mealPct,
       workoutPct: currentStats.workoutPct,
       streak,
-      trend: trendDelta > 3 ? "up" as const : trendDelta < -3 ? "down" as const : "flat" as const,
+      trend,
       trendDelta,
+      performanceState,
+      last14DaysRate,
     };
   })() : undefined;
 
