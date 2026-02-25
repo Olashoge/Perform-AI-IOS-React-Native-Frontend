@@ -198,7 +198,7 @@ function TagInput({
             <View key={tag} style={styles.tag}>
               <Text style={styles.tagText}>{tag}</Text>
               <Pressable onPress={() => removeTag(tag)} hitSlop={6}>
-                <Ionicons name="close" size={14} color={Colors.text} />
+                <Ionicons name="close" size={14} color="#FFFFFF" />
               </Pressable>
             </View>
           ))}
@@ -1063,7 +1063,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     color: Colors.textSecondary,
   },
   segmentedBtnTextActive: {
-    color: Colors.text,
+    color: "#FFFFFF",
     fontFamily: "Inter_600SemiBold",
   },
   pillWrap: {
@@ -1089,7 +1089,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     color: Colors.textSecondary,
   },
   pillTextActive: {
-    color: Colors.text,
+    color: "#FFFFFF",
     fontFamily: "Inter_600SemiBold",
   },
   heightRow: {
@@ -1128,7 +1128,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   tagText: {
     fontSize: 11,
     fontFamily: "Inter_500Medium",
-    color: Colors.text,
+    color: "#FFFFFF",
   },
   accordionSection: {
     marginBottom: 8,
@@ -1162,7 +1162,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   accordionBadgeText: {
     fontSize: 9,
     fontFamily: "Inter_600SemiBold",
-    color: Colors.text,
+    color: "#FFFFFF",
   },
   saveButton: {
     backgroundColor: Colors.primary,
@@ -1178,7 +1178,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   saveButtonText: {
     fontSize: 15,
     fontFamily: "Inter_600SemiBold",
-    color: Colors.text,
+    color: "#FFFFFF",
   },
   bottomSection: {
     alignItems: "center",
