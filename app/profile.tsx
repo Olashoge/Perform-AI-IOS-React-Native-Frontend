@@ -91,7 +91,7 @@ function SegmentedControl({
             style={[styles.segmentedBtn, isSelected && styles.segmentedBtnActive]}
             onPress={() => {
               Haptics.selectionAsync();
-              onSelect(opt);
+              onSelect(selected === opt ? "" : opt);
             }}
           >
             <Text
@@ -135,7 +135,7 @@ function PillSelector({
         onSelect([...arr, opt]);
       }
     } else {
-      onSelect(opt);
+      onSelect(selected === opt ? "" : opt);
     }
   };
 
@@ -198,7 +198,7 @@ function TagInput({
             <View key={tag} style={styles.tag}>
               <Text style={styles.tagText}>{tag}</Text>
               <Pressable onPress={() => removeTag(tag)} hitSlop={6}>
-                <Ionicons name="close" size={14} color={Colors.text} />
+                <Ionicons name="close" size={14} color="#FFFFFF" />
               </Pressable>
             </View>
           ))}
@@ -1054,16 +1054,16 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderColor: Colors.border,
   },
   segmentedBtnActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: Colors.text,
+    borderColor: Colors.text,
   },
   segmentedBtnText: {
     fontSize: 12,
     fontFamily: "Inter_500Medium",
-    color: Colors.textSecondary,
+    color: Colors.text,
   },
   segmentedBtnTextActive: {
-    color: Colors.text,
+    color: "#FFFFFF",
     fontFamily: "Inter_600SemiBold",
   },
   pillWrap: {
@@ -1080,16 +1080,16 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderColor: Colors.border,
   },
   pillActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: Colors.text,
+    borderColor: Colors.text,
   },
   pillText: {
     fontSize: 11,
     fontFamily: "Inter_500Medium",
-    color: Colors.textSecondary,
+    color: Colors.text,
   },
   pillTextActive: {
-    color: Colors.text,
+    color: "#FFFFFF",
     fontFamily: "Inter_600SemiBold",
   },
   heightRow: {
@@ -1120,7 +1120,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.text,
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -1128,7 +1128,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   tagText: {
     fontSize: 11,
     fontFamily: "Inter_500Medium",
-    color: Colors.text,
+    color: "#FFFFFF",
   },
   accordionSection: {
     marginBottom: 8,
