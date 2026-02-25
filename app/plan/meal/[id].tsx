@@ -532,6 +532,10 @@ export default function MealPlanDetailScreen() {
       Alert.alert("No Regens Left", "You've used your day regeneration for today. It resets at midnight.");
       return;
     }
+    if (planRegensRemaining <= 0) {
+      Alert.alert("Plan Limit Reached", "You've used all your plan regenerations. This limit does not reset.");
+      return;
+    }
     Alert.alert(
       "Regenerate Day",
       "This will replace all meals for this day with new ones.",
@@ -547,7 +551,7 @@ export default function MealPlanDetailScreen() {
         },
       ]
     );
-  }, [dayRegensRemaining, isCooldownActive, allowance, dayRegenMutation]);
+  }, [dayRegensRemaining, planRegensRemaining, isCooldownActive, allowance, dayRegenMutation]);
 
   const pricingMap = useMemo(() => {
     const map = new Map<string, { min: number; max: number }>();

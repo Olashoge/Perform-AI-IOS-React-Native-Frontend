@@ -1,0 +1,28 @@
+Three Counters, Three Checks
+Every regen must pass all three checks:
+
+Cooldown check — Is a 6-hour cooldown active? (triggers after 3 regens in any 24-hour window)
+Daily limit check — Has the user used their 1 daily regen? (resets at midnight UTC)
+Plan lifetime check — Has the user used all their plan regens? (default 5, never resets)
+How Counters Increment
+Meal day regen: mealRegensUsedToday += 1 and regensUsedTotal += 1
+
+Workout session regen: mealRegensUsedToday += 1 AND workoutRegensUsedToday += 1 AND regensUsedTotal += 1. This is a key detail — workout regens also increment the meal regen daily counter because they share a daily pool.
+
+Daily Reset
+The reset is lazy — it happens on the next access, not at a scheduled time. When any endpoint reads the allowance and notices lastDailyResetAt is a different UTC date than today, it zeros out all four daily counters. The regensUsedTotal (lifetime) is never reset.
+
+Cooldown
+After each regen, the server counts all regen events in the last 24 hours for that goal plan. If there are 3 or more, it sets regenCooldownUntil to 6 hours from now. The cooldown expires naturally — no action needed to clear it.
+
+Bonuses and Penalties
+These are computed from the user's previous plan behavior and applied when a new goal plan's allowance is created:
+
+80%+ adherence → +1 plan regen
+90%+ adherence → +1 daily swap (meal and workout)
+High regen usage (>80%) + low adherence (<60%) → -1 plan regen
+7+ day check-in streak → earns a Flex Token (redeemable for +1 daily regen)
+The plan regen limit has a floor of 3 — penalties can never reduce it below 3.
+
+Keeping iOS In Sync
+Fetch GET /api/allowance/current when the plan view loads, after every swap/regen/redemption, and on a 60-second polling interval. Don't compute counters locally — always use the server response as truth. If the endpoint returns null, the plan has no allowance (standalone/legacy plan), so fall back to the swapCount and regenDayCount fields on the plan object itself.

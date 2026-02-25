@@ -89,8 +89,12 @@ export default function WorkoutPlanDetailScreen() {
       Alert.alert("No Regens Left", "You've used your day regeneration for today. It resets at midnight.");
       return;
     }
+    if (planRegensRemaining <= 0) {
+      Alert.alert("Plan Limit Reached", "You've used all your plan regenerations. This limit does not reset.");
+      return;
+    }
     Alert.alert(
-      "Regenerate Day",
+      "Regenerate Session",
       "This will replace all exercises for this day with new ones.",
       [
         { text: "Cancel", style: "cancel" },
@@ -104,7 +108,7 @@ export default function WorkoutPlanDetailScreen() {
         },
       ]
     );
-  }, [dayRegensRemaining, isCooldownActive, allowance, dayRegenMutation]);
+  }, [dayRegensRemaining, planRegensRemaining, isCooldownActive, allowance, dayRegenMutation]);
 
   const plan = data?.planJson ?? data;
   const status = data?.status;

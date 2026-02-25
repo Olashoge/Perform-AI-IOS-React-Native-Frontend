@@ -1377,6 +1377,7 @@ export function useAllowance() {
       logApiCall("GET", "/api/allowance/current", response.status);
       return response.data;
     },
+    refetchInterval: 60000,
   });
 }
 
@@ -1398,7 +1399,9 @@ export function useMealSwap(planId: string | null) {
         if (!old) return old;
         return { ...old, today: { ...old.today, mealSwapsUsed: old.today.mealSwapsUsed + 1 } };
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
+      }, 500);
     },
     onError: (error: any) => {
       const msg = error?.response?.data?.message || "Could not swap meal";
@@ -1423,9 +1426,15 @@ export function useDayRegen(planId: string | null) {
       queryClient.invalidateQueries({ queryKey: ["/api/plan", planId, "grocery"] });
       queryClient.setQueryData<AllowanceData>(["/api/allowance/current"], (old) => {
         if (!old) return old;
-        return { ...old, today: { ...old.today, mealRegensUsed: old.today.mealRegensUsed + 1 } };
+        return {
+          ...old,
+          today: { ...old.today, mealRegensUsed: old.today.mealRegensUsed + 1 },
+          plan: { ...old.plan, regensUsed: old.plan.regensUsed + 1 },
+        };
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
+      }, 500);
     },
     onError: (error: any) => {
       const msg = error?.response?.data?.message || "Could not regenerate day";
@@ -1451,7 +1460,9 @@ export function useWorkoutSwap(workoutId: string | null) {
         if (!old) return old;
         return { ...old, today: { ...old.today, workoutSwapsUsed: old.today.workoutSwapsUsed + 1 } };
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
+      }, 500);
     },
     onError: (error: any) => {
       const msg = error?.response?.data?.message || "Could not swap exercise";
@@ -1475,9 +1486,19 @@ export function useWorkoutDayRegen(workoutId: string | null) {
       queryClient.refetchQueries({ queryKey: ["workout-plan", workoutId] });
       queryClient.setQueryData<AllowanceData>(["/api/allowance/current"], (old) => {
         if (!old) return old;
-        return { ...old, today: { ...old.today, workoutRegensUsed: old.today.workoutRegensUsed + 1 } };
+        return {
+          ...old,
+          today: {
+            ...old.today,
+            mealRegensUsed: old.today.mealRegensUsed + 1,
+            workoutRegensUsed: old.today.workoutRegensUsed + 1,
+          },
+          plan: { ...old.plan, regensUsed: old.plan.regensUsed + 1 },
+        };
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/allowance/current"] });
+      }, 500);
     },
     onError: (error: any) => {
       const msg = error?.response?.data?.message || "Could not regenerate workout session";
