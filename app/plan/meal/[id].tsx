@@ -286,11 +286,11 @@ function MealCard({ mealType, meal, completed, onSwap, swapDisabled, isSwapping 
 
   const typeColor = getMealTypeColor(mealType);
 
-  const nr = meal.nutritionEstimateRange;
+  const nr = meal.nutritionEstimateRange || (meal as any).nutrition_estimate_range;
   const calDisplay = nr?.calories || meal.calories;
-  const proteinDisplay = nr?.protein || (meal.macros?.protein_g ? `${meal.macros.protein_g}g` : null);
-  const carbsDisplay = nr?.carbs || (meal.macros?.carbs_g ? `${meal.macros.carbs_g}g` : null);
-  const fatDisplay = nr?.fat || (meal.macros?.fat_g ? `${meal.macros.fat_g}g` : null);
+  const proteinDisplay = nr?.protein || nr?.protein_g || (meal.macros?.protein_g ? `${meal.macros.protein_g}` : null);
+  const carbsDisplay = nr?.carbs || nr?.carbs_g || (meal.macros?.carbs_g ? `${meal.macros.carbs_g}` : null);
+  const fatDisplay = nr?.fat || nr?.fat_g || (meal.macros?.fat_g ? `${meal.macros.fat_g}` : null);
   const allInstructions = meal.instructions || meal.steps || [];
 
   const quickInfoParts: { icon: string; value: string; iconColor?: string }[] = [];
