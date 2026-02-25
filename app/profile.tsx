@@ -1162,10 +1162,10 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   accordionBadgeText: {
     fontSize: 9,
     fontFamily: "Inter_600SemiBold",
-    color: Colors.text,
+    color: "#FFFFFF",
   },
   saveButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.text,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: "center",
@@ -1178,7 +1178,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   saveButtonText: {
     fontSize: 15,
     fontFamily: "Inter_600SemiBold",
-    color: Colors.text,
+    color: "#FFFFFF",
   },
   bottomSection: {
     alignItems: "center",
