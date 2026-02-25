@@ -162,7 +162,8 @@ export default function WorkoutPlanDetailScreen() {
   const title = plan?.title ?? "Workout Plan";
   const summary = plan?.summary ?? "";
   const workoutStartDate = data?.planStartDate || data?.startDate || plan?.startDate || plan?.planStartDate;
-  const progressionNotes: string[] = plan?.progressionNotes ?? plan?.progression_notes ?? plan?.progressionTips ?? [];
+  const rawNotes = plan?.progressionNotes ?? plan?.progression_notes ?? plan?.progressionTips ?? [];
+  const progressionNotes: string[] = typeof rawNotes === "string" ? [rawNotes] : (Array.isArray(rawNotes) ? rawNotes.filter((n: any) => typeof n === "string" && n.trim()) : []);
 
   return (
     <View style={[styles.container, { paddingTop: topInset }]}>
@@ -325,9 +326,9 @@ function getSessionMain(session: any): any[] {
 }
 
 function getSessionCoachingTips(session: any): string[] {
-  const tips = session.coachingTips ?? session.coaching_tips ?? session.tips ?? [];
+  const tips = session.coachingCues ?? session.coachingTips ?? session.coaching_tips ?? session.tips ?? [];
   if (typeof tips === "string") return [tips];
-  if (Array.isArray(tips)) return tips.map((t: any) => typeof t === "string" ? t : t.text ?? t.tip ?? String(t));
+  if (Array.isArray(tips)) return tips.map((t: any) => typeof t === "string" ? t : t.text ?? t.tip ?? t.cue ?? String(t));
   return [];
 }
 
