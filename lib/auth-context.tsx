@@ -1,20 +1,37 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient, { storeTokens, clearTokens, getAccessToken, getRefreshToken } from './api-client';
 
 interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
+  needsOnboarding: boolean;
   user: any | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  completeOnboarding: () => void;
 }
 
+const ONBOARDING_KEY = 'perform_onboarding_complete';
+
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+async function fetchProfileOnboardingStatus(): Promise<boolean> {
+  try {
+    const response = await apiClient.get('/api/profile');
+    const p = response.data;
+    const hasProfile = !!(p && (p.primaryGoal || p.age || p.weightKg || p.trainingExperience));
+    return !hasProfile;
+  } catch {
+    return true;
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [user, setUser] = useState<any | null>(null);
 
   useEffect(() => {
@@ -46,6 +63,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } catch {}
           }
           setUser(Object.keys(userData).length > 0 ? userData : null);
+
+          const cached = await AsyncStorage.getItem(ONBOARDING_KEY);
+          if (cached === 'true') {
+            setNeedsOnboarding(false);
+          } else {
+            const needs = await fetchProfileOnboardingStatus();
+            setNeedsOnboarding(needs);
+            if (!needs) {
+              await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+            }
+          }
         } catch {
           await clearTokens();
           setIsAuthenticated(false);
@@ -56,6 +84,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const payload = JSON.parse(atob(token.split('.')[1]));
           if (payload.email) setUser({ email: payload.email });
         } catch {}
+
+        const cached = await AsyncStorage.getItem(ONBOARDING_KEY);
+        if (cached === 'true') {
+          setNeedsOnboarding(false);
+        } else {
+          const needs = await fetchProfileOnboardingStatus();
+          setNeedsOnboarding(needs);
+          if (!needs) {
+            await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+          }
+        }
       }
     } catch {
       setIsAuthenticated(false);
@@ -74,6 +113,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await storeTokens(accessToken, refreshToken);
     setUser({ ...(userData || {}), email: userData?.email || email.toLowerCase() });
     setIsAuthenticated(true);
+
+    const cached = await AsyncStorage.getItem(ONBOARDING_KEY);
+    if (cached === 'true') {
+      setNeedsOnboarding(false);
+    } else {
+      const needs = await fetchProfileOnboardingStatus();
+      setNeedsOnboarding(needs);
+      if (!needs) {
+        await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+      }
+    }
   }
 
   async function signup(name: string, email: string, password: string) {
@@ -96,20 +146,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function logout() {
     await clearTokens();
+    await AsyncStorage.removeItem(ONBOARDING_KEY);
     setUser(null);
     setIsAuthenticated(false);
+    setNeedsOnboarding(false);
   }
+
+  const completeOnboarding = useCallback(() => {
+    setNeedsOnboarding(false);
+    AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+  }, []);
 
   const value = useMemo(
     () => ({
       isAuthenticated,
       isLoading,
+      needsOnboarding,
       user,
       login,
       signup,
       logout,
+      completeOnboarding,
     }),
-    [isAuthenticated, isLoading, user]
+    [isAuthenticated, isLoading, needsOnboarding, user, completeOnboarding]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

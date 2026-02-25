@@ -15,9 +15,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useUpdateProfile, ProfileData } from "@/lib/api-hooks";
+import { useAuth } from "@/lib/auth-context";
 
 const TOTAL_STEPS = 5;
 
@@ -131,6 +131,7 @@ export default function OnboardingScreen() {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const updateProfile = useUpdateProfile();
+  const { completeOnboarding } = useAuth();
   const webTopInset = Platform.OS === "web" ? 67 : 0;
   const webBottomInset = Platform.OS === "web" ? 34 : 0;
 
@@ -237,7 +238,7 @@ export default function OnboardingScreen() {
       if (hasSubstantiveData) {
         await updateProfile.mutateAsync(data);
       }
-      await AsyncStorage.setItem("perform_onboarding_complete", "true");
+      completeOnboarding();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/(tabs)");
     } catch (err: any) {
