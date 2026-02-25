@@ -560,6 +560,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     backgroundColor: Colors.surface,
     borderRadius: 20,
     padding: 24,
+    marginTop: 4,
     marginBottom: 16,
   },
   thisWeekLabel: { fontSize: 9, fontFamily: "Inter_600SemiBold", color: Colors.textSecondary, letterSpacing: 0.5, marginBottom: 2 },
