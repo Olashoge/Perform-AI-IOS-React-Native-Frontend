@@ -162,6 +162,7 @@ export default function WorkoutPlanDetailScreen() {
   const title = plan?.title ?? "Workout Plan";
   const summary = plan?.summary ?? "";
   const workoutStartDate = data?.planStartDate || data?.startDate || plan?.startDate || plan?.planStartDate;
+  const progressionNotes: string[] = plan?.progressionNotes ?? plan?.progression_notes ?? plan?.progressionTips ?? [];
 
   return (
     <View style={[styles.container, { paddingTop: topInset }]}>
@@ -257,6 +258,21 @@ export default function WorkoutPlanDetailScreen() {
             swapPendingIndex={swapMutation.isPending && swapMutation.variables?.dayIndex === idx ? swapMutation.variables?.exerciseIndex : undefined}
           />
         ))}
+
+        {progressionNotes.length > 0 && (
+          <View style={styles.progressionCard}>
+            <View style={styles.progressionHeader}>
+              <Ionicons name="trending-up-outline" size={18} color={WORKOUT_ACCENT} />
+              <Text style={styles.progressionTitle}>Progression Notes</Text>
+            </View>
+            {progressionNotes.map((note, i) => (
+              <View key={i} style={styles.progressionNoteRow}>
+                <Text style={styles.progressionBullet}>{"›"}</Text>
+                <Text style={styles.progressionNoteText}>{note}</Text>
+              </View>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -1101,6 +1117,44 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     color: Colors.textSecondary,
     lineHeight: 20,
     paddingVertical: 2,
+  },
+  progressionCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  progressionHeader: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 8,
+    marginBottom: 12,
+  },
+  progressionTitle: {
+    fontSize: 15,
+    fontWeight: "700" as const,
+    color: Colors.text,
+  },
+  progressionNoteRow: {
+    flexDirection: "row" as const,
+    alignItems: "flex-start" as const,
+    gap: 8,
+    paddingVertical: 4,
+  },
+  progressionBullet: {
+    fontSize: 16,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+  },
+  progressionNoteText: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+    flex: 1,
   },
   exercisesSection: {
     gap: 8,
