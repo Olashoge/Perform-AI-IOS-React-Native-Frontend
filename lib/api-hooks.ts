@@ -1388,8 +1388,11 @@ export function useMealSwap(planId: string | null) {
       logApiCall("POST", `/api/plan/${planId}/swap`, response.status);
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["meal-plan", planId] });
+    onSuccess: (data) => {
+      if (data && (data.planJson || data.days)) {
+        queryClient.setQueryData(["meal-plan", planId], data);
+      }
+      queryClient.refetchQueries({ queryKey: ["meal-plan", planId] });
       queryClient.invalidateQueries({ queryKey: ["/api/plan", planId, "grocery"] });
       queryClient.setQueryData<AllowanceData>(["/api/allowance/current"], (old) => {
         if (!old) return old;
@@ -1412,8 +1415,11 @@ export function useDayRegen(planId: string | null) {
       logApiCall("POST", `/api/plan/${planId}/regenerate-day`, response.status);
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["meal-plan", planId] });
+    onSuccess: (data) => {
+      if (data && (data.planJson || data.days)) {
+        queryClient.setQueryData(["meal-plan", planId], data);
+      }
+      queryClient.refetchQueries({ queryKey: ["meal-plan", planId] });
       queryClient.invalidateQueries({ queryKey: ["/api/plan", planId, "grocery"] });
       queryClient.setQueryData<AllowanceData>(["/api/allowance/current"], (old) => {
         if (!old) return old;
@@ -1436,8 +1442,11 @@ export function useWorkoutSwap(workoutId: string | null) {
       logApiCall("POST", `/api/workout/${workoutId}/swap`, response.status);
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["workout-plan", workoutId] });
+    onSuccess: (data) => {
+      if (data && (data.planJson || data.days)) {
+        queryClient.setQueryData(["workout-plan", workoutId], data);
+      }
+      queryClient.refetchQueries({ queryKey: ["workout-plan", workoutId] });
       queryClient.setQueryData<AllowanceData>(["/api/allowance/current"], (old) => {
         if (!old) return old;
         return { ...old, today: { ...old.today, workoutSwapsUsed: old.today.workoutSwapsUsed + 1 } };
@@ -1459,8 +1468,11 @@ export function useWorkoutDayRegen(workoutId: string | null) {
       logApiCall("POST", `/api/workout/${workoutId}/regenerate-day`, response.status);
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["workout-plan", workoutId] });
+    onSuccess: (data) => {
+      if (data && (data.planJson || data.days)) {
+        queryClient.setQueryData(["workout-plan", workoutId], data);
+      }
+      queryClient.refetchQueries({ queryKey: ["workout-plan", workoutId] });
       queryClient.setQueryData<AllowanceData>(["/api/allowance/current"], (old) => {
         if (!old) return old;
         return { ...old, today: { ...old.today, workoutRegensUsed: old.today.workoutRegensUsed + 1 } };
