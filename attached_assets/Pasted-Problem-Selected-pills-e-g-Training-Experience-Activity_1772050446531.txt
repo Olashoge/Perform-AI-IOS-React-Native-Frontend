@@ -1,0 +1,94 @@
+Problem:
+Selected pills (e.g. Training Experience, Activity Level, Unit System, Sex, Goal, Location) use a dark background but keep dark text, making the label unreadable.
+
+Fix:
+When a pill is selected:
+- Background → theme.colors.ink (or accentNavy)
+- Text → #FFFFFF
+- Border → transparent (or same as background)
+
+When unselected:
+- Background → theme.colors.surface or mutedFill
+- Text → theme.colors.ink
+- Border → theme.colors.divider
+
+Implementation:
+
+1) In your theme file (colors.ts):
+
+export const colors = {
+  bg: "#F6F7F9",
+  surface: "#FFFFFF",
+  ink: "#111827",
+  inkSoft: "#4B5563",
+  divider: "#E5E7EB",
+  mutedFill: "#F1F5F9",
+  accentNavy: "#0B1F3A",
+};
+
+2) Standardize a reusable Pill component:
+
+const Pill = ({ label, selected, onPress }) => {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[
+        styles.pill,
+        selected && styles.pillSelected
+      ]}
+    >
+      <Text
+        style={[
+          styles.pillText,
+          selected && styles.pillTextSelected
+        ]}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+};
+
+3) Styles:
+
+const styles = StyleSheet.create({
+  pill: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.divider,
+  },
+  pillSelected: {
+    backgroundColor: colors.ink,   // dark background
+    borderColor: colors.ink,
+  },
+  pillText: {
+    color: colors.ink,
+    fontWeight: "500",
+  },
+  pillTextSelected: {
+    color: "#FFFFFF",              // CRITICAL FIX
+  },
+});
+
+4) Replace all ad-hoc chip styles across:
+- Unit System
+- Sex
+- Training Experience
+- Activity Level
+- Training Days
+- Goals
+- Workout Location
+- Spice Preference
+- Prep Style
+- Allergies
+- Foods to Avoid
+
+All must use the same Pill component so the state is consistent.
+
+5) Verify:
+- Selected = dark background + white text
+- Unselected = white/soft background + dark text
+- No low-contrast combinations remain

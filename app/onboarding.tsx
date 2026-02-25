@@ -56,10 +56,10 @@ function PillButton({
       style={{
         paddingHorizontal: 16,
         paddingVertical: 10,
-        borderRadius: 10,
+        borderRadius: 999,
         borderWidth: 1.5,
         borderColor: selected ? Colors.text : Colors.border,
-        backgroundColor: selected ? Colors.text + "0A" : "transparent",
+        backgroundColor: selected ? Colors.text : Colors.surface,
         marginRight: 8,
         marginBottom: 8,
       }}
@@ -67,8 +67,8 @@ function PillButton({
       <Text
         style={{
           fontSize: 14,
-          fontWeight: selected ? "600" : "400",
-          color: selected ? Colors.text : Colors.textSecondary,
+          fontWeight: selected ? "600" : "500",
+          color: selected ? Colors.background : Colors.text,
         }}
       >
         {label}
