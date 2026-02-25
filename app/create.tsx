@@ -8,7 +8,7 @@ import {
   Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Icon, IconName } from "@/components/Icon";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
@@ -24,7 +24,7 @@ export default function CreateScreen() {
       id: "wellness",
       title: "Wellness Plan",
       subtitle: "Complete meal + workout plan tailored to your goals",
-      icon: "sparkles" as const,
+      icon: "sparkles" as IconName,
       color: Colors.primary,
       recommended: true,
       enabled: true,
@@ -33,7 +33,7 @@ export default function CreateScreen() {
       id: "meal_7day",
       title: "Meal Plan (7-day)",
       subtitle: "A full week of personalized meals",
-      icon: "restaurant" as const,
+      icon: "restaurant" as IconName,
       color: Colors.accent,
       recommended: false,
       enabled: true,
@@ -42,7 +42,7 @@ export default function CreateScreen() {
       id: "workout_7day",
       title: "Workout Plan (7-day)",
       subtitle: "A full week of structured workouts",
-      icon: "fitness" as const,
+      icon: "fitness" as IconName,
       color: Colors.error,
       recommended: false,
       enabled: true,
@@ -51,7 +51,7 @@ export default function CreateScreen() {
       id: "daily_meal",
       title: "Daily Meal",
       subtitle: "AI-generated meals for today based on your profile",
-      icon: "nutrition" as const,
+      icon: "nutrition" as IconName,
       color: Colors.warning,
       recommended: false,
       enabled: true,
@@ -60,7 +60,7 @@ export default function CreateScreen() {
       id: "daily_workout",
       title: "Daily Workout",
       subtitle: "AI-generated workout for today based on your profile",
-      icon: "barbell" as const,
+      icon: "barbell" as IconName,
       color: Colors.primary,
       recommended: false,
       enabled: true,
@@ -84,7 +84,7 @@ export default function CreateScreen() {
             onPress={() => router.back()}
             style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
           >
-            <Ionicons name="chevron-back" size={22} color={Colors.text} />
+            <Icon name="back" size={24} />
           </Pressable>
           <Text style={styles.headerTitle}>Create Plan</Text>
           <View style={{ width: 44 }} />
@@ -123,7 +123,7 @@ export default function CreateScreen() {
               disabled={!plan.enabled}
             >
               <View style={[styles.planIconBg, { backgroundColor: plan.color + "1A" }]}>
-                <Ionicons name={plan.icon} size={26} color={plan.color} />
+                <Icon name={plan.icon} size={28} color={plan.color} />
               </View>
               <View style={styles.planInfo}>
                 <View style={styles.planTitleRow}>
@@ -140,9 +140,9 @@ export default function CreateScreen() {
                   {plan.enabled ? plan.subtitle : "Coming next"}
                 </Text>
               </View>
-              <Ionicons
-                name="chevron-forward"
-                size={18}
+              <Icon
+                name="forward"
+                size={20}
                 color={plan.enabled ? Colors.textSecondary : Colors.textTertiary}
               />
             </Pressable>

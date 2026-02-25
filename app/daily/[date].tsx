@@ -14,6 +14,7 @@ import {
 import { useLocalSearchParams, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 import {
@@ -102,7 +103,7 @@ function MealItem({
           style={[styles.checkbox, meal.completed && styles.checkboxChecked]}
           hitSlop={8}
         >
-          {meal.completed && <Ionicons name="checkmark" size={14} color="#fff" />}
+          {meal.completed && <Icon name="checkmark" size={16} color="#fff" />}
         </Pressable>
 
         <Pressable
@@ -395,7 +396,7 @@ function WorkoutItem({
       <View style={styles.wkHeader}>
         <View style={styles.wkHeaderLeft}>
           <View style={[styles.wkIconCircle, { backgroundColor: Colors.primary + "18" }]}>
-            <Ionicons name="fitness" size={22} color={Colors.primary} />
+            <Icon name="fitness" size={24} color={Colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.wkTitle}>Daily Workout — {dateLabel}</Text>
@@ -408,7 +409,7 @@ function WorkoutItem({
             style={[styles.wkCheckbox, workout.completed && styles.wkCheckboxChecked]}
             hitSlop={8}
           >
-            {workout.completed && <Ionicons name="checkmark" size={14} color="#fff" />}
+            {workout.completed && <Icon name="checkmark" size={16} color="#fff" />}
           </Pressable>
         </View>
       </View>
@@ -421,13 +422,13 @@ function WorkoutItem({
         ) : null}
         {difficulty ? (
           <View style={[styles.wkMetaTag, { backgroundColor: getDifficultyColor(difficulty) + "18" }]}>
-            <Ionicons name="speedometer-outline" size={12} color={getDifficultyColor(difficulty)} />
+            <Icon name="speedometer" size={16} color={getDifficultyColor(difficulty)} />
             <Text style={[styles.wkMetaText, { color: getDifficultyColor(difficulty) }]}>{difficulty}</Text>
           </View>
         ) : null}
         {duration ? (
           <View style={styles.wkMetaTag}>
-            <Ionicons name="time-outline" size={12} color={Colors.textSecondary} />
+            <Icon name="time" size={16} color={Colors.textSecondary} />
             <Text style={styles.wkMetaText}>{duration} min</Text>
           </View>
         ) : null}
@@ -479,7 +480,7 @@ function WorkoutItem({
                       {setsRepsLabel ? <Text style={styles.wkExerciseDetail}>{setsRepsLabel}</Text> : null}
                       {rest ? (
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
-                          <Ionicons name="time-outline" size={11} color={Colors.textSecondary} />
+                          <Icon name="time" size={16} color={Colors.textSecondary} />
                           <Text style={styles.wkExerciseDetail}>{rest}</Text>
                         </View>
                       ) : null}
@@ -593,7 +594,7 @@ function PlanBottomSheet({
                     {generatingMeal ? (
                       <ActivityIndicator size="small" color={Colors.accent} />
                     ) : (
-                      <Ionicons name="restaurant" size={22} color={Colors.accent} />
+                      <Icon name="restaurant" size={24} color={Colors.accent} />
                     )}
                   </View>
                   <View style={styles.sheetOptionContent}>
@@ -605,7 +606,7 @@ function PlanBottomSheet({
                     </Text>
                   </View>
                   {!generatingMeal && (
-                    <Ionicons name="chevron-forward" size={18} color={Colors.textTertiary} />
+                    <Icon name="forward" size={20} color={Colors.textTertiary} />
                   )}
                 </Pressable>
               )}
@@ -620,7 +621,7 @@ function PlanBottomSheet({
                     {generatingWorkout ? (
                       <ActivityIndicator size="small" color={Colors.primary} />
                     ) : (
-                      <Ionicons name="fitness" size={22} color={Colors.primary} />
+                      <Icon name="fitness" size={24} color={Colors.primary} />
                     )}
                   </View>
                   <View style={styles.sheetOptionContent}>
@@ -632,14 +633,14 @@ function PlanBottomSheet({
                     </Text>
                   </View>
                   {!generatingWorkout && (
-                    <Ionicons name="chevron-forward" size={18} color={Colors.textTertiary} />
+                    <Icon name="forward" size={20} color={Colors.textTertiary} />
                   )}
                 </Pressable>
               )}
 
               {!canAddMeal && !canAddWorkout && (
                 <View style={styles.sheetEmpty}>
-                  <Ionicons name="checkmark-circle" size={32} color={Colors.accent} />
+                  <Icon name="checkmarkCircle" size={28} color={Colors.accent} />
                   <Text style={styles.sheetEmptyText}>This day is fully planned!</Text>
                 </View>
               )}
@@ -832,7 +833,7 @@ export default function DailyDetailScreen() {
           onPress={() => router.back()}
           style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
         >
-          <Ionicons name="chevron-back" size={24} color={Colors.text} />
+          <Icon name="back" size={24} color={Colors.text} />
         </Pressable>
         <View style={styles.headerCenter}>
           <Text style={styles.headerDate}>
@@ -894,7 +895,7 @@ export default function DailyDetailScreen() {
           {meals.length > 0 && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Ionicons name="restaurant" size={18} color={Colors.accent} />
+                <Icon name="restaurant" size={20} color={Colors.accent} />
                 <Text style={styles.sectionTitle}>Meals</Text>
                 <Text style={styles.sectionCount}>
                   {meals.filter((m) => m.completed).length}/{meals.length}
@@ -931,7 +932,7 @@ export default function DailyDetailScreen() {
           {isEmpty && !generatingMeal && !generatingWorkout && (
             <View style={styles.emptyState}>
               <View style={styles.emptyIconCircle}>
-                <Ionicons name="calendar-outline" size={40} color={Colors.textTertiary} />
+                <Icon name="calendar" size={28} color={Colors.textTertiary} />
               </View>
               <Text style={styles.emptyTitle}>Nothing planned yet</Text>
               <Text style={styles.emptySubtitle}>
@@ -941,7 +942,7 @@ export default function DailyDetailScreen() {
                 style={({ pressed }) => [styles.planButton, pressed && { opacity: 0.85 }]}
                 onPress={() => setShowSheet(true)}
               >
-                <Ionicons name="sparkles" size={18} color="#fff" />
+                <Icon name="sparkles" size={20} color="#fff" />
                 <Text style={styles.planButtonText}>Plan This Day</Text>
               </Pressable>
             </View>
@@ -952,7 +953,7 @@ export default function DailyDetailScreen() {
               style={({ pressed }) => [styles.addMoreBtn, pressed && { opacity: 0.8 }]}
               onPress={() => setShowSheet(true)}
             >
-              <Ionicons name="add-circle-outline" size={18} color={Colors.primary} />
+              <Icon name="create" size={20} color={Colors.primary} />
               <Text style={styles.addMoreText}>
                 {canAddMeal && canAddWorkout
                   ? "Add meals or workout"
@@ -970,7 +971,7 @@ export default function DailyDetailScreen() {
           style={[styles.fab, { bottom: insets.bottom + 20 + (Platform.OS === "web" ? 34 : 0) }]}
           onPress={() => setShowSheet(true)}
         >
-          <Ionicons name="sparkles" size={22} color="#fff" />
+          <Icon name="sparkles" size={24} color="#fff" />
         </Pressable>
       )}
 

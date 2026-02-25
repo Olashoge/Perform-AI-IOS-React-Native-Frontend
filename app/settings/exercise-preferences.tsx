@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
@@ -38,7 +39,7 @@ function ExerciseCard({
   return (
     <View style={styles.itemCard}>
       <View style={styles.itemIconCircle}>
-        <Ionicons name="barbell" size={18} color={Colors.textSecondary} />
+        <Icon name="barbell" size={16} color={Colors.textSecondary} />
       </View>
       <View style={styles.itemContent}>
         <Text style={styles.itemName} numberOfLines={2}>{name}</Text>
@@ -57,7 +58,7 @@ function ExerciseCard({
         hitSlop={10}
         style={styles.deleteBtn}
       >
-        <Ionicons name="trash-outline" size={18} color={Colors.textTertiary} />
+        <Icon name="trash" size={16} color={Colors.textTertiary} />
       </Pressable>
     </View>
   );
@@ -117,7 +118,7 @@ export default function ExercisePreferencesScreen() {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + webTopInset + 8 }]}>
         <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={28} color={Colors.text} />
+          <Icon name="back" size={28} />
         </Pressable>
         <Text style={styles.headerTitle}>Exercise Preferences</Text>
         <View style={{ width: 40 }} />

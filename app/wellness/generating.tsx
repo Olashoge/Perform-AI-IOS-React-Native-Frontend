@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
@@ -44,9 +45,9 @@ function getStageIcon(rawStatus: string, Colors: ThemeColors): {
 } {
   const status = normalizeStageStatus(rawStatus);
   if (status === "completed")
-    return { name: "checkmark-circle", color: Colors.accent };
+    return { name: "checkmark-circle-outline", color: Colors.accent };
   if (status === "in_progress")
-    return { name: "ellipsis-horizontal-circle", color: Colors.primary };
+    return { name: "ellipsis-horizontal-circle-outline", color: Colors.primary };
   return { name: "ellipse-outline", color: Colors.textSecondary };
 }
 
@@ -115,7 +116,7 @@ export default function GeneratingScreen() {
       {isFailed ? (
         <View style={styles.centerContent}>
           <View style={styles.errorIconWrap}>
-            <Ionicons name="alert-circle" size={64} color={Colors.error} />
+            <Icon name="alertCircle" size={28} color={Colors.error} />
           </View>
           <Text style={styles.title}>Generation Failed</Text>
           <Text style={styles.subtitle}>
@@ -163,7 +164,7 @@ export default function GeneratingScreen() {
               const label = getStageLabel(rawStatus);
               return (
                 <View key={stage.key} style={styles.stageRow}>
-                  <Ionicons name={icon.name} size={24} color={icon.color} />
+                  <Ionicons name={icon.name as keyof typeof Ionicons.glyphMap} size={24} color={icon.color} />
                   <Text style={styles.stageLabel}>{stage.label}</Text>
                   <Text
                     style={[

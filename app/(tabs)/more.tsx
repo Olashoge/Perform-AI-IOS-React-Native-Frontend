@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
@@ -42,7 +43,7 @@ function ProfileHeader({ Colors }: { Colors: ThemeColors }) {
 
       <View style={styles.avatarContainer}>
         <View style={styles.avatarCircle}>
-          <Ionicons name="person" size={36} color={Colors.primary} />
+          <Icon name="person" size={28} color={Colors.primary} />
         </View>
         <Text style={styles.profileName}>{displayName}</Text>
       </View>
@@ -51,7 +52,7 @@ function ProfileHeader({ Colors }: { Colors: ThemeColors }) {
         style={styles.profileStatCol}
         onPress={() => router.push("/(tabs)/performance")}
       >
-        <Ionicons name="trending-up" size={20} color={Colors.scoreGreen} />
+        <Icon name="trendingUp" size={20} color={Colors.scoreGreen} />
         <Text style={styles.profileStatLabel}>Progress</Text>
       </Pressable>
     </View>
@@ -73,7 +74,7 @@ function MenuRow({ item, Colors, isLast }: { item: MenuItem; Colors: ThemeColors
         <Ionicons name={item.icon} size={20} color={item.iconColor} />
       </View>
       <Text style={styles.menuLabel}>{item.label}</Text>
-      <Ionicons name="chevron-forward" size={18} color={Colors.textTertiary} />
+      <Icon name="forward" size={20} color={Colors.textTertiary} />
       {!isLast && <View style={styles.menuDivider} />}
     </Pressable>
   );

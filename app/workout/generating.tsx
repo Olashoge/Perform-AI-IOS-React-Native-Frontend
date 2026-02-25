@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
@@ -65,7 +66,7 @@ export default function WorkoutGeneratingScreen() {
     <View style={[styles.container, { paddingTop: topInset + 20 }]}>
       {isFailed ? (
         <View style={styles.centerContent}>
-          <Ionicons name="alert-circle" size={64} color={Colors.error} />
+          <Icon name="alertCircle" size={28} color={Colors.error} />
           <Text style={styles.title}>Generation Failed</Text>
           <Text style={styles.subtitle}>
             {data?.errorMessage || "Something went wrong while creating your workout plan."}
@@ -106,7 +107,7 @@ export default function WorkoutGeneratingScreen() {
           <View style={styles.stagesContainer}>
             {STAGES.map((stage, idx) => {
               const status = idx < currentStage ? "completed" : idx === currentStage ? "in_progress" : "pending";
-              const iconName: any = status === "completed" ? "checkmark-circle" : status === "in_progress" ? "ellipsis-horizontal-circle" : "ellipse-outline";
+              const iconName: any = status === "completed" ? "checkmark-circle-outline" : status === "in_progress" ? "ellipsis-horizontal-circle-outline" : "ellipse-outline";
               const iconColor = status === "completed" ? Colors.accent : status === "in_progress" ? Colors.error : Colors.textSecondary;
               return (
                 <View key={stage.key} style={styles.stageRow}>

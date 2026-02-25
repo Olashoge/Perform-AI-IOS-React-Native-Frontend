@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
@@ -59,7 +59,7 @@ function LinkedPlanCard({
   onPress,
 }: {
   title: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: import("@/components/Icon").IconName;
   iconColor: string;
   status: string;
   available: boolean;
@@ -74,7 +74,7 @@ function LinkedPlanCard({
       disabled={!available}
     >
       <View style={[styles.linkedIconCircle, { backgroundColor: iconColor + "20" }]}>
-        <Ionicons name={icon} size={24} color={iconColor} />
+        <Icon name={icon} size={24} color={iconColor} />
       </View>
       <View style={styles.linkedContent}>
         <Text style={styles.linkedTitle}>{title}</Text>
@@ -98,7 +98,7 @@ function LinkedPlanCard({
         </View>
       </View>
       {available && (
-        <Ionicons name="chevron-forward" size={20} color={Colors.textSecondary} />
+        <Icon name="forward" size={20} color={Colors.textSecondary} />
       )}
     </Pressable>
   );
@@ -119,7 +119,7 @@ export default function WellnessPlanDetailScreen() {
       <View style={[styles.container, { paddingTop: topInset }]}>
         <View style={styles.header}>
           <Pressable style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={24} color={Colors.text} />
+            <Icon name="back" size={24} color={Colors.text} />
           </Pressable>
           <Text style={styles.headerTitle}>Wellness Plan</Text>
           <View style={styles.headerSpacer} />
@@ -136,16 +136,16 @@ export default function WellnessPlanDetailScreen() {
       <View style={[styles.container, { paddingTop: topInset }]}>
         <View style={styles.header}>
           <Pressable style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={24} color={Colors.text} />
+            <Icon name="back" size={24} color={Colors.text} />
           </Pressable>
           <Text style={styles.headerTitle}>Wellness Plan</Text>
           <View style={styles.headerSpacer} />
         </View>
         <View style={styles.centered}>
-          <Ionicons name="alert-circle-outline" size={48} color={Colors.error} />
+          <Icon name="alertCircle" size={28} color={Colors.error} />
           <Text style={styles.errorText}>Failed to load plan</Text>
           <Pressable style={styles.retryButton} onPress={() => refetch()}>
-            <Ionicons name="refresh" size={20} color={Colors.text} />
+            <Icon name="refresh" size={20} color={Colors.text} />
             <Text style={styles.retryText}>Retry</Text>
           </Pressable>
         </View>
@@ -177,11 +177,11 @@ export default function WellnessPlanDetailScreen() {
     <View style={[styles.container, { paddingTop: topInset }]}>
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color={Colors.text} />
+          <Icon name="back" size={24} color={Colors.text} />
         </Pressable>
         <Text style={styles.headerTitle} numberOfLines={1}>Wellness Plan</Text>
         <Pressable style={styles.refreshButton} onPress={() => refetch()}>
-          <Ionicons name="refresh" size={20} color={Colors.textSecondary} />
+          <Icon name="refresh" size={20} color={Colors.textSecondary} />
         </Pressable>
       </View>
 
@@ -200,7 +200,7 @@ export default function WellnessPlanDetailScreen() {
         <View style={styles.overviewCard}>
           <View style={styles.overviewHeader}>
             <View style={[styles.overviewIcon, { backgroundColor: Colors.primary + "20" }]}>
-              <Ionicons name="sparkles" size={28} color={Colors.primary} />
+              <Icon name="sparkles" size={28} color={Colors.primary} />
             </View>
             <View style={styles.overviewHeaderText}>
               <Text style={styles.planName}>{planName}</Text>
@@ -210,7 +210,7 @@ export default function WellnessPlanDetailScreen() {
 
           {primaryGoal && (
             <View style={styles.infoRow}>
-              <Ionicons name="flag-outline" size={16} color={Colors.textSecondary} />
+              <Icon name="flag" size={16} color={Colors.textSecondary} />
               <Text style={styles.infoLabel}>Goal</Text>
               <Text style={styles.infoValue}>{primaryGoal}</Text>
             </View>
@@ -218,7 +218,7 @@ export default function WellnessPlanDetailScreen() {
 
           {(startDate || endDate) && (
             <View style={styles.infoRow}>
-              <Ionicons name="calendar-outline" size={16} color={Colors.textSecondary} />
+              <Icon name="calendar" size={16} color={Colors.textSecondary} />
               <Text style={styles.infoLabel}>Duration</Text>
               <Text style={styles.infoValue}>
                 {formatDate(startDate)}{endDate ? ` – ${formatDate(endDate)}` : ""}
@@ -228,7 +228,7 @@ export default function WellnessPlanDetailScreen() {
 
           {planType && (
             <View style={styles.infoRow}>
-              <Ionicons name="layers-outline" size={16} color={Colors.textSecondary} />
+              <Icon name="layers" size={16} color={Colors.textSecondary} />
               <Text style={styles.infoLabel}>Type</Text>
               <Text style={styles.infoValue}>
                 {planType === "both"

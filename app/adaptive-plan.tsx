@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 import { PerformanceStateKey, useApplyRecoveryWeek } from "@/lib/api-hooks";
@@ -48,7 +49,7 @@ const WEEK_TYPE_CONFIG: Record<string, {
     ],
   },
   "Momentum Week": {
-    icon: "trending-up",
+    icon: "trending-up-outline",
     subtitle: "Build on your upward trend with progressive challenge.",
     training: [
       { label: "Training days", before: "3–4 days", after: "4–5 days" },
@@ -157,7 +158,7 @@ export default function AdjustWeekScreen() {
       showsVerticalScrollIndicator={false}
     >
       <Pressable style={styles.backButton} onPress={() => router.back()}>
-        <Ionicons name="arrow-back" size={22} color={Colors.text} />
+        <Icon name="arrowBack" size={24} />
       </Pressable>
 
       <View style={styles.heroSection}>
@@ -177,7 +178,7 @@ export default function AdjustWeekScreen() {
             <Text style={styles.changeLabel}>{item.label}</Text>
             <View style={styles.changeValues}>
               <Text style={styles.changeBefore}>{item.before}</Text>
-              <Ionicons name="arrow-forward" size={12} color={Colors.textTertiary} style={{ marginHorizontal: 6 }} />
+              <Icon name="arrowForward" size={16} color={Colors.textTertiary} />
               <Text style={[styles.changeAfter, { color: stateColor }]}>{item.after}</Text>
             </View>
           </View>
@@ -191,7 +192,7 @@ export default function AdjustWeekScreen() {
             <Text style={styles.changeLabel}>{item.label}</Text>
             <View style={styles.changeValues}>
               <Text style={styles.changeBefore}>{item.before}</Text>
-              <Ionicons name="arrow-forward" size={12} color={Colors.textTertiary} style={{ marginHorizontal: 6 }} />
+              <Icon name="arrowForward" size={16} color={Colors.textTertiary} />
               <Text style={[styles.changeAfter, { color: stateColor }]}>{item.after}</Text>
             </View>
           </View>
@@ -225,7 +226,7 @@ export default function AdjustWeekScreen() {
             <ActivityIndicator size={18} color="#FFFFFF" />
           ) : (
             <>
-              <Ionicons name="checkmark-circle-outline" size={18} color="#FFFFFF" />
+              <Icon name="checkmarkCircle" size={20} color="#FFFFFF" />
               <Text style={styles.primaryButtonText}>
                 {applied ? "Applied" : `Apply ${weekType}`}
               </Text>

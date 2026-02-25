@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Icon, IconName } from "@/components/Icon";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
@@ -30,7 +30,7 @@ function SectionHeader({
   icon,
   title,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: IconName;
   title: string;
 }) {
   const Colors = useColors();
@@ -38,7 +38,7 @@ function SectionHeader({
 
   return (
     <View style={styles.sectionHeader}>
-      <Ionicons name={icon} size={18} color={Colors.primary} />
+      <Icon name={icon} size={20} color={Colors.primary} />
       <Text style={styles.sectionHeaderText}>{title}</Text>
     </View>
   );
@@ -198,7 +198,7 @@ function TagInput({
             <View key={tag} style={styles.tag}>
               <Text style={styles.tagText}>{tag}</Text>
               <Pressable onPress={() => removeTag(tag)} hitSlop={6}>
-                <Ionicons name="close" size={14} color="#FFFFFF" />
+                <Icon name="close" size={16} color="#FFFFFF" />
               </Pressable>
             </View>
           ))}
@@ -283,8 +283,8 @@ function EquipmentAccordion({
               onPress={() => toggleCategory(cat.name)}
             >
               <View style={styles.accordionHeaderLeft}>
-                <Ionicons
-                  name={isOpen ? "chevron-down" : "chevron-forward"}
+                <Icon
+                  name={isOpen ? "chevronDown" : "forward"}
                   size={16}
                   color={Colors.textSecondary}
                 />
@@ -555,7 +555,7 @@ export default function ProfileScreen() {
     >
       <View style={[styles.header, { paddingTop: insets.top + webTopInset + 8 }]}>
         <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={28} color={Colors.text} />
+          <Icon name="back" size={28} />
         </Pressable>
         <Text style={styles.headerTitle}>Profile</Text>
         <View style={{ width: 40 }} />
@@ -573,7 +573,7 @@ export default function ProfileScreen() {
 
         <View style={styles.avatarSection}>
           <View style={styles.avatar}>
-            <Ionicons name="person" size={40} color={Colors.primary} />
+            <Icon name="person" size={28} color={Colors.primary} />
           </View>
           <Text style={styles.userName}>
             {user?.name || user?.email || "User"}
@@ -581,7 +581,7 @@ export default function ProfileScreen() {
           {user?.email && <Text style={styles.userEmail}>{user.email}</Text>}
         </View>
 
-        <SectionHeader icon="body-outline" title="PHYSICAL STATS & GOALS" />
+        <SectionHeader icon="body" title="PHYSICAL STATS & GOALS" />
         <View style={styles.sectionCard}>
           <FormField label="Unit System">
             <SegmentedControl
@@ -719,7 +719,7 @@ export default function ProfileScreen() {
           </FormField>
         </View>
 
-        <SectionHeader icon="medkit-outline" title="HEALTH & MEDICAL" />
+        <SectionHeader icon="medkit" title="HEALTH & MEDICAL" />
         <View style={styles.sectionCard}>
           <FormField label="Sleep Hours">
             <TextInput
@@ -751,7 +751,7 @@ export default function ProfileScreen() {
           </FormField>
         </View>
 
-        <SectionHeader icon="barbell-outline" title="TRAINING CAPACITY" />
+        <SectionHeader icon="barbell" title="TRAINING CAPACITY" />
         <View style={styles.sectionCard}>
           <FormField label="Training Experience">
             <PillSelector
@@ -797,7 +797,7 @@ export default function ProfileScreen() {
         </View>
 
         <SectionHeader
-          icon="location-outline"
+          icon="location"
           title="WORKOUT LOCATION & EQUIPMENT"
         />
         <View style={styles.sectionCard}>
@@ -829,7 +829,7 @@ export default function ProfileScreen() {
           </FormField>
         </View>
 
-        <SectionHeader icon="nutrition-outline" title="NUTRITION & LIFESTYLE" />
+        <SectionHeader icon="nutrition" title="NUTRITION & LIFESTYLE" />
         <View style={styles.sectionCard}>
           <FormField label="Appetite Level">
             <PillSelector
@@ -919,11 +919,7 @@ export default function ProfileScreen() {
             style={styles.diagnosticsLink}
             onPress={() => router.push("/diagnostics")}
           >
-            <Ionicons
-              name="bug-outline"
-              size={18}
-              color={Colors.warning}
-            />
+            <Icon name="bug" size={20} color={Colors.warning} />
             <Text style={styles.diagnosticsText}>Diagnostics</Text>
           </Pressable>
         </View>

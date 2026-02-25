@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useAuth } from "@/lib/auth-context";
 import { getAccessToken, getRefreshToken, API_BASE_URL } from "@/lib/api-client";
@@ -112,14 +112,14 @@ export default function DiagnosticsScreen() {
           onPress={() => router.back()}
           style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
         >
-          <Ionicons name="chevron-back" size={24} color={Colors.text} />
+          <Icon name="back" size={24} />
         </Pressable>
         <Text style={styles.headerTitle}>Diagnostics</Text>
         <Pressable
           onPress={refresh}
           style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
         >
-          <Ionicons name="refresh" size={22} color={Colors.primary} />
+          <Icon name="refresh" size={24} color={Colors.primary} />
         </Pressable>
       </View>
 
@@ -167,7 +167,7 @@ export default function DiagnosticsScreen() {
             </View>
           ) : metaError ? (
             <View style={styles.metaLoading}>
-              <Ionicons name="warning" size={16} color={Colors.error} />
+              <Icon name="warning" size={16} color={Colors.error} />
               <Text style={[styles.metaLoadingText, { color: Colors.error }]}>{metaError}</Text>
             </View>
           ) : meta ? (

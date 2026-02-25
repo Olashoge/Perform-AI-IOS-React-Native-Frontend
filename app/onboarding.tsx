@@ -12,10 +12,10 @@ import {
   Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
+import { Icon } from "@/components/Icon";
 import { useUpdateProfile, ProfileData } from "@/lib/api-hooks";
 import { useAuth } from "@/lib/auth-context";
 
@@ -535,7 +535,7 @@ export default function OnboardingScreen() {
         <View style={styles.bottomBarInner}>
           {step > 1 ? (
             <Pressable onPress={goBack} style={styles.backButton}>
-              <Ionicons name="chevron-back" size={22} color={Colors.text} />
+              <Icon name="back" size={24} />
             </Pressable>
           ) : (
             <View style={{ width: 44 }} />

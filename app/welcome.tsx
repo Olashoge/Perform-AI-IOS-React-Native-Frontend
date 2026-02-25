@@ -1,8 +1,8 @@
 import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/lib/theme-context';
+import { Icon } from '@/components/Icon';
 
 export default function Welcome() {
   const router = useRouter();
@@ -16,7 +16,7 @@ export default function Welcome() {
     <View style={[styles.container, { backgroundColor: Colors.background, paddingTop: topInset, paddingBottom: bottomInset + 24 }]}>
       <View style={styles.content}>
         <View style={[styles.iconContainer, { backgroundColor: Colors.surfaceElevated }]}>
-          <Ionicons name="flash" size={48} color={Colors.text} />
+          <Icon name="flash" size={28} />
         </View>
         <Text style={[styles.title, { color: Colors.text }]}>Perform AI</Text>
         <Text style={[styles.subtitle, { color: Colors.textSecondary }]}>Structured performance, simplified.</Text>

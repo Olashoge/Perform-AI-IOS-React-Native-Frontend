@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import * as Crypto from "expo-crypto";
@@ -204,7 +205,7 @@ export default function NewMealPlanScreen() {
     return (
       <View style={[styles.container, { paddingTop: topInset + 20 }]}>
         <View style={styles.profileRequired}>
-          <Ionicons name="person-circle-outline" size={64} color={Colors.textSecondary} />
+          <Icon name="personCircle" size={28} color={Colors.textSecondary} />
           <Text style={styles.profileRequiredTitle}>Profile Required</Text>
           <Text style={styles.profileRequiredText}>
             Set up your profile first so we can personalize your meal plan.
@@ -328,7 +329,7 @@ export default function NewMealPlanScreen() {
     >
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color={Colors.text} />
+          <Icon name="back" size={24} />
         </Pressable>
         <Text style={styles.headerTitle}>7-Day Meal Plan</Text>
         <View style={{ width: 40 }} />
@@ -545,7 +546,7 @@ export default function NewMealPlanScreen() {
             <ActivityIndicator color={Colors.text} />
           ) : (
             <>
-              <Ionicons name="sparkles" size={20} color={Colors.text} />
+              <Icon name="sparkles" size={20} />
               <Text style={styles.generateButtonText}>Generate Meal Plan</Text>
             </>
           )}

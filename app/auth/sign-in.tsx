@@ -17,6 +17,7 @@ import * as Haptics from "expo-haptics";
 import { StatusBar } from "expo-status-bar";
 import { useColors, useTheme, ThemeColors } from "@/lib/theme-context";
 import { useAuth } from "@/lib/auth-context";
+import { Icon } from "@/components/Icon";
 
 export default function SignInScreen() {
   const Colors = useColors();
@@ -74,7 +75,7 @@ export default function SignInScreen() {
         <View style={styles.content}>
           <View style={styles.header}>
             <View style={styles.iconContainer}>
-              <Ionicons name="flash" size={40} color={Colors.text} />
+              <Icon name="flash" size={28} />
             </View>
             <Text style={styles.title}>Sign In</Text>
             <Text style={styles.subtitle}>Welcome back</Text>
@@ -82,14 +83,16 @@ export default function SignInScreen() {
 
           {!!error && (
             <View style={styles.errorContainer}>
-              <Ionicons name="alert-circle" size={18} color={Colors.error} />
+              <Icon name="alertCircle" size={20} color={Colors.error} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
 
           <View style={styles.form}>
             <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+              <View style={styles.inputIcon}>
+                <Icon name="mail" size={20} color={Colors.textSecondary} />
+              </View>
               <TextInput
                 style={styles.input}
                 placeholder="Email"
@@ -105,7 +108,9 @@ export default function SignInScreen() {
             </View>
 
             <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+              <View style={styles.inputIcon}>
+                <Icon name="lock" size={20} color={Colors.textSecondary} />
+              </View>
               <TextInput
                 style={styles.input}
                 placeholder="Password"

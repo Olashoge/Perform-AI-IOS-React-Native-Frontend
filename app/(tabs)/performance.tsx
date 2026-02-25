@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import { useRouter } from "expo-router";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 import { usePerformanceData, WeekScore, PerformanceState, PerformanceStateKey, useWellnessPlans } from "@/lib/api-hooks";
@@ -20,7 +21,7 @@ const STATE_CONFIG: Record<PerformanceStateKey, {
   weekType: string;
 }> = {
   on_track: { icon: "rocket-outline", weekType: "Progression Week" },
-  building_momentum: { icon: "trending-up", weekType: "Momentum Week" },
+  building_momentum: { icon: "trending-up-outline", weekType: "Momentum Week" },
   recovering: { icon: "shield-checkmark-outline", weekType: "Stability Week" },
   at_risk: { icon: "leaf-outline", weekType: "Recovery Focus Week" },
   declining: { icon: "alert-circle-outline", weekType: "Recovery Focus Week" },
@@ -62,7 +63,7 @@ function IdentityBlock({
       </View>
       <View style={styles.identityDeltaRow}>
         <Ionicons
-          name={trendDelta > 0 ? "arrow-up" : trendDelta < 0 ? "arrow-down" : "remove-outline"}
+          name={trendDelta > 0 ? "arrow-up-outline" : trendDelta < 0 ? "arrow-down-outline" : "remove-outline"}
           size={14}
           color={trendDelta > 0 ? Colors.accent : trendDelta < 0 ? Colors.error : Colors.textSecondary}
         />
@@ -195,7 +196,7 @@ function PerformanceDrivers({ mealPct, workoutPct }: { mealPct: number; workoutP
         </View>
       </View>
       <View style={[styles.bottleneckRow, { backgroundColor: bottleneckColor + "0F" }]}>
-        <Ionicons name="analytics-outline" size={14} color={bottleneckColor} />
+        <Icon name="performance" size={16} color={bottleneckColor} />
         <Text style={[styles.bottleneckText, { color: bottleneckColor }]}>{bottleneck}</Text>
       </View>
     </View>
@@ -246,7 +247,7 @@ function AdaptiveCoaching({ performanceState, wellnessPlanId }: { performanceSta
         } as any)}
       >
         <Text style={styles.coachingCtaText}>Adjust Next Week Plan</Text>
-        <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+        <Icon name="arrowForward" size={16} color="#FFFFFF" />
       </Pressable>
     </View>
   );
@@ -265,7 +266,7 @@ function StreakConsistency({
     <View style={styles.streakConsistencyCard}>
       <View style={styles.streakRow}>
         <View style={styles.streakIconBg}>
-          <Ionicons name="flame" size={22} color={Colors.warning} />
+          <Icon name="flame" size={24} color={Colors.warning} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.streakValue}>{streak} day{streak !== 1 ? "s" : ""}</Text>

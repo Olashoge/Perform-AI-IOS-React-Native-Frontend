@@ -13,7 +13,8 @@ import {
   Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
@@ -84,7 +85,7 @@ function IngredientProposalModal({
                   alignItems: "center",
                   marginRight: 12,
                 }}>
-                  {selected[ing] && <Ionicons name="checkmark" size={14} color="#fff" />}
+                  {selected[ing] && <Icon name="checkmark" size={16} color="#fff" />}
                 </View>
                 <Text style={{ fontSize: 14, fontFamily: "Inter_500Medium", color: Colors.text, flex: 1 }}>
                   {ing.charAt(0).toUpperCase() + ing.slice(1)}
@@ -312,7 +313,7 @@ function MealCard({ mealType, meal, completed, onSwap, swapDisabled, isSwapping 
       <View style={styles.mealTopRow}>
         <View style={styles.mealTopLeft}>
           <View style={[styles.completionCircle, completed && styles.completionCircleDone]}>
-            {completed && <Ionicons name="checkmark" size={12} color="#fff" />}
+            {completed && <Icon name="checkmark" size={16} color="#fff" />}
           </View>
           <View style={styles.mealBadges}>
             <View style={[styles.mealTypeBadge, { backgroundColor: typeColor + "18" }]}>
@@ -341,7 +342,7 @@ function MealCard({ mealType, meal, completed, onSwap, swapDisabled, isSwapping 
               {isSwapping ? (
                 <ActivityIndicator size={16} color={Colors.primary} />
               ) : (
-                <Ionicons name="swap-horizontal-outline" size={18} color={Colors.primary} />
+                <Icon name="swap" size={20} color={Colors.primary} />
               )}
             </TouchableOpacity>
           )}
@@ -365,7 +366,7 @@ function MealCard({ mealType, meal, completed, onSwap, swapDisabled, isSwapping 
         <View style={styles.mealQuickInfo}>
           {quickInfoParts.map((part, i) => (
             <View key={i} style={styles.quickInfoItem}>
-              {part.icon ? <Ionicons name={part.icon as any} size={13} color={part.iconColor || Colors.textTertiary} /> : null}
+              {part.icon ? <Ionicons name={part.icon as any} size={13} color={part.iconColor ?? Colors.textTertiary} /> : null}
               <Text style={styles.quickInfoText}>{part.value}</Text>
               {i < quickInfoParts.length - 1 || macroLine.length > 0 ? (
                 <Text style={styles.quickInfoSep}>|</Text>
@@ -467,13 +468,13 @@ function BudgetCard({ allowance, Colors }: { allowance: AllowanceData; Colors: T
       borderColor: Colors.border,
     }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 }}>
-        <Ionicons name="wallet-outline" size={15} color={Colors.primary} />
+        <Icon name="wallet" size={16} color={Colors.primary} />
         <Text style={{ fontSize: 13, fontWeight: "600", color: Colors.text }}>Today's Budget</Text>
       </View>
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
         {items.map((item) => (
           <View key={item.label} style={{ alignItems: "center", flex: 1 }}>
-            <Ionicons name={item.icon} size={16} color={item.remaining > 0 ? Colors.primary : Colors.textTertiary} style={{ marginBottom: 4 }} />
+            <Ionicons name={item.icon} size={16} color={item.remaining > 0 ? Colors.primary : Colors.textTertiary} style={{ marginBottom: 4 } as any} />
             <Text style={{
               fontSize: 16,
               fontWeight: "700",
@@ -628,13 +629,13 @@ export default function MealPlanDetailScreen() {
   if (error || !plan) {
     return (
       <View style={[styles.container, styles.centered, { paddingTop: topInset }]}>
-        <Ionicons name="alert-circle" size={48} color={Colors.error} />
+        <Icon name="alertCircle" size={28} color={Colors.error} />
         <Text style={styles.errorTitle}>Failed to load plan</Text>
         <Text style={styles.errorSubtitle}>
           {error instanceof Error ? error.message : "Something went wrong."}
         </Text>
         <Pressable style={styles.retryButton} onPress={() => refetch()}>
-          <Ionicons name="refresh" size={20} color={Colors.text} />
+          <Icon name="refresh" size={20} color={Colors.text} />
           <Text style={styles.retryText}>Retry</Text>
         </Pressable>
       </View>
@@ -653,7 +654,7 @@ export default function MealPlanDetailScreen() {
           Your meal plan is being created. This usually takes 1-2 minutes.
         </Text>
         <Pressable style={styles.retryButton} onPress={() => refetch()}>
-          <Ionicons name="refresh" size={20} color={Colors.text} />
+          <Icon name="refresh" size={20} color={Colors.text} />
           <Text style={styles.retryText}>Refresh</Text>
         </Pressable>
       </View>
@@ -678,7 +679,7 @@ export default function MealPlanDetailScreen() {
     <View style={[styles.container, { paddingTop: topInset }]}>
       <View style={styles.headerBar}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Ionicons name="chevron-back" size={28} color={Colors.text} />
+          <Icon name="back" size={28} color={Colors.text} />
         </Pressable>
         <Text style={styles.headerTitle} numberOfLines={1}>Meal Plan</Text>
         <View style={{ width: 28 }} />
@@ -704,7 +705,7 @@ export default function MealPlanDetailScreen() {
 
         {dailyTargetStr ? (
           <View style={styles.dailyTargetsCard}>
-            <Ionicons name="sparkles" size={16} color={Colors.primary} />
+            <Icon name="sparkles" size={16} color={Colors.primary} />
             <Text style={styles.dailyTargetsText}>
               <Text style={styles.dailyTargetsBold}>Daily targets: </Text>
               {dailyTargetStr}
@@ -719,14 +720,14 @@ export default function MealPlanDetailScreen() {
             style={[styles.tab, activeTab === "meals" && styles.tabActive]}
             onPress={() => setActiveTab("meals")}
           >
-            <Ionicons name="restaurant-outline" size={16} color={activeTab === "meals" ? Colors.primary : Colors.textSecondary} />
+            <Icon name="restaurant" size={16} color={activeTab === "meals" ? Colors.primary : Colors.textSecondary} />
             <Text style={[styles.tabText, activeTab === "meals" && styles.tabTextActive]}>Meals</Text>
           </Pressable>
           <Pressable
             style={[styles.tab, activeTab === "grocery" && styles.tabActive]}
             onPress={() => setActiveTab("grocery")}
           >
-            <Ionicons name="cart-outline" size={16} color={activeTab === "grocery" ? Colors.primary : Colors.textSecondary} />
+            <Icon name="cart" size={16} color={activeTab === "grocery" ? Colors.primary : Colors.textSecondary} />
             <Text style={[styles.tabText, activeTab === "grocery" && styles.tabTextActive]}>Grocery List</Text>
           </Pressable>
         </View>
@@ -770,7 +771,7 @@ export default function MealPlanDetailScreen() {
                       {dayRegenMutation.isPending && dayRegenMutation.variables?.dayIndex === dayNum ? (
                         <ActivityIndicator size={12} color={Colors.textSecondary} />
                       ) : (
-                        <Ionicons name="refresh-outline" size={14} color={Colors.textSecondary} />
+                        <Icon name="refresh" size={16} color={Colors.textSecondary} />
                       )}
                       <Text style={styles.regenDayText}>Regenerate Day</Text>
                     </Pressable>
@@ -801,7 +802,7 @@ export default function MealPlanDetailScreen() {
                 {regenerateMutation.isPending ? (
                   <ActivityIndicator size={14} color={Colors.primary} />
                 ) : (
-                  <Ionicons name="refresh-outline" size={14} color={Colors.primary} />
+                  <Icon name="refresh" size={16} color={Colors.primary} />
                 )}
                 <Text style={styles.rebuildBtnText}>
                   {regenerateMutation.isPending ? "Rebuilding..." : "Rebuild List"}
@@ -835,7 +836,7 @@ export default function MealPlanDetailScreen() {
                             styles.groceryCheckbox,
                             isOwned && { backgroundColor: Colors.primary, borderColor: Colors.primary },
                           ]}>
-                            {isOwned && <Ionicons name="checkmark" size={14} color="#fff" />}
+                            {isOwned && <Icon name="checkmark" size={16} color="#fff" />}
                           </View>
                           <View style={styles.groceryRowLeft}>
                             <Text style={[
@@ -859,7 +860,7 @@ export default function MealPlanDetailScreen() {
               ))
             ) : (
               <View style={styles.emptyGrocery}>
-                <Ionicons name="cart-outline" size={40} color={Colors.textTertiary} />
+                <Icon name="cart" size={28} color={Colors.textTertiary} />
                 <Text style={styles.emptyGroceryText}>No grocery list available</Text>
               </View>
             )}

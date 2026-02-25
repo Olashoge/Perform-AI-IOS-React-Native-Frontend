@@ -9,7 +9,7 @@ import {
   Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
@@ -175,13 +175,13 @@ function WeekDayPicker({ days, selectedDate, onSelectDate, weekStart, onPrev, on
         </View>
         <View style={styles.weekNavRow}>
           <Pressable onPress={onPrev} hitSlop={12}>
-            <Ionicons name="chevron-back" size={22} color={Colors.textSecondary} />
+            <Icon name="back" size={24} color={Colors.textSecondary} />
           </Pressable>
           <Pressable onPress={onToday} style={styles.todayBtn}>
             <Text style={[styles.todayBtnText, isCurrentWeek && { color: Colors.textTertiary }]}>Today</Text>
           </Pressable>
           <Pressable onPress={onNext} hitSlop={12}>
-            <Ionicons name="chevron-forward" size={22} color={Colors.textSecondary} />
+            <Icon name="forward" size={24} color={Colors.textSecondary} />
           </Pressable>
         </View>
       </View>
@@ -274,9 +274,9 @@ function DayDetailSection({ day, Colors }: { day: DayData | undefined; Colors: T
               </View>
               <View style={styles.mealItemRight}>
                 <View style={[styles.completionCircle, meal.completed && { backgroundColor: Colors.scoreGreen, borderColor: Colors.scoreGreen }]}>
-                  {meal.completed && <Ionicons name="checkmark" size={14} color="#fff" />}
+                  {meal.completed && <Icon name="checkmark" size={16} color="#fff" />}
                 </View>
-                <Ionicons name="chevron-forward" size={16} color={Colors.textTertiary} />
+                <Icon name="forward" size={16} color={Colors.textTertiary} />
               </View>
             </Pressable>
           ))}
@@ -301,16 +301,16 @@ function DayDetailSection({ day, Colors }: { day: DayData | undefined; Colors: T
           </View>
           <View style={styles.mealItemRight}>
             <View style={[styles.completionCircle, workout.completed && { backgroundColor: Colors.scoreGreen, borderColor: Colors.scoreGreen }]}>
-              {workout.completed && <Ionicons name="checkmark" size={14} color="#fff" />}
+              {workout.completed && <Icon name="checkmark" size={16} color="#fff" />}
             </View>
-            <Ionicons name="chevron-forward" size={16} color={Colors.textTertiary} />
+            <Icon name="forward" size={16} color={Colors.textTertiary} />
           </View>
         </Pressable>
       ))}
 
       {!hasContent && (
         <View style={styles.emptyDayCard}>
-          <Ionicons name="calendar-outline" size={32} color={Colors.textTertiary} />
+          <Icon name="calendar" size={28} color={Colors.textTertiary} />
           <Text style={styles.emptyDayText}>No meals or workouts scheduled</Text>
         </View>
       )}
@@ -319,7 +319,7 @@ function DayDetailSection({ day, Colors }: { day: DayData | undefined; Colors: T
         style={({ pressed }) => [styles.planDayBtn, pressed && { opacity: 0.7 }]}
         onPress={() => router.push({ pathname: "/daily/[date]", params: { date: day.date } })}
       >
-        <Ionicons name="add" size={18} color={Colors.text} />
+        <Icon name="add" size={20} color={Colors.text} />
         <Text style={styles.planDayText}>Plan this day</Text>
       </Pressable>
     </View>
@@ -400,12 +400,12 @@ function ActivePlansSection({ Colors }: { Colors: ThemeColors }) {
             </View>
             {formatPlanDates(plan) ? (
               <View style={styles.planDateRow}>
-                <Ionicons name="calendar-outline" size={13} color={Colors.textSecondary} />
+                <Icon name="calendar" size={16} color={Colors.textSecondary} />
                 <Text style={styles.planDateText}>{formatPlanDates(plan)}</Text>
               </View>
             ) : null}
           </View>
-          <Ionicons name="chevron-forward" size={20} color={Colors.textTertiary} />
+          <Icon name="forward" size={20} color={Colors.textTertiary} />
         </Pressable>
       ))}
     </View>
@@ -415,7 +415,7 @@ function ActivePlansSection({ Colors }: { Colors: ThemeColors }) {
 function QuickActionsGrid({ Colors }: { Colors: ThemeColors }) {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const actions = [
-    { icon: "heart-outline" as const, label: "Wellness", sub: "Your health journey", color: Colors.error, onPress: () => router.push({ pathname: "/plans", params: { tab: "wellness" } }) },
+    { icon: "heart" as const, label: "Wellness", sub: "Your health journey", color: Colors.error, onPress: () => router.push({ pathname: "/plans", params: { tab: "wellness" } }) },
     { icon: "restaurant" as const, label: "Meal Plans", sub: "Adjust nutrition", color: Colors.warning, onPress: () => router.push({ pathname: "/plans", params: { tab: "meals" } }) },
     { icon: "barbell" as const, label: "Workouts", sub: "View training", color: Colors.scoreGreen, onPress: () => router.push({ pathname: "/plans", params: { tab: "workouts" } }) },
     { icon: "calendar" as const, label: "View Week", sub: "See your schedule", color: Colors.primary, onPress: () => router.push("/(tabs)/calendar") },
@@ -431,9 +431,9 @@ function QuickActionsGrid({ Colors }: { Colors: ThemeColors }) {
         >
           <View style={styles.quickActionTop}>
             <View style={[styles.quickActionIconBg, { backgroundColor: action.color + "18" }]}>
-              <Ionicons name={action.icon} size={20} color={action.color} />
+              <Icon name={action.icon} size={20} color={action.color} />
             </View>
-            <Ionicons name="arrow-forward" size={16} color={Colors.textTertiary} />
+            <Icon name="arrowForward" size={16} color={Colors.textTertiary} />
           </View>
           <Text style={styles.quickActionLabel}>{action.label}</Text>
           <Text style={styles.quickActionSub}>{action.sub}</Text>

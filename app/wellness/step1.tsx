@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
@@ -200,7 +201,7 @@ export default function Step1Screen() {
             onPress={() => router.back()}
             style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
           >
-            <Ionicons name="chevron-back" size={22} color={Colors.text} />
+            <Icon name="back" size={24} />
           </Pressable>
           <View style={styles.gateCenter}>
             <Ionicons name="person-circle-outline" size={64} color={Colors.textSecondary} />
@@ -252,7 +253,7 @@ export default function Step1Screen() {
             onPress={() => router.back()}
             style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
           >
-            <Ionicons name="chevron-back" size={22} color={Colors.text} />
+            <Icon name="back" size={24} />
           </Pressable>
           <View style={styles.dotsRow}>
             {Array.from({ length: stepCount }).map((_, i) => (
@@ -380,7 +381,7 @@ export default function Step1Screen() {
           onPress={handleNext}
         >
           <Text style={styles.nextBtnText}>Next</Text>
-          <Ionicons name="arrow-forward" size={18} color="#fff" />
+          <Icon name="arrowForward" size={20} color="#fff" />
         </Pressable>
       </View>
     </View>

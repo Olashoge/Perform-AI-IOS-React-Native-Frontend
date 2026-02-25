@@ -1,0 +1,71 @@
+TASK: Standardize ALL icons across the entire iOS app to a single OUTLINE icon system with uniform sizing/weight and zero filled icons.
+
+CONTEXT
+- This is the Perform AI (React Native + Expo) app.
+- Current problem: icons are mixed (filled vs outline, multiple families), inconsistent sizes/weights.
+- Goal: every icon in the app must be outline style and consistent.
+
+NON-NEGOTIABLE REQUIREMENTS
+1) Use ONE icon library across the entire app (no mixing).
+2) All icons must be outline style (no filled icons anywhere).
+3) Enforce uniformity via a single wrapper component:
+   - Standard sizes only: 16 / 20 / 24 / 28
+   - Centralized color tokens only (no random hex values in components)
+4) Replace all direct icon usage across the codebase with the wrapper component.
+5) Ensure tab bar icons, list-row icons, card icons, empty-state icons all match the same system.
+
+ICON LIBRARY CHOICE
+- Use lucide-react-native as the single icon system (outline-first, consistent geometry).
+- If lucide-react-native cannot be installed for any reason, fallback to Feather from @expo/vector-icons, but still enforce a wrapper and no mixing.
+
+IMPLEMENTATION STEPS (DO IN THIS ORDER)
+A) Install and configure
+- Add lucide-react-native dependency (and any required peer deps for Expo).
+- Confirm icons render on iOS.
+
+B) Create a single Icon wrapper component
+- Create: src/ui/Icon.tsx (or src/components/ui/Icon.tsx depending on current structure)
+- Wrapper must accept:
+  - name: a typed union of semantic app icon names (NOT raw library icon names)
+  - size: 16|20|24|28 (default 24)
+  - color: optional (defaults to theme text color)
+- Wrapper must map semantic names -> lucide icons in one ICON_MAP.
+- Wrapper should NOT expose strokeWidth changes per-call; set strokeWidth centrally (ex: 2).
+
+C) Replace icons everywhere
+- Search the entire repo for any icon imports/usages:
+  @expo/vector-icons, Ionicons, MaterialIcons, FontAwesome, Feather, etc.
+- Remove those imports and replace with the new <Icon /> wrapper.
+- Do NOT leave any screen/component using a different icon pack.
+
+D) Standardize navigation icons
+- Update bottom tab navigator icons to use the wrapper.
+- Ensure focused/unfocused states only change color/opacity, NOT filled variants.
+
+E) Fix “missing icon” gaps
+- If a previously-used icon does not exist in Lucide, pick the closest outline alternative and keep it consistent.
+- Examples:
+  - Workouts: Dumbbell (preferred) or Activity as backup
+  - Nutrition: Utensils / Salad / Apple (choose one and use consistently)
+  - More: MoreHorizontal
+  - Profile: User
+  - Settings: Settings
+  - Calendar: Calendar
+  - Performance: TrendingUp
+
+F) Clean-up + verification
+- Run the app and visually verify:
+  - Tabs, More screen rows, Dashboard card grid, empty states.
+- Confirm: no filled icons remain and no other icon library remains installed/used (unless required elsewhere for non-icon reasons).
+- If other icon packages are unused after migration, remove them to prevent reintroduction.
+
+DELIVERABLES
+1) New Icon wrapper file + semantic icon mapping.
+2) All icon usage across the app migrated to wrapper.
+3) Bottom tabs updated and consistent.
+4) Brief summary of files changed and any icon substitutions made.
+
+DO NOT
+- Do not change unrelated UI layout unless required to fix icon sizing alignment.
+- Do not introduce multiple icon families.
+- Do not keep any “-filled” or non-outline variant icons.

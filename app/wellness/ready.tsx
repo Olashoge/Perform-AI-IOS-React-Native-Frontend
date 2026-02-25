@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
@@ -29,7 +30,7 @@ export default function ReadyScreen() {
       <View style={styles.centerContent}>
         <View style={styles.checkmarkWrap}>
           <Ionicons
-            name="checkmark-circle"
+            name="checkmark-circle-outline"
             size={80}
             color={Colors.accent}
           />

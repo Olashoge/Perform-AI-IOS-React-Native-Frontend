@@ -11,7 +11,7 @@ import {
   Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 
 export type ErrorFallbackProps = {
   error: Error;
@@ -73,7 +73,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
             },
           ]}
         >
-          <Feather name="alert-circle" size={20} color={theme.text} />
+          <Icon name="alertCircle" size={20} color={theme.text} />
         </Pressable>
       ) : null}
 
@@ -139,7 +139,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
                     { opacity: pressed ? 0.6 : 1 },
                   ]}
                 >
-                  <Feather name="x" size={24} color={theme.text} />
+                  <Icon name="close" size={24} color={theme.text} />
                 </Pressable>
               </View>
 

@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
@@ -247,7 +248,7 @@ export default function Step2Screen() {
             onPress={() => router.back()}
             style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}
           >
-            <Ionicons name="chevron-back" size={22} color={Colors.text} />
+            <Icon name="back" size={24} />
           </Pressable>
           <View style={styles.dotsRow}>
             {Array.from({ length: stepCount }).map((_, i) => (
@@ -352,7 +353,7 @@ export default function Step2Screen() {
                     disabled={disabled}
                   >
                     <View style={[styles.checkbox, selected && styles.checkboxChecked]}>
-                      {selected && <Ionicons name="checkmark" size={14} color="#fff" />}
+                      {selected && <Icon name="checkmark" size={16} color="#fff" />}
                     </View>
                     <Text
                       style={[
@@ -486,7 +487,7 @@ export default function Step2Screen() {
             {showAdvanced ? "Hide advanced options" : "Show advanced options"}
           </Text>
           <Ionicons
-            name={showAdvanced ? "chevron-up" : "chevron-down"}
+            name={showAdvanced ? "chevron-up-outline" : "chevron-down-outline"}
             size={16}
             color={Colors.primary}
           />
@@ -501,7 +502,7 @@ export default function Step2Screen() {
                 onPress={() => handleHouseholdChange(-1)}
                 disabled={mealForm.householdSize <= 1}
               >
-                <Ionicons name="remove" size={20} color={mealForm.householdSize <= 1 ? Colors.textTertiary : Colors.text} />
+                <Icon name="remove" size={20} color={mealForm.householdSize <= 1 ? Colors.textTertiary : Colors.text} />
               </Pressable>
               <Text style={styles.numberValue}>{mealForm.householdSize}</Text>
               <Pressable
@@ -509,7 +510,7 @@ export default function Step2Screen() {
                 onPress={() => handleHouseholdChange(1)}
                 disabled={mealForm.householdSize >= 8}
               >
-                <Ionicons name="add" size={20} color={mealForm.householdSize >= 8 ? Colors.textTertiary : Colors.text} />
+                <Icon name="add" size={20} color={mealForm.householdSize >= 8 ? Colors.textTertiary : Colors.text} />
               </Pressable>
             </View>
           </>
@@ -527,7 +528,7 @@ export default function Step2Screen() {
           onPress={handleNext}
         >
           <Text style={styles.nextBtnText}>Next</Text>
-          <Ionicons name="arrow-forward" size={18} color="#fff" />
+          <Icon name="arrowForward" size={20} color="#fff" />
         </Pressable>
       </View>
     </KeyboardAvoidingView>

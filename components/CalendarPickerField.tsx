@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from "react";
 import { View, Text, Pressable, Modal } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import * as Haptics from "expo-haptics";
 import { ThemeColors } from "@/lib/theme-context";
 
@@ -100,7 +100,7 @@ export default function CalendarPickerField({
         <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: value ? Colors.text : Colors.textTertiary }}>
           {displayLabel}
         </Text>
-        <Ionicons name="calendar-outline" size={18} color={Colors.textSecondary} />
+        <Icon name="calendar" size={16} color={Colors.textSecondary} />
       </Pressable>
 
       <Modal visible={showModal} transparent animationType="fade">
@@ -120,13 +120,13 @@ export default function CalendarPickerField({
           >
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <Pressable onPress={goToPrev} hitSlop={12} style={{ padding: 4 }}>
-                <Ionicons name="chevron-back" size={22} color={Colors.text} />
+                <Icon name="back" size={20} color={Colors.text} />
               </Pressable>
               <Text style={{ fontSize: 16, fontFamily: "Inter_600SemiBold", color: Colors.text }}>
                 {MONTH_NAMES[viewMonth]} {viewYear}
               </Text>
               <Pressable onPress={goToNext} hitSlop={12} style={{ padding: 4 }}>
-                <Ionicons name="chevron-forward" size={22} color={Colors.text} />
+                <Icon name="forward" size={20} color={Colors.text} />
               </Pressable>
             </View>
 

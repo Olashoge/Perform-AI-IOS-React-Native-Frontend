@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
@@ -38,7 +39,7 @@ function MealCard({
   return (
     <View style={styles.itemCard}>
       <View style={styles.itemIconCircle}>
-        <Ionicons name="restaurant" size={18} color={Colors.textSecondary} />
+        <Icon name="restaurant" size={16} color={Colors.textSecondary} />
       </View>
       <View style={styles.itemContent}>
         <Text style={styles.itemName} numberOfLines={2}>{meal.mealName}</Text>
@@ -57,7 +58,7 @@ function MealCard({
         hitSlop={10}
         style={styles.deleteBtn}
       >
-        <Ionicons name="trash-outline" size={18} color={Colors.textTertiary} />
+        <Icon name="trash" size={16} color={Colors.textTertiary} />
       </Pressable>
     </View>
   );
@@ -104,7 +105,7 @@ function IngredientCard({
         hitSlop={10}
         style={styles.deleteBtn}
       >
-        <Ionicons name="trash-outline" size={18} color={Colors.textTertiary} />
+        <Icon name="trash" size={16} color={Colors.textTertiary} />
       </Pressable>
     </View>
   );
@@ -166,7 +167,7 @@ export default function MealPreferencesScreen() {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + webTopInset + 8 }]}>
         <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={28} color={Colors.text} />
+          <Icon name="back" size={28} />
         </Pressable>
         <Text style={styles.headerTitle}>Meal Preferences</Text>
         <View style={{ width: 40 }} />

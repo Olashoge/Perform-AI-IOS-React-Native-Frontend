@@ -70,7 +70,7 @@ function ClassicTabLayout() {
         options={{
           title: "Dashboard",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="bar-chart" size={size} color={color} />
+            <Ionicons name="stats-chart-outline" size={size} color={color} />
           ),
         }}
       />

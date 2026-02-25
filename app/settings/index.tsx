@@ -9,7 +9,7 @@ import {
   Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors, useTheme, ThemeMode } from "@/lib/theme-context";
@@ -96,7 +96,7 @@ export default function SettingsIndexScreen() {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + webTopInset + 8 }]}>
         <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={28} color={Colors.text} />
+          <Icon name="back" size={28} />
         </Pressable>
         <Text style={styles.headerTitle}>Settings</Text>
         <View style={{ width: 40 }} />
@@ -116,7 +116,7 @@ export default function SettingsIndexScreen() {
       <View style={styles.card}>
         <View style={styles.infoRow}>
           <View style={[styles.rowIconBg, { backgroundColor: Colors.primary + "1A" }]}>
-            <Ionicons name="mail-outline" size={20} color={Colors.primary} />
+            <Icon name="mail" size={20} color={Colors.primary} />
           </View>
           <View style={styles.rowContent}>
             <Text style={styles.rowLabel}>Email</Text>
@@ -164,7 +164,7 @@ export default function SettingsIndexScreen() {
         style={({ pressed }) => [styles.signOutButton, pressed && { opacity: 0.8 }]}
         onPress={handleLogout}
       >
-        <Ionicons name="log-out-outline" size={20} color={Colors.error} />
+        <Icon name="logOut" size={20} color={Colors.error} />
         <Text style={styles.signOutText}>Sign Out</Text>
       </Pressable>
     </ScrollView>

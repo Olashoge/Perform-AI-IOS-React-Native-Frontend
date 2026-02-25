@@ -13,7 +13,8 @@ import {
   Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
@@ -103,10 +104,10 @@ export default function WorkoutPlanDetailScreen() {
       <View style={[styles.container, { paddingTop: topInset }]}>
         <Header />
         <View style={styles.centerContent}>
-          <Ionicons name="alert-circle" size={48} color={Colors.error} />
+          <Icon name="alertCircle" size={28} color={Colors.error} />
           <Text style={styles.errorText}>Failed to load plan</Text>
           <Pressable style={styles.retryButton} onPress={() => refetch()}>
-            <Ionicons name="refresh" size={20} color={Colors.text} />
+            <Icon name="refresh" size={20} color={Colors.text} />
             <Text style={styles.retryText}>Retry</Text>
           </Pressable>
         </View>
@@ -123,7 +124,7 @@ export default function WorkoutPlanDetailScreen() {
           <Text style={styles.loadingText}>Plan is still generating...</Text>
           <Text style={styles.loadingSubtext}>Check back in a moment</Text>
           <Pressable style={styles.retryButton} onPress={() => refetch()}>
-            <Ionicons name="refresh" size={20} color={Colors.text} />
+            <Icon name="refresh" size={20} color={Colors.text} />
             <Text style={styles.retryText}>Refresh</Text>
           </Pressable>
         </View>
@@ -196,7 +197,7 @@ export default function WorkoutPlanDetailScreen() {
         {progressionNotes.length > 0 && (
           <View style={styles.progressionCard}>
             <View style={styles.progressionHeader}>
-              <Ionicons name="trending-up-outline" size={18} color={Colors.error} />
+              <Icon name="trendingUp" size={20} color={Colors.error} />
               <Text style={styles.progressionTitle}>Progression Notes</Text>
             </View>
             {progressionNotes.map((note, i) => (
@@ -218,7 +219,7 @@ function Header() {
   return (
     <View style={styles.header}>
       <Pressable onPress={() => router.back()} hitSlop={12}>
-        <Ionicons name="chevron-back" size={28} color={Colors.text} />
+        <Icon name="back" size={28} color={Colors.text} />
       </Pressable>
       <Text style={styles.headerTitle}>Workout Plan</Text>
       <View style={{ width: 28 }} />
@@ -529,7 +530,7 @@ function DayCard({
           </View>
         </View>
         <View style={styles.restDayContent}>
-          <MaterialCommunityIcons name="sleep" size={36} color={Colors.textSecondary} />
+          <Icon name="sleep" size={28} color={Colors.textSecondary} />
           <Text style={styles.restDayText}>Recovery & Rest</Text>
           <Text style={styles.restDaySubtext}>
             Let your muscles recover and rebuild
@@ -574,7 +575,7 @@ function DayCard({
               {dayRegenPending ? (
                 <ActivityIndicator size={12} color={Colors.textSecondary} />
               ) : (
-                <Ionicons name="refresh-outline" size={14} color={Colors.textSecondary} />
+                <Icon name="refresh" size={16} color={Colors.textSecondary} />
               )}
               <Text style={{ fontSize: 11, fontWeight: "500" as const, color: Colors.textSecondary }}>Regen</Text>
             </Pressable>
@@ -596,13 +597,13 @@ function DayCard({
           <View style={styles.sessionMeta}>
             {session.focus ? (
               <View style={styles.metaTag}>
-                <Ionicons name="body" size={14} color={Colors.textSecondary} />
+                <Icon name="body" size={16} color={Colors.textSecondary} />
                 <Text style={styles.metaText}>{session.focus}</Text>
               </View>
             ) : null}
             {(session.durationMinutes || session.estimatedDuration) ? (
               <View style={styles.metaTag}>
-                <Ionicons name="time-outline" size={14} color={Colors.textSecondary} />
+                <Icon name="time" size={16} color={Colors.textSecondary} />
                 <Text style={styles.metaText}>{session.durationMinutes ?? session.estimatedDuration} min</Text>
               </View>
             ) : null}
@@ -615,7 +616,7 @@ function DayCard({
           {warmup && (
             <View style={styles.sessionSectionCard}>
               <View style={styles.sectionHeaderRow}>
-                <Ionicons name="flame-outline" size={18} color={Colors.warning} />
+                <Icon name="flame" size={20} color={Colors.warning} />
                 <Text style={styles.sectionTitle}>WARM-UP</Text>
               </View>
               {formatBulletContent(warmup).map((line, i) => (
@@ -630,7 +631,7 @@ function DayCard({
           {mainExercises.length > 0 && (
             <View style={styles.exercisesSection}>
               <View style={styles.sectionHeaderRow}>
-                <Ionicons name="barbell-outline" size={18} color={Colors.error} />
+                <Icon name="barbell" size={20} color={Colors.error} />
                 <Text style={styles.sectionTitle}>MAIN WORKOUT</Text>
               </View>
               {mainExercises.map((ex: any, idx: number) => (
@@ -649,7 +650,7 @@ function DayCard({
           {cooldown && (
             <View style={styles.sessionSectionCard}>
               <View style={styles.sectionHeaderRow}>
-                <Ionicons name="snow-outline" size={18} color="#64D2FF" />
+                <Icon name="snow" size={20} color="#64D2FF" />
                 <Text style={styles.sectionTitle}>COOL-DOWN</Text>
               </View>
               {formatBulletContent(cooldown).map((line, i) => (
@@ -664,7 +665,7 @@ function DayCard({
           {coachingTips.length > 0 && (
             <View style={styles.sessionSectionCard}>
               <View style={styles.sectionHeaderRow}>
-                <Ionicons name="bulb-outline" size={18} color="#FFD60A" />
+                <Icon name="bulb" size={20} color="#FFD60A" />
                 <Text style={styles.sectionTitle}>COACHING TIPS</Text>
               </View>
               {coachingTips.map((tip, i) => (
@@ -713,7 +714,7 @@ function ExerciseCard({ exercise, index, onSwap, swapDisabled, isSwapping }: { e
             {isSwapping ? (
               <ActivityIndicator size={16} color={Colors.error} />
             ) : (
-              <Ionicons name="swap-horizontal-outline" size={18} color={Colors.error} />
+              <Icon name="swap" size={20} color={Colors.error} />
             )}
           </TouchableOpacity>
         )}
@@ -726,7 +727,7 @@ function ExerciseCard({ exercise, index, onSwap, swapDisabled, isSwapping }: { e
         ) : null}
         {duration != null && (
           <View style={styles.detailChip}>
-            <Ionicons name="time-outline" size={12} color={Colors.textSecondary} />
+            <Icon name="time" size={16} color={Colors.textSecondary} />
             <Text style={styles.detailValue}>{duration}{typeof duration === "number" ? " minutes" : ""}</Text>
           </View>
         )}
@@ -744,7 +745,7 @@ function ExerciseCard({ exercise, index, onSwap, swapDisabled, isSwapping }: { e
         )}
         {rest != null && (
           <View style={styles.detailChip}>
-            <Ionicons name="pause-outline" size={12} color={Colors.textSecondary} />
+            <Icon name="pause" size={16} color={Colors.textSecondary} />
             <Text style={styles.detailLabel}>Rest: {rest}{typeof rest === "number" ? "s" : ""}</Text>
           </View>
         )}

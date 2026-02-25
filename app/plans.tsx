@@ -11,7 +11,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Icon, IconName } from "@/components/Icon";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
@@ -77,7 +77,7 @@ function StatusBadge({ startDate, backendStatus, Colors }: { startDate?: string;
   let label: string;
   let bgColor: string;
   let textColor: string;
-  let icon: keyof typeof Ionicons.glyphMap;
+  let icon: IconName;
 
   if (lifecycle === "active") {
     label = "Active";
@@ -88,32 +88,32 @@ function StatusBadge({ startDate, backendStatus, Colors }: { startDate?: string;
     label = "Scheduled";
     bgColor = Colors.primary + "18";
     textColor = Colors.primary;
-    icon = "calendar-outline";
+    icon = "calendar";
   } else if (lifecycle === "completed") {
     label = "Completed";
     bgColor = "#8E8E9318";
     textColor = "#8E8E93";
-    icon = "checkmark-circle-outline";
+    icon = "checkmarkCircle";
   } else if (lifecycle === "generating") {
     label = "Generating";
     bgColor = Colors.primary + "18";
     textColor = Colors.primary;
-    icon = "hourglass-outline";
+    icon = "hourglass";
   } else if (lifecycle === "failed") {
     label = "Failed";
     bgColor = Colors.error + "18";
     textColor = Colors.error;
-    icon = "alert-circle-outline";
+    icon = "alertCircle";
   } else {
     label = "Draft";
     bgColor = Colors.surfaceElevated;
     textColor = Colors.textSecondary;
-    icon = "document-outline";
+    icon = "document";
   }
 
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: bgColor, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
-      <Ionicons name={icon as any} size={10} color={textColor} />
+      <Icon name={icon} size={16} color={textColor} />
       <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: textColor }}>
         {label}
       </Text>
@@ -165,7 +165,7 @@ function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: {
     <View style={styles.wellnessCard}>
       <View style={styles.wellnessCardHeader}>
         <View style={styles.wellnessIconCircle}>
-          <Ionicons name="heart-outline" size={20} color={Colors.error} />
+          <Icon name="heart" size={20} color={Colors.error} />
         </View>
         <View style={{ flex: 1, gap: 4 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -175,7 +175,7 @@ function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: {
           </View>
           {startDate && (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-              <Ionicons name="calendar-outline" size={11} color={Colors.textSecondary} />
+              <Icon name="calendar" size={16} color={Colors.textSecondary} />
               <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textSecondary }}>
                 {formatDateRange(startDate, endDate)}
               </Text>
@@ -190,7 +190,7 @@ function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: {
           hitSlop={10}
           style={{ padding: 6 }}
         >
-          <Ionicons name="trash-outline" size={18} color={Colors.textTertiary} />
+          <Icon name="trash" size={20} color={Colors.textTertiary} />
         </Pressable>
       </View>
 
@@ -205,17 +205,17 @@ function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: {
           }}
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
-            <Ionicons name="restaurant" size={14} color={Colors.textSecondary} />
+            <Icon name="restaurant" size={16} color={Colors.textSecondary} />
             <Text style={styles.linkedPlanLabel}>Meal Plan</Text>
             {(plan.mealPlan?.id || plan.mealPlanId) && (
-              <Ionicons name="open-outline" size={12} color={Colors.textTertiary} />
+              <Icon name="openExternal" size={16} color={Colors.textTertiary} />
             )}
           </View>
           {mealPlanName ? (
             <Text style={styles.linkedPlanName} numberOfLines={2}>{mealPlanName}</Text>
           ) : (
             <Pressable style={styles.linkButton}>
-              <Ionicons name="link-outline" size={14} color={Colors.textTertiary} />
+              <Icon name="link" size={16} color={Colors.textTertiary} />
               <Text style={styles.linkButtonText}>Link Meal Plan</Text>
             </Pressable>
           )}
@@ -231,17 +231,17 @@ function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: {
           }}
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
-            <Ionicons name="barbell" size={14} color={Colors.textSecondary} />
+            <Icon name="barbell" size={16} color={Colors.textSecondary} />
             <Text style={styles.linkedPlanLabel}>Workout Plan</Text>
             {(plan.workoutPlan?.id || plan.workoutPlanId) && (
-              <Ionicons name="open-outline" size={12} color={Colors.textTertiary} />
+              <Icon name="openExternal" size={16} color={Colors.textTertiary} />
             )}
           </View>
           {workoutPlanName ? (
             <Text style={styles.linkedPlanName} numberOfLines={2}>{workoutPlanName}</Text>
           ) : (
             <Pressable style={styles.linkButton}>
-              <Ionicons name="link-outline" size={14} color={Colors.textTertiary} />
+              <Icon name="link" size={16} color={Colors.textTertiary} />
               <Text style={styles.linkButtonText}>Link Workout Plan</Text>
             </Pressable>
           )}
@@ -269,7 +269,7 @@ function MealPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () => v
       }}
     >
       <View style={[styles.simplePlanIcon, { backgroundColor: Colors.warning + "20" }]}>
-        <Ionicons name="restaurant" size={20} color={Colors.warning} />
+        <Icon name="restaurant" size={20} color={Colors.warning} />
       </View>
       <View style={{ flex: 1, gap: 4 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -289,9 +289,9 @@ function MealPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () => v
         hitSlop={10}
         style={{ padding: 6 }}
       >
-        <Ionicons name="trash-outline" size={18} color={Colors.textTertiary} />
+        <Icon name="trash" size={20} color={Colors.textTertiary} />
       </Pressable>
-      <Ionicons name="chevron-forward" size={18} color={Colors.textTertiary} />
+      <Icon name="forward" size={20} color={Colors.textTertiary} />
     </Pressable>
   );
 }
@@ -314,7 +314,7 @@ function WorkoutPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () =
       }}
     >
       <View style={[styles.simplePlanIcon, { backgroundColor: Colors.accent + "20" }]}>
-        <Ionicons name="barbell" size={20} color={Colors.accent} />
+        <Icon name="barbell" size={20} color={Colors.accent} />
       </View>
       <View style={{ flex: 1, gap: 4 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -337,9 +337,9 @@ function WorkoutPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () =
         hitSlop={10}
         style={{ padding: 6 }}
       >
-        <Ionicons name="trash-outline" size={18} color={Colors.textTertiary} />
+        <Icon name="trash" size={20} color={Colors.textTertiary} />
       </Pressable>
-      <Ionicons name="chevron-forward" size={18} color={Colors.textTertiary} />
+      <Icon name="forward" size={20} color={Colors.textTertiary} />
     </Pressable>
   );
 }
@@ -348,7 +348,7 @@ function EmptyState({ type, Colors }: { type: string; Colors: ThemeColors }) {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   return (
     <View style={styles.emptyState}>
-      <Ionicons name="document-text-outline" size={40} color={Colors.textTertiary} />
+      <Icon name="document" size={28} color={Colors.textTertiary} />
       <Text style={styles.emptyTitle}>No {type} Plans</Text>
       <Text style={styles.emptySubtitle}>Create a new plan to get started.</Text>
     </View>
@@ -400,7 +400,7 @@ function WellnessPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
         <Pressable style={{ padding: 8 }} onPress={() => {}}>
-          <Ionicons name="swap-vertical" size={18} color={Colors.textSecondary} />
+          <Icon name="swapVertical" size={20} color={Colors.textSecondary} />
         </Pressable>
         <Pressable
           style={styles.newPlanButton}
@@ -409,7 +409,7 @@ function WellnessPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
             router.push("/(tabs)/create" as any);
           }}
         >
-          <Ionicons name="sparkles" size={14} color="#fff" />
+          <Icon name="sparkles" size={16} color="#fff" />
           <Text style={styles.newPlanButtonText}>New Wellness Plan</Text>
         </Pressable>
       </View>
@@ -475,7 +475,7 @@ function NutritionPage({ Colors, styles }: { Colors: ThemeColors; styles: any })
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
         <Pressable style={{ padding: 8 }} onPress={() => {}}>
-          <Ionicons name="swap-vertical" size={18} color={Colors.textSecondary} />
+          <Icon name="swapVertical" size={20} color={Colors.textSecondary} />
         </Pressable>
         <Pressable
           style={styles.newPlanButton}
@@ -484,7 +484,7 @@ function NutritionPage({ Colors, styles }: { Colors: ThemeColors; styles: any })
             router.push("/(tabs)/create" as any);
           }}
         >
-          <Ionicons name="sparkles" size={14} color="#fff" />
+          <Icon name="sparkles" size={16} color="#fff" />
           <Text style={styles.newPlanButtonText}>New Meal Plan</Text>
         </Pressable>
       </View>
@@ -551,7 +551,7 @@ function TrainingPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
 
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
         <Pressable style={{ padding: 8 }} onPress={() => {}}>
-          <Ionicons name="swap-vertical" size={18} color={Colors.textSecondary} />
+          <Icon name="swapVertical" size={20} color={Colors.textSecondary} />
         </Pressable>
         <Pressable
           style={styles.newPlanButton}
@@ -560,7 +560,7 @@ function TrainingPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
             router.push("/(tabs)/create" as any);
           }}
         >
-          <Ionicons name="sparkles" size={14} color="#fff" />
+          <Icon name="sparkles" size={16} color="#fff" />
           <Text style={styles.newPlanButtonText}>New Workout Plan</Text>
         </Pressable>
       </View>
@@ -610,7 +610,7 @@ export default function PlansScreen() {
     <View style={[styles.container, { paddingTop: topInset, paddingBottom: bottomInset }]}>
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={28} color={Colors.text} />
+          <Icon name="back" size={28} />
         </Pressable>
         <Text style={styles.headerTitle}>{headerTitles[tab] || "Plans"}</Text>
         <View style={{ width: 40 }} />

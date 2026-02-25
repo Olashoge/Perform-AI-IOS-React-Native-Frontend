@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import * as Crypto from "expo-crypto";
@@ -236,7 +237,7 @@ export default function NewWorkoutPlanScreen() {
     return (
       <View style={[styles.container, { paddingTop: topInset + 20 }]}>
         <View style={styles.profileRequired}>
-          <Ionicons name="person-circle-outline" size={64} color={Colors.textSecondary} />
+          <Icon name="personCircle" size={28} color={Colors.textSecondary} />
           <Text style={styles.profileRequiredTitle}>Profile Required</Text>
           <Text style={styles.profileRequiredText}>
             Set up your profile first so we can personalize your workout plan.
@@ -341,7 +342,7 @@ export default function NewWorkoutPlanScreen() {
     >
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color={Colors.text} />
+          <Icon name="back" size={24} />
         </Pressable>
         <Text style={styles.headerTitle}>7-Day Workout Plan</Text>
         <View style={{ width: 40 }} />
@@ -464,7 +465,7 @@ export default function NewWorkoutPlanScreen() {
           <Text style={styles.advancedToggleText}>
             Equipment ({equipmentAvailable.length} selected)
           </Text>
-          <Ionicons name={showEquipment ? "chevron-up" : "chevron-down"} size={18} color={Colors.textSecondary} />
+          <Ionicons name={showEquipment ? "chevron-up-outline" : "chevron-down-outline"} size={18} color={Colors.textSecondary} />
         </Pressable>
 
         {showEquipment && (
@@ -509,7 +510,7 @@ export default function NewWorkoutPlanScreen() {
             <ActivityIndicator color={Colors.text} />
           ) : (
             <>
-              <Ionicons name="flash" size={20} color={Colors.text} />
+              <Icon name="flash" size={20} />
               <Text style={styles.generateButtonText}>Generate Workout Plan</Text>
             </>
           )}

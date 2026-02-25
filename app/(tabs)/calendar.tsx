@@ -9,7 +9,7 @@ import {
   Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Icon } from "@/components/Icon";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
@@ -102,7 +102,7 @@ function DayCard({ day, isToday, Colors }: { day: DayData; isToday: boolean; Col
             day.workouts.map((workout, idx) => (
               <View key={workout.id || idx} style={styles.workoutRow}>
                 <View style={[styles.completionDot, { backgroundColor: workout.completed ? Colors.scoreGreen : Colors.surfaceTertiary }]} />
-                <Ionicons name="barbell-outline" size={13} color={Colors.primary} style={{ marginRight: 6 }} />
+                <Icon name="barbell" size={16} color={Colors.primary} />
                 <Text style={styles.workoutName} numberOfLines={1}>{workout.name}</Text>
                 {workout.duration ? (
                   <Text style={styles.workoutDuration}>{workout.duration}m</Text>
@@ -202,7 +202,7 @@ export default function CalendarScreen() {
             }}
             style={({ pressed }) => [styles.navBtn, pressed && { opacity: 0.6 }]}
           >
-            <Ionicons name="chevron-back" size={22} color={Colors.text} />
+            <Icon name="back" size={24} color={Colors.text} />
           </Pressable>
 
           <View style={styles.weekLabel}>
@@ -216,7 +216,7 @@ export default function CalendarScreen() {
             }}
             style={({ pressed }) => [styles.navBtn, pressed && { opacity: 0.6 }]}
           >
-            <Ionicons name="chevron-forward" size={22} color={Colors.text} />
+            <Icon name="forward" size={24} color={Colors.text} />
           </Pressable>
         </View>
 
@@ -243,13 +243,13 @@ export default function CalendarScreen() {
             </View>
             <View style={styles.adherenceRow}>
               <View style={styles.adherenceItem}>
-                <Ionicons name="restaurant" size={14} color={Colors.accent} />
+                <Icon name="restaurant" size={16} color={Colors.accent} />
                 <Text style={styles.adherenceLabel}>Meals</Text>
                 <Text style={[styles.adherenceValue, { color: getScoreColor(mealPct) }]}>{mealPct}%</Text>
               </View>
               <View style={styles.adherenceDivider} />
               <View style={styles.adherenceItem}>
-                <Ionicons name="barbell" size={14} color={Colors.primary} />
+                <Icon name="barbell" size={16} color={Colors.primary} />
                 <Text style={styles.adherenceLabel}>Workouts</Text>
                 <Text style={[styles.adherenceValue, { color: getScoreColor(workoutPct) }]}>{workoutPct}%</Text>
               </View>
@@ -277,7 +277,7 @@ export default function CalendarScreen() {
           router.push("/(tabs)/create");
         }}
       >
-        <Ionicons name="add" size={28} color="#FFFFFF" />
+        <Icon name="add" size={28} color="#FFFFFF" />
       </Pressable>
     </>
   );
