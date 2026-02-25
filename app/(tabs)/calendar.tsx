@@ -24,16 +24,22 @@ const MONTHS_SHORT = [
 
 const DAYS_SHORT = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
-const MEAL_TYPE_CONFIG: Record<string, { label: string; color: string }> = {
-  breakfast: { label: "BRE", color: "#FF9F0A" },
-  lunch: { label: "LUN", color: "#30D158" },
-  dinner: { label: "DIN", color: "#0A84FF" },
-  snack: { label: "SNK", color: "#BF5AF2" },
+const MEAL_TYPE_LABELS: Record<string, string> = {
+  breakfast: "BRE",
+  lunch: "LUN",
+  dinner: "DIN",
+  snack: "SNK",
 };
 
-function getMealTypeConfig(type: string): { label: string; color: string } {
+function getMealTypeConfig(type: string, Colors: ThemeColors): { label: string; color: string } {
   const key = type.toLowerCase();
-  return MEAL_TYPE_CONFIG[key] || { label: type.slice(0, 3).toUpperCase(), color: "#8E8E93" };
+  const colorMap: Record<string, string> = {
+    breakfast: Colors.warning,
+    lunch: Colors.accent,
+    dinner: Colors.primary,
+    snack: Colors.textSecondary,
+  };
+  return { label: MEAL_TYPE_LABELS[key] || type.slice(0, 3).toUpperCase(), color: colorMap[key] || Colors.textSecondary };
 }
 
 function DayCard({ day, isToday, Colors }: { day: DayData; isToday: boolean; Colors: ThemeColors }) {
@@ -79,7 +85,7 @@ function DayCard({ day, isToday, Colors }: { day: DayData; isToday: boolean; Col
         <View style={styles.dayContentSection}>
           {day.meals.length > 0 ? (
             day.meals.map((meal, idx) => {
-              const config = getMealTypeConfig(meal.type);
+              const config = getMealTypeConfig(meal.type, Colors);
               return (
                 <View key={meal.id || idx} style={styles.mealRow}>
                   <View style={[styles.completionDot, { backgroundColor: meal.completed ? Colors.scoreGreen : Colors.surfaceTertiary }]} />

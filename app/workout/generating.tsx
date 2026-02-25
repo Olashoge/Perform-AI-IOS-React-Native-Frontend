@@ -95,7 +95,7 @@ export default function WorkoutGeneratingScreen() {
         <View style={styles.centerContent}>
           <ActivityIndicator
             size="large"
-            color="#FF6B6B"
+            color={Colors.error}
             style={styles.indicator}
           />
           <Text style={styles.title}>Creating Your Workout Plan...</Text>
@@ -107,12 +107,12 @@ export default function WorkoutGeneratingScreen() {
             {STAGES.map((stage, idx) => {
               const status = idx < currentStage ? "completed" : idx === currentStage ? "in_progress" : "pending";
               const iconName: any = status === "completed" ? "checkmark-circle" : status === "in_progress" ? "ellipsis-horizontal-circle" : "ellipse-outline";
-              const iconColor = status === "completed" ? Colors.accent : status === "in_progress" ? "#FF6B6B" : Colors.textSecondary;
+              const iconColor = status === "completed" ? Colors.accent : status === "in_progress" ? Colors.error : Colors.textSecondary;
               return (
                 <View key={stage.key} style={styles.stageRow}>
                   <Ionicons name={iconName} size={24} color={iconColor} />
                   <Text style={styles.stageLabel}>{stage.label}</Text>
-                  <Text style={[styles.stageStatus, status === "completed" && { color: Colors.accent }, status === "in_progress" && { color: "#FF6B6B" }]}>
+                  <Text style={[styles.stageStatus, status === "completed" && { color: Colors.accent }, status === "in_progress" && { color: Colors.error }]}>
                     {status === "completed" ? "Done" : status === "in_progress" ? "Working..." : "Pending"}
                   </Text>
                 </View>
@@ -141,7 +141,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   stageLabel: { flex: 1, fontSize: 14, fontFamily: "Inter_500Medium", color: Colors.text },
   stageStatus: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textSecondary },
   buttonGroup: { width: "100%", gap: 12, marginTop: 32 },
-  primaryButton: { backgroundColor: "#FF6B6B", borderRadius: 14, paddingVertical: 16, alignItems: "center" },
+  primaryButton: { backgroundColor: Colors.error, borderRadius: 14, paddingVertical: 16, alignItems: "center" },
   primaryButtonText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.text },
   secondaryButton: { backgroundColor: Colors.surface, borderRadius: 14, paddingVertical: 16, alignItems: "center" },
   secondaryButtonText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.text },

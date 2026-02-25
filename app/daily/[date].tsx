@@ -34,12 +34,14 @@ const MONTHS = [
 ];
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-const MEAL_TYPE_COLORS: Record<string, string> = {
-  breakfast: "#FF9F0A",
-  lunch: "#30D158",
-  dinner: "#0A84FF",
-  snack: "#AF52DE",
-};
+function getMealTypeColors(Colors: ThemeColors): Record<string, string> {
+  return {
+    breakfast: Colors.warning,
+    lunch: Colors.accent,
+    dinner: Colors.primary,
+    snack: Colors.textSecondary,
+  };
+}
 
 function getMealTypeLabel(type: string): string {
   const lower = type.toLowerCase();
@@ -50,8 +52,8 @@ function getMealTypeLabel(type: string): string {
   return type.charAt(0).toUpperCase() + type.slice(1);
 }
 
-function getMealTypeColor(type: string): string {
-  return MEAL_TYPE_COLORS[type.toLowerCase()] || "#8E8E93";
+function getMealTypeColor(type: string, Colors: ThemeColors): string {
+  return getMealTypeColors(Colors)[type.toLowerCase()] || Colors.textTertiary;
 }
 
 function MealItem({
@@ -73,7 +75,7 @@ function MealItem({
     meal.note
   );
 
-  const typeColor = getMealTypeColor(meal.type);
+  const typeColor = getMealTypeColor(meal.type, Colors);
 
   const quickInfoParts: string[] = [];
   if (meal.prepTime) quickInfoParts.push(meal.prepTime);
@@ -170,7 +172,7 @@ function MealItem({
             <View style={styles.macroBar}>
               {meal.nutritionEstimateRange.protein && (
                 <View style={styles.macroItem}>
-                  <View style={[styles.macroDotIndicator, { backgroundColor: "#FF6B6B" }]} />
+                  <View style={[styles.macroDotIndicator, { backgroundColor: Colors.error }]} />
                   <Text style={styles.macroLabel}>Protein</Text>
                   <Text style={styles.macroValue}>{meal.nutritionEstimateRange.protein}</Text>
                 </View>
@@ -257,10 +259,10 @@ function ExerciseAvoidModal({
             disabled={feedbackMutation.isPending}
             style={({ pressed }) => ({
               paddingVertical: 14, paddingHorizontal: 16, borderRadius: 10,
-              backgroundColor: "#FF6B6B18", marginBottom: 10, opacity: pressed ? 0.7 : 1,
+              backgroundColor: Colors.error + "18", marginBottom: 10, opacity: pressed ? 0.7 : 1,
             })}
           >
-            <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#FF6B6B" }}>Avoid Completely</Text>
+            <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.error }}>Avoid Completely</Text>
             <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textSecondary, marginTop: 2 }}>
               This exercise will never appear again
             </Text>
@@ -319,10 +321,10 @@ function ExerciseLikeDislike({ exerciseName }: { exerciseName: string }) {
     <>
       <View style={{ flexDirection: "row" }}>
         <TouchableOpacity onPress={handleLike} disabled={loading} activeOpacity={0.5} style={{ opacity: loading ? 0.4 : 1, paddingHorizontal: 8, paddingVertical: 6 }}>
-          <Ionicons name={state === "liked" ? "thumbs-up" : "thumbs-up-outline"} size={16} color={state === "liked" ? "#30D158" : Colors.textTertiary} />
+          <Ionicons name={state === "liked" ? "thumbs-up" : "thumbs-up-outline"} size={16} color={state === "liked" ? Colors.accent : Colors.textTertiary} />
         </TouchableOpacity>
         <TouchableOpacity onPress={handleDislike} disabled={loading} activeOpacity={0.5} style={{ opacity: loading ? 0.4 : 1, paddingHorizontal: 8, paddingVertical: 6 }}>
-          <Ionicons name={state === "disliked" ? "thumbs-down" : "thumbs-down-outline"} size={16} color={state === "disliked" ? "#FF6B6B" : Colors.textTertiary} />
+          <Ionicons name={state === "disliked" ? "thumbs-down" : "thumbs-down-outline"} size={16} color={state === "disliked" ? Colors.error : Colors.textTertiary} />
         </TouchableOpacity>
       </View>
       <ExerciseAvoidModal
@@ -465,10 +467,10 @@ function WorkoutItem({
                       <Text style={styles.wkExerciseName}>{name}</Text>
                       {exType ? (
                         <View style={[styles.wkCategoryBadge, {
-                          backgroundColor: exType.toLowerCase() === "cardio" ? "#FF9F0A15" : Colors.primary + "15",
+                          backgroundColor: exType.toLowerCase() === "cardio" ? Colors.warning + "15" : Colors.primary + "15",
                         }]}>
                           <Text style={[styles.wkCategoryText, {
-                            color: exType.toLowerCase() === "cardio" ? "#FF9F0A" : Colors.primary,
+                            color: exType.toLowerCase() === "cardio" ? Colors.warning : Colors.primary,
                           }]}>{exType}</Text>
                         </View>
                       ) : null}

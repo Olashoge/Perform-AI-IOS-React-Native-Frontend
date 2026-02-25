@@ -81,8 +81,8 @@ function StatusBadge({ startDate, backendStatus, Colors }: { startDate?: string;
 
   if (lifecycle === "active") {
     label = "Active";
-    bgColor = "#30D15820";
-    textColor = "#30D158";
+    bgColor = Colors.accent + "20";
+    textColor = Colors.accent;
     icon = "sparkles";
   } else if (lifecycle === "scheduled") {
     label = "Scheduled";
@@ -101,8 +101,8 @@ function StatusBadge({ startDate, backendStatus, Colors }: { startDate?: string;
     icon = "hourglass-outline";
   } else if (lifecycle === "failed") {
     label = "Failed";
-    bgColor = "#FF453A18";
-    textColor = "#FF453A";
+    bgColor = Colors.error + "18";
+    textColor = Colors.error;
     icon = "alert-circle-outline";
   } else {
     label = "Draft";
@@ -165,7 +165,7 @@ function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: {
     <View style={styles.wellnessCard}>
       <View style={styles.wellnessCardHeader}>
         <View style={styles.wellnessIconCircle}>
-          <Ionicons name="heart-outline" size={20} color="#FF6B6B" />
+          <Ionicons name="heart-outline" size={20} color={Colors.error} />
         </View>
         <View style={{ flex: 1, gap: 4 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -268,8 +268,8 @@ function MealPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () => v
         router.push(`/plan/meal/${id}` as any);
       }}
     >
-      <View style={[styles.simplePlanIcon, { backgroundColor: "#FF9F0A20" }]}>
-        <Ionicons name="restaurant" size={20} color="#FF9F0A" />
+      <View style={[styles.simplePlanIcon, { backgroundColor: Colors.warning + "20" }]}>
+        <Ionicons name="restaurant" size={20} color={Colors.warning} />
       </View>
       <View style={{ flex: 1, gap: 4 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -313,8 +313,8 @@ function WorkoutPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () =
         router.push(`/plan/workout/${id}` as any);
       }}
     >
-      <View style={[styles.simplePlanIcon, { backgroundColor: "#30D15820" }]}>
-        <Ionicons name="barbell" size={20} color="#30D158" />
+      <View style={[styles.simplePlanIcon, { backgroundColor: Colors.accent + "20" }]}>
+        <Ionicons name="barbell" size={20} color={Colors.accent} />
       </View>
       <View style={{ flex: 1, gap: 4 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -711,7 +711,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#FF6B6B18",
+    backgroundColor: Colors.error + "18",
     alignItems: "center",
     justifyContent: "center",
   },

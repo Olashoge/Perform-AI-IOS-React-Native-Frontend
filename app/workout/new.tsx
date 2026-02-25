@@ -581,7 +581,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderTopWidth: 1, borderTopColor: Colors.border,
   },
   generateButton: {
-    backgroundColor: "#FF6B6B", borderRadius: 14, paddingVertical: 16,
+    backgroundColor: Colors.primary, borderRadius: 14, paddingVertical: 16,
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
   },
   generateButtonText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: Colors.text },

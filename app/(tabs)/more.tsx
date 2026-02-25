@@ -107,7 +107,7 @@ export default function MoreScreen() {
       items: [
         {
           icon: "heart-outline",
-          iconColor: "#FF6B6B",
+          iconColor: Colors.error,
           label: "Wellness Plans",
           onPress: () => router.push({ pathname: "/plans", params: { tab: "wellness" } }),
         },
@@ -130,13 +130,13 @@ export default function MoreScreen() {
       items: [
         {
           icon: "nutrition-outline",
-          iconColor: "#FF9F0A",
+          iconColor: Colors.warning,
           label: "Meal Preferences",
           onPress: () => router.push("/settings/food-preferences"),
         },
         {
           icon: "fitness-outline",
-          iconColor: "#30D158",
+          iconColor: Colors.accent,
           label: "Exercise Preferences",
           onPress: () => router.push("/settings/exercise-preferences"),
         },

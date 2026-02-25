@@ -264,7 +264,7 @@ export default function WellnessPlanDetailScreen() {
             <LinkedPlanCard
               title="7-Day Workout Plan"
               icon="fitness"
-              iconColor="#FF6B6B"
+              iconColor={Colors.error}
               status={workoutPlanStatus}
               available={isWorkoutAvailable}
               onPress={() => {

@@ -1,0 +1,173 @@
+=== START PROMPT ===
+
+Objective:
+Refine the iOS app to feel ultra-premium and structured without expanding feature scope. 
+We are NOT redesigning. We are tightening hierarchy, color discipline, onboarding flow, and auth structure.
+
+-----------------------------------
+SECTION 1 — ARRIVAL & AUTH FLOW
+-----------------------------------
+
+1. Add Welcome screen (/welcome)
+   - Brand mark
+   - “Perform AI”
+   - 1-line subtitle
+   - Primary button: “Create Account”
+   - Secondary button: “Sign In”
+   - Minimal layout, no carousel
+
+2. Update Sign In (/auth/sign-in)
+   - Email
+   - Password
+   - “Forgot password?”
+   - Link: “Create Account”
+
+3. Update Sign Up (/auth/sign-up)
+   - Name
+   - Email
+   - Password
+   - Link: “Already have an account? Sign In”
+
+4. Navigation Rules
+   - Not authenticated → /welcome
+   - Authenticated but missing onboarding minimum → /onboarding
+   - Authenticated + complete → main tabs
+
+-----------------------------------
+SECTION 2 — ONBOARDING WIZARD
+-----------------------------------
+
+Create a single multi-step wizard screen (/onboarding).
+
+Layout:
+- Progress indicator (e.g. Step 2 of 5)
+- Back + Next
+- Clean card layout
+- Persist data progressively
+- Save to backend at completion
+
+Steps:
+
+Step 1 – Basics
+- Unit system
+- Sex
+- Age
+- Height
+- Weight
+
+Step 2 – Goal
+- Primary goal
+- Target weight (optional)
+
+Step 3 – Training (required before plans)
+- Experience
+- Activity level
+- Training days
+- Session duration
+- Workout location
+
+Step 4 – Nutrition (skippable)
+- Allergies/intolerances
+- Foods to avoid
+- Spice level
+- Prep style
+
+Step 5 – Lifestyle (skippable)
+- Sleep hours
+- Stress level
+
+After completion → route to Dashboard.
+
+Profile screen remains editable under “More” tab.
+Do not require full profile completion before generating plans.
+
+-----------------------------------
+SECTION 3 — COLOR SYSTEM REFINEMENT
+-----------------------------------
+
+Implement restrained institutional color system.
+
+Define color tokens:
+
+Brand Ink (Primary Dark): #0B1220
+Background: #F6F7FB
+Card: #FFFFFF
+Border: #E7EBF2
+Secondary Text: #5B667A
+Primary Accent (Deep Blue): #2D5BFF
+
+Status Colors (muted, not saturated):
+Success: #2E8B57
+Warning: #D08A1D
+Risk: #B65C5C
+
+Rules:
+- Only Brand Ink and Deep Blue are used for primary actions.
+- Status colors are muted and only used for indicators.
+- Remove high saturation reds, greens, golds, and purples.
+- Desaturate all icon background colors by ~30%.
+
+-----------------------------------
+SECTION 4 — PERFORMANCE SCREEN ADJUSTMENTS
+-----------------------------------
+
+1. Recovery Focus card:
+   - Remove large red background block.
+   - Use neutral card background.
+   - Add subtle left border accent in muted Risk color.
+   - Primary CTA button uses Deep Blue (not red).
+
+2. Weekly score ring:
+   - Use muted Risk tone when low.
+   - Do NOT use bright red.
+   - Ensure ring thickness and contrast remain subtle.
+
+3. “At Risk” badge:
+   - Muted red pill.
+   - Light background tint, dark red text.
+
+-----------------------------------
+SECTION 5 — CREATE SCREEN REFINEMENT
+-----------------------------------
+
+1. Desaturate icon background colors (reduce visual playfulness).
+2. Remove unnecessary color diversity.
+3. Use neutral backgrounds with subtle tint.
+4. Keep layout unchanged.
+
+-----------------------------------
+SECTION 6 — GLOBAL STATUS CLEANUP
+-----------------------------------
+
+- Checkmarks use muted Success green.
+- Warning states use muted Risk.
+- Do not mix gold + green + blue inconsistently.
+- Workout and meal completion colors should be consistent across all screens.
+
+-----------------------------------
+SECTION 7 — DO NOT ADD FEATURES
+-----------------------------------
+
+Do NOT:
+- Add new analytics
+- Add new widgets
+- Add animations
+- Add onboarding animations
+- Expand feature scope
+
+Only refine structure, color discipline, and onboarding flow.
+
+-----------------------------------
+DELIVERABLES
+-----------------------------------
+
+- Welcome screen implemented
+- Updated auth screens
+- Multi-step onboarding wizard
+- Refined color tokens applied globally
+- Performance card adjusted
+- Create screen desaturated
+- Navigation guards working
+- No regressions in plan generation or completion tracking
+
+=== END PROMPT ===

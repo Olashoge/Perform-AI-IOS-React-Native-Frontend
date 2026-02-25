@@ -20,7 +20,6 @@ import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useWorkoutPlan, useExerciseFeedback, useDeleteExercisePreferenceByKey, useExercisePreferences, useWorkoutSwap, useWorkoutDayRegen } from "@/lib/api-hooks";
 
 const WEB_TOP_INSET = 67;
-const WORKOUT_ACCENT = "#FF6B6B";
 
 function toExerciseKey(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
@@ -92,7 +91,7 @@ export default function WorkoutPlanDetailScreen() {
       <View style={[styles.container, { paddingTop: topInset }]}>
         <Header />
         <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color={WORKOUT_ACCENT} />
+          <ActivityIndicator size="large" color={Colors.error} />
           <Text style={styles.loadingText}>Loading workout plan...</Text>
         </View>
       </View>
@@ -120,7 +119,7 @@ export default function WorkoutPlanDetailScreen() {
       <View style={[styles.container, { paddingTop: topInset }]}>
         <Header />
         <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color={WORKOUT_ACCENT} />
+          <ActivityIndicator size="large" color={Colors.error} />
           <Text style={styles.loadingText}>Plan is still generating...</Text>
           <Text style={styles.loadingSubtext}>Check back in a moment</Text>
           <Pressable style={styles.retryButton} onPress={() => refetch()}>
@@ -150,7 +149,7 @@ export default function WorkoutPlanDetailScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={WORKOUT_ACCENT}
+            tintColor={Colors.error}
           />
         }
       >
@@ -197,7 +196,7 @@ export default function WorkoutPlanDetailScreen() {
         {progressionNotes.length > 0 && (
           <View style={styles.progressionCard}>
             <View style={styles.progressionHeader}>
-              <Ionicons name="trending-up-outline" size={18} color={WORKOUT_ACCENT} />
+              <Ionicons name="trending-up-outline" size={18} color={Colors.error} />
               <Text style={styles.progressionTitle}>Progression Notes</Text>
             </View>
             {progressionNotes.map((note, i) => (
@@ -232,7 +231,7 @@ function StatBadge({ icon, label, value }: { icon: string; label: string; value:
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   return (
     <View style={styles.statBadge}>
-      <Ionicons name={icon as any} size={18} color={WORKOUT_ACCENT} />
+      <Ionicons name={icon as any} size={18} color={Colors.error} />
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
     </View>
@@ -342,12 +341,12 @@ function ExerciseAvoidModal({
               paddingVertical: 14,
               paddingHorizontal: 16,
               borderRadius: 10,
-              backgroundColor: "#FF6B6B18",
+              backgroundColor: Colors.error + "18",
               marginBottom: 10,
               opacity: pressed ? 0.7 : 1,
             })}
           >
-            <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#FF6B6B" }}>Avoid Completely</Text>
+            <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.error }}>Avoid Completely</Text>
             <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textSecondary, marginTop: 2 }}>
               This exercise will never appear again
             </Text>
@@ -434,7 +433,7 @@ function LikeDislikeButtons({ exerciseName }: { exerciseName: string }) {
           <Ionicons
             name={state === "liked" ? "thumbs-up" : "thumbs-up-outline"}
             size={18}
-            color={state === "liked" ? "#30D158" : Colors.textTertiary}
+            color={state === "liked" ? Colors.accent : Colors.textTertiary}
           />
         </TouchableOpacity>
         <TouchableOpacity
@@ -450,7 +449,7 @@ function LikeDislikeButtons({ exerciseName }: { exerciseName: string }) {
           <Ionicons
             name={state === "disliked" ? "thumbs-down" : "thumbs-down-outline"}
             size={18}
-            color={state === "disliked" ? WORKOUT_ACCENT : Colors.textTertiary}
+            color={state === "disliked" ? Colors.error : Colors.textTertiary}
           />
         </TouchableOpacity>
       </View>
@@ -616,7 +615,7 @@ function DayCard({
           {warmup && (
             <View style={styles.sessionSectionCard}>
               <View style={styles.sectionHeaderRow}>
-                <Ionicons name="flame-outline" size={18} color="#FF9F0A" />
+                <Ionicons name="flame-outline" size={18} color={Colors.warning} />
                 <Text style={styles.sectionTitle}>WARM-UP</Text>
               </View>
               {formatBulletContent(warmup).map((line, i) => (
@@ -631,7 +630,7 @@ function DayCard({
           {mainExercises.length > 0 && (
             <View style={styles.exercisesSection}>
               <View style={styles.sectionHeaderRow}>
-                <Ionicons name="barbell-outline" size={18} color={WORKOUT_ACCENT} />
+                <Ionicons name="barbell-outline" size={18} color={Colors.error} />
                 <Text style={styles.sectionTitle}>MAIN WORKOUT</Text>
               </View>
               {mainExercises.map((ex: any, idx: number) => (
@@ -712,9 +711,9 @@ function ExerciseCard({ exercise, index, onSwap, swapDisabled, isSwapping }: { e
             }}
           >
             {isSwapping ? (
-              <ActivityIndicator size={16} color={WORKOUT_ACCENT} />
+              <ActivityIndicator size={16} color={Colors.error} />
             ) : (
-              <Ionicons name="swap-horizontal-outline" size={18} color={WORKOUT_ACCENT} />
+              <Ionicons name="swap-horizontal-outline" size={18} color={Colors.error} />
             )}
           </TouchableOpacity>
         )}
@@ -831,7 +830,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     left: 0,
     right: 0,
     height: 4,
-    backgroundColor: WORKOUT_ACCENT,
+    backgroundColor: Colors.error,
   },
   planTitle: {
     fontSize: 20,
@@ -928,7 +927,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   sessionTitle: {
     fontSize: 15,
     fontWeight: "600" as const,
-    color: WORKOUT_ACCENT,
+    color: Colors.error,
     marginBottom: 4,
   },
   sessionDescription: {
@@ -1053,14 +1052,14 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: `${WORKOUT_ACCENT}25`,
+    backgroundColor: Colors.error + "25",
     alignItems: "center",
     justifyContent: "center",
   },
   exerciseIndexText: {
     fontSize: 11,
     fontWeight: "700" as const,
-    color: WORKOUT_ACCENT,
+    color: Colors.error,
   },
   exerciseName: {
     fontSize: 13,

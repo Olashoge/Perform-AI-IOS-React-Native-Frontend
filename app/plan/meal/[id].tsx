@@ -78,8 +78,8 @@ function IngredientProposalModal({
                   height: 22,
                   borderRadius: 4,
                   borderWidth: 2,
-                  borderColor: selected[ing] ? "#FF6B6B" : Colors.textTertiary,
-                  backgroundColor: selected[ing] ? "#FF6B6B" : "transparent",
+                  borderColor: selected[ing] ? Colors.error : Colors.textTertiary,
+                  backgroundColor: selected[ing] ? Colors.error : "transparent",
                   justifyContent: "center",
                   alignItems: "center",
                   marginRight: 12,
@@ -102,7 +102,7 @@ function IngredientProposalModal({
             <Pressable
               onPress={handleSubmit}
               disabled={resolveMutation.isPending}
-              style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: "#FF6B6B", alignItems: "center", opacity: resolveMutation.isPending ? 0.6 : 1 }}
+              style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: Colors.error, alignItems: "center", opacity: resolveMutation.isPending ? 0.6 : 1 }}
             >
               <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>
                 {resolveMutation.isPending ? "Saving..." : "Avoid Selected"}
@@ -192,7 +192,7 @@ function MealActionButtons({ mealName, cuisineTag, ingredients }: { mealName: st
           <Ionicons
             name={state === "liked" ? "thumbs-up" : "thumbs-up-outline"}
             size={18}
-            color={state === "liked" ? "#30D158" : Colors.textTertiary}
+            color={state === "liked" ? Colors.accent : Colors.textTertiary}
           />
         </TouchableOpacity>
         <TouchableOpacity
@@ -208,7 +208,7 @@ function MealActionButtons({ mealName, cuisineTag, ingredients }: { mealName: st
           <Ionicons
             name={state === "disliked" ? "thumbs-down" : "thumbs-down-outline"}
             size={18}
-            color={state === "disliked" ? "#FF6B6B" : Colors.textTertiary}
+            color={state === "disliked" ? Colors.error : Colors.textTertiary}
           />
         </TouchableOpacity>
       </View>
@@ -279,11 +279,11 @@ function MealCard({ mealType, meal, completed, onSwap, swapDisabled, isSwapping 
 
   const getMealTypeColor = (type: string): string => {
     const lower = type.toLowerCase();
-    if (lower === "breakfast") return "#FF9F0A";
-    if (lower === "lunch") return "#30D158";
-    if (lower === "dinner") return "#0A84FF";
-    if (lower === "snack") return "#AF52DE";
-    return "#8E8E93";
+    if (lower === "breakfast") return Colors.warning;
+    if (lower === "lunch") return Colors.accent;
+    if (lower === "dinner") return Colors.primary;
+    if (lower === "snack") return Colors.textSecondary;
+    return Colors.textTertiary;
   };
 
   const typeColor = getMealTypeColor(mealType);
@@ -1083,8 +1083,8 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     justifyContent: "center" as const,
   },
   completionCircleDone: {
-    backgroundColor: "#30D158",
-    borderColor: "#30D158",
+    backgroundColor: Colors.accent,
+    borderColor: Colors.accent,
   },
   mealBadges: {
     flexDirection: "row" as const,
