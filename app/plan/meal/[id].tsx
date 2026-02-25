@@ -410,14 +410,8 @@ function MealCard({ mealType, meal, completed, onSwap, swapDisabled, isSwapping 
             </View>
           ) : null}
 
-          {(calDisplay || proteinDisplay || carbsDisplay || fatDisplay) ? (
+          {(proteinDisplay || carbsDisplay || fatDisplay) ? (
             <View style={styles.macroBarRow}>
-              {calDisplay ? (
-                <View style={styles.macroBarItem}>
-                  <Text style={styles.macroBarLabel}>Cal</Text>
-                  <Text style={styles.macroBarValue}>{calDisplay}</Text>
-                </View>
-              ) : null}
               {proteinDisplay ? (
                 <View style={styles.macroBarItem}>
                   <Text style={styles.macroBarLabel}>Protein</Text>
