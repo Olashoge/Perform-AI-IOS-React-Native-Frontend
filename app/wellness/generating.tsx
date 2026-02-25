@@ -64,8 +64,19 @@ export default function GeneratingScreen() {
   const { goalPlanId } = useLocalSearchParams<{ goalPlanId: string }>();
   const { resetWizard } = useWellness();
   const [enabled, setEnabled] = useState(true);
+  const [visualStage, setVisualStage] = useState(0);
+  const [startTime] = useState(Date.now());
 
   const { data } = useGenerationStatus(goalPlanId ?? null, enabled);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const newStage = Math.min(Math.floor(elapsed / 20000), 3);
+      setVisualStage(newStage);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [startTime]);
 
   useEffect(() => {
     if (data?.status === "ready") {
@@ -78,7 +89,25 @@ export default function GeneratingScreen() {
   }, [data?.status]);
 
   const isFailed = data?.status === "failed";
-  const stageStatuses = data?.progress?.stageStatuses;
+
+  const computedStageStatuses = useMemo(() => {
+    const result: Record<string, string> = {};
+    STAGES.forEach((stage, idx) => {
+      if (idx < visualStage) {
+        result[stage.key] = "DONE";
+      } else if (idx === visualStage) {
+        result[stage.key] = "RUNNING";
+      } else {
+        result[stage.key] = "PENDING";
+      }
+    });
+    if (data?.status === "ready") {
+      STAGES.forEach((stage) => { result[stage.key] = "DONE"; });
+    }
+    return result;
+  }, [visualStage, data?.status]);
+
+  const stageStatuses = computedStageStatuses;
   const topInset = Platform.OS === "web" ? WEB_TOP_INSET : insets.top;
 
   return (
