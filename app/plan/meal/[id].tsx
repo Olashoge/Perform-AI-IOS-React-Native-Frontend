@@ -250,11 +250,13 @@ interface MealData {
   cuisineTag?: string;
   description?: string;
   prepTime?: string | number;
+  prepTimeMinutes?: number;
   cookTime?: string | number;
   servings?: number;
   calories?: number | string;
   macros?: MacroData;
   nutritionEstimateRange?: NutritionRange;
+  whyItHelpsGoal?: string;
   ingredients?: Ingredient[];
   instructions?: string[];
   steps?: string[];
@@ -293,7 +295,10 @@ function MealCard({ mealType, meal, completed, onSwap, swapDisabled, isSwapping 
   const fatDisplay = nr?.fat || nr?.fat_g || (meal.macros?.fat_g ? `${meal.macros.fat_g}` : null);
   const allInstructions = meal.instructions || meal.steps || [];
 
+  const prepMins = meal.prepTimeMinutes || (typeof meal.prepTime === "number" ? meal.prepTime : null);
+
   const quickInfoParts: { icon: string; value: string; iconColor?: string }[] = [];
+  if (prepMins) quickInfoParts.push({ icon: "time-outline", value: `${prepMins}m` });
   if (meal.servings) quickInfoParts.push({ icon: "people-outline", value: `${meal.servings}` });
   if (calDisplay) quickInfoParts.push({ icon: "flame-outline", value: `${calDisplay} cal`, iconColor: Colors.warning });
   if (proteinDisplay) quickInfoParts.push({ icon: "", value: `P ${proteinDisplay}g` });
@@ -380,6 +385,10 @@ function MealCard({ mealType, meal, completed, onSwap, swapDisabled, isSwapping 
         <View style={styles.mealExpanded}>
           {meal.description ? (
             <Text style={styles.mealDescription}>{meal.description}</Text>
+          ) : null}
+
+          {(meal as any).whyItHelpsGoal ? (
+            <Text style={styles.mealInsight}>{(meal as any).whyItHelpsGoal}</Text>
           ) : null}
 
           {meal.ingredients && meal.ingredients.length > 0 ? (
@@ -749,10 +758,12 @@ export default function MealPlanDetailScreen() {
                 <View key={dayIdx} style={styles.daySection}>
                   <View style={styles.dayHeader}>
                     <View style={styles.dayHeaderLeft}>
-                      <Text style={styles.dayTitle}>
-                        Day {dayNum}{dayOfWeek ? ` - ${dayOfWeek}` : ""}{dayType ? ` (${dayType})` : ""}
+                      <Text>
+                        <Text style={styles.dayTitle}>
+                          Day {dayNum}{dayOfWeek ? ` - ${dayOfWeek}` : ""}{dayType ? ` (${dayType})` : ""}
+                        </Text>
+                        {dateStr ? <Text style={styles.dayDate}>{"  "}{dateStr}</Text> : null}
                       </Text>
-                      {dateStr ? <Text style={styles.dayDate}>{dateStr}</Text> : null}
                     </View>
                     <Pressable
                       style={({ pressed }) => [
@@ -1109,9 +1120,9 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     color: Colors.text,
   },
   dayDate: {
-    fontSize: 12,
+    fontSize: 13,
     color: Colors.textSecondary,
-    marginTop: 2,
+    fontWeight: "400" as const,
   },
   regenDayBtn: {
     flexDirection: "row" as const,
@@ -1231,6 +1242,13 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginLeft: 30,
   },
   mealDescription: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    fontStyle: "italic" as const,
+    lineHeight: 20,
+    marginBottom: 14,
+  },
+  mealInsight: {
     fontSize: 13,
     color: Colors.textSecondary,
     fontStyle: "italic" as const,
