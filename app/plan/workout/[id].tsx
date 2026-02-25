@@ -563,7 +563,7 @@ function DayCard({
   const dayNum = day.dayIndex ?? dayIndex + 1;
   const dayLabel = day.dayLabel ?? `Day ${dayNum}`;
   const { dayOfWeek, dateStr } = formatWorkoutDayDate(startDate, dayIndex);
-  const dayType = isWorkout ? "Workout Day" : "Rest Day";
+  const dayType = isWorkout ? "Workout" : "Rest";
 
   if (!isWorkout) {
     return (
@@ -989,9 +989,8 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     padding: 16,
   },
   dayLabelContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
+    flex: 1,
+    marginRight: 8,
   },
   dayLabel: {
     fontSize: 15,
