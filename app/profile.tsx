@@ -392,10 +392,32 @@ export default function ProfileScreen() {
   const [formData, setFormData] = useState<ProfileData>({ ...defaultFormData });
   const [loaded, setLoaded] = useState(false);
 
+  const [weightText, setWeightText] = useState("");
+  const [targetWeightText, setTargetWeightText] = useState("");
+  const [ageText, setAgeText] = useState("");
+  const [heightCmText, setHeightCmText] = useState("");
+  const [feetText, setFeetText] = useState("");
+  const [inchesText, setInchesText] = useState("");
+  const [sleepText, setSleepText] = useState("");
+  const [sessionDurationText, setSessionDurationText] = useState("");
+
   useEffect(() => {
     if (profile.data && !loaded) {
-      setFormData({ ...defaultFormData, ...profile.data });
+      const d = { ...defaultFormData, ...profile.data };
+      setFormData(d);
       setLoaded(true);
+      const imp = d.unitSystem === "imperial";
+      setWeightText(d.weightKg != null ? String(imp ? kgToLbs(d.weightKg) : d.weightKg) : "");
+      setTargetWeightText(d.targetWeightKg != null ? String(imp ? kgToLbs(d.targetWeightKg) : d.targetWeightKg) : "");
+      setAgeText(d.age != null ? String(d.age) : "");
+      setHeightCmText(d.heightCm != null ? String(d.heightCm) : "");
+      if (d.heightCm != null) {
+        const fi = cmToFeetInches(d.heightCm);
+        setFeetText(String(fi.feet));
+        setInchesText(String(fi.inches));
+      }
+      setSleepText(d.sleepHours != null ? String(d.sleepHours) : "");
+      setSessionDurationText(d.sessionDurationMinutes != null ? String(d.sessionDurationMinutes) : "");
     }
   }, [profile.data, loaded]);
 
@@ -408,15 +430,31 @@ export default function ProfileScreen() {
 
   const isImperial = formData.unitSystem === "imperial";
 
-  const displayWeight = (val: number | null): string => {
-    if (val == null) return "";
-    return isImperial ? String(kgToLbs(val)) : String(val);
-  };
+  useEffect(() => {
+    if (!loaded) return;
+    setWeightText(formData.weightKg != null ? String(isImperial ? kgToLbs(formData.weightKg) : formData.weightKg) : "");
+    setTargetWeightText(formData.targetWeightKg != null ? String(isImperial ? kgToLbs(formData.targetWeightKg) : formData.targetWeightKg) : "");
+    if (formData.heightCm != null) {
+      if (isImperial) {
+        const fi = cmToFeetInches(formData.heightCm);
+        setFeetText(String(fi.feet));
+        setInchesText(String(fi.inches));
+      } else {
+        setHeightCmText(String(formData.heightCm));
+      }
+    }
+  }, [formData.unitSystem]);
 
   const handleWeightChange = (
     key: "weightKg" | "targetWeightKg",
     text: string
   ) => {
+    if (key === "weightKg") setWeightText(text);
+    else setTargetWeightText(text);
+  };
+
+  const commitWeight = (key: "weightKg" | "targetWeightKg") => {
+    const text = key === "weightKg" ? weightText : targetWeightText;
     const num = parseFloat(text);
     if (text === "" || isNaN(num)) {
       updateField(key, null);
@@ -447,20 +485,29 @@ export default function ProfileScreen() {
     : { feet: 0, inches: 0 };
 
   const handleFeetChange = (text: string) => {
-    const feet = parseInt(text) || 0;
-    const cm = feetInchesToCm(feet, currentFeetInches.inches);
-    updateField("heightCm", cm);
+    setFeetText(text);
+  };
+  const commitFeet = () => {
+    const feet = parseInt(feetText) || 0;
+    const inches = parseInt(inchesText) || 0;
+    updateField("heightCm", feetInchesToCm(feet, inches));
   };
 
   const handleInchesChange = (text: string) => {
-    const inches = parseInt(text) || 0;
-    const cm = feetInchesToCm(currentFeetInches.feet, inches);
-    updateField("heightCm", cm);
+    setInchesText(text);
+  };
+  const commitInches = () => {
+    const feet = parseInt(feetText) || 0;
+    const inches = parseInt(inchesText) || 0;
+    updateField("heightCm", feetInchesToCm(feet, inches));
   };
 
   const handleCmChange = (text: string) => {
-    const num = parseFloat(text);
-    if (text === "" || isNaN(num)) {
+    setHeightCmText(text);
+  };
+  const commitHeightCm = () => {
+    const num = parseFloat(heightCmText);
+    if (heightCmText === "" || isNaN(num)) {
       updateField("heightCm", null);
       return;
     }
@@ -548,10 +595,9 @@ export default function ProfileScreen() {
           <FormField label="Age">
             <TextInput
               style={styles.textInput}
-              value={formData.age != null ? String(formData.age) : ""}
-              onChangeText={(t) =>
-                updateField("age", t === "" ? null : parseInt(t) || null)
-              }
+              value={ageText}
+              onChangeText={setAgeText}
+              onBlur={() => updateField("age", ageText === "" ? null : parseInt(ageText) || null)}
               keyboardType="numeric"
               placeholderTextColor={Colors.textTertiary}
               placeholder="Enter age"
@@ -573,8 +619,9 @@ export default function ProfileScreen() {
                 <View style={styles.heightInputWrap}>
                   <TextInput
                     style={[styles.textInput, styles.heightTextInput]}
-                    value={formData.heightCm != null ? String(currentFeetInches.feet) : ""}
+                    value={feetText}
                     onChangeText={handleFeetChange}
+                    onBlur={commitFeet}
                     keyboardType="numeric"
                     placeholderTextColor={Colors.textTertiary}
                     placeholder="ft"
@@ -584,8 +631,9 @@ export default function ProfileScreen() {
                 <View style={styles.heightInputWrap}>
                   <TextInput
                     style={[styles.textInput, styles.heightTextInput]}
-                    value={formData.heightCm != null ? String(currentFeetInches.inches) : ""}
+                    value={inchesText}
                     onChangeText={handleInchesChange}
+                    onBlur={commitInches}
                     keyboardType="numeric"
                     placeholderTextColor={Colors.textTertiary}
                     placeholder="in"
@@ -598,8 +646,9 @@ export default function ProfileScreen() {
             <FormField label="Height (cm)">
               <TextInput
                 style={styles.textInput}
-                value={formData.heightCm != null ? String(formData.heightCm) : ""}
+                value={heightCmText}
                 onChangeText={handleCmChange}
+                onBlur={commitHeightCm}
                 keyboardType="numeric"
                 placeholderTextColor={Colors.textTertiary}
                 placeholder="e.g. 180"
@@ -612,8 +661,9 @@ export default function ProfileScreen() {
           >
             <TextInput
               style={styles.textInput}
-              value={displayWeight(formData.weightKg)}
+              value={weightText}
               onChangeText={(t) => handleWeightChange("weightKg", t)}
+              onBlur={() => commitWeight("weightKg")}
               keyboardType="numeric"
               placeholderTextColor={Colors.textTertiary}
               placeholder={isImperial ? "e.g. 155" : "e.g. 70"}
@@ -625,8 +675,9 @@ export default function ProfileScreen() {
           >
             <TextInput
               style={styles.textInput}
-              value={displayWeight(formData.targetWeightKg)}
+              value={targetWeightText}
               onChangeText={(t) => handleWeightChange("targetWeightKg", t)}
+              onBlur={() => commitWeight("targetWeightKg")}
               keyboardType="numeric"
               placeholderTextColor={Colors.textTertiary}
               placeholder={isImperial ? "e.g. 165" : "e.g. 75"}
@@ -673,15 +724,9 @@ export default function ProfileScreen() {
           <FormField label="Sleep Hours">
             <TextInput
               style={styles.textInput}
-              value={
-                formData.sleepHours != null ? String(formData.sleepHours) : ""
-              }
-              onChangeText={(t) =>
-                updateField(
-                  "sleepHours",
-                  t === "" ? null : parseFloat(t) || null
-                )
-              }
+              value={sleepText}
+              onChangeText={setSleepText}
+              onBlur={() => updateField("sleepHours", sleepText === "" ? null : parseFloat(sleepText) || null)}
               keyboardType="numeric"
               placeholderTextColor={Colors.textTertiary}
               placeholder="e.g. 7"
@@ -741,17 +786,9 @@ export default function ProfileScreen() {
           <FormField label="Session Duration (minutes)">
             <TextInput
               style={styles.textInput}
-              value={
-                formData.sessionDurationMinutes != null
-                  ? String(formData.sessionDurationMinutes)
-                  : ""
-              }
-              onChangeText={(t) =>
-                updateField(
-                  "sessionDurationMinutes",
-                  t === "" ? null : parseInt(t) || null
-                )
-              }
+              value={sessionDurationText}
+              onChangeText={setSessionDurationText}
+              onBlur={() => updateField("sessionDurationMinutes", sessionDurationText === "" ? null : parseInt(sessionDurationText) || null)}
               keyboardType="numeric"
               placeholderTextColor={Colors.textTertiary}
               placeholder="e.g. 60"
