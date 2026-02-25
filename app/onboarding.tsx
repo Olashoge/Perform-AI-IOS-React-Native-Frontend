@@ -184,7 +184,7 @@ export default function OnboardingScreen() {
       const weightKg = weightVal != null ? (isImperial ? Math.round((weightVal / 2.20462) * 10) / 10 : weightVal) : null;
       const targetWeightKg = targetWeightVal != null ? (isImperial ? Math.round((targetWeightVal / 2.20462) * 10) / 10 : targetWeightVal) : null;
 
-      const data: Partial<ProfileData> = {
+      const raw: Record<string, any> = {
         unitSystem,
         sex,
         age,
@@ -194,7 +194,7 @@ export default function OnboardingScreen() {
         primaryGoal,
         trainingExperience: experience,
         activityLevel,
-        trainingDaysOfWeek: trainingDays,
+        trainingDaysOfWeek: trainingDays.length > 0 ? trainingDays : undefined,
         sessionDurationMinutes: sessionDuration,
         workoutLocationDefault: workoutLocation,
         allergiesIntolerances: allergies,
@@ -204,11 +204,18 @@ export default function OnboardingScreen() {
         stressLevel,
       };
 
+      const data: Partial<ProfileData> = {};
+      for (const [key, value] of Object.entries(raw)) {
+        if (value === null || value === undefined || value === "") continue;
+        (data as any)[key] = value;
+      }
+
       await updateProfile.mutateAsync(data);
       await AsyncStorage.setItem("perform_onboarding_complete", "true");
       router.replace("/(tabs)");
     } catch (err: any) {
-      Alert.alert("Error", err?.message || "Failed to save profile");
+      const apiMsg = err?.response?.data?.message || err?.response?.data?.error;
+      Alert.alert("Error", apiMsg || err?.message || "Failed to save profile");
     } finally {
       setSaving(false);
     }

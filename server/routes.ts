@@ -63,6 +63,21 @@ function proxyToExternal(req: any, res: any) {
   };
 
   const proxyReq = https.request(options, (proxyRes) => {
+    if (proxyRes.statusCode && proxyRes.statusCode >= 400) {
+      let body = "";
+      proxyRes.on("data", (chunk: Buffer) => { body += chunk.toString(); });
+      proxyRes.on("end", () => {
+        console.error(`Proxy ${req.method} ${req.originalUrl} => ${proxyRes.statusCode}: ${body}`);
+        res.status(proxyRes.statusCode || 500);
+        Object.entries(proxyRes.headers).forEach(([key, value]) => {
+          if (key.toLowerCase() !== "transfer-encoding" && key.toLowerCase() !== "access-control-allow-origin") {
+            res.setHeader(key, value as string);
+          }
+        });
+        res.end(body);
+      });
+      return;
+    }
     res.status(proxyRes.statusCode || 500);
     Object.entries(proxyRes.headers).forEach(([key, value]) => {
       if (key.toLowerCase() !== "transfer-encoding" && key.toLowerCase() !== "access-control-allow-origin") {
