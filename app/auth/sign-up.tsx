@@ -34,12 +34,20 @@ export default function SignUpScreen() {
   const webBottomInset = Platform.OS === "web" ? 34 : 0;
 
   async function handleSignUp() {
-    if (!name.trim()) {
-      setError("Please enter your name");
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password;
+
+    if (trimmedName.length < 2) {
+      setError("Name must be at least 2 characters");
       return;
     }
-    if (!email.trim() || !password.trim()) {
-      setError("Please enter both email and password");
+    if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+    if (trimmedPassword.length < 8) {
+      setError("Password must be at least 8 characters");
       return;
     }
 
@@ -47,7 +55,7 @@ export default function SignUpScreen() {
     setError("");
 
     try {
-      await login(email.trim(), password);
+      await login(trimmedEmail, trimmedPassword);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/");
     } catch (err: any) {
@@ -74,7 +82,7 @@ export default function SignUpScreen() {
         <View style={styles.content}>
           <View style={styles.header}>
             <View style={styles.iconContainer}>
-              <Ionicons name="flash" size={40} color={Colors.primary} />
+              <Ionicons name="flash" size={40} color={Colors.text} />
             </View>
             <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>Start your performance journey</Text>
@@ -123,7 +131,7 @@ export default function SignUpScreen() {
               <Ionicons name="lock-closed-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Password"
+                placeholder="Password (8+ characters)"
                 placeholderTextColor={Colors.textTertiary}
                 value={password}
                 onChangeText={setPassword}
@@ -151,9 +159,9 @@ export default function SignUpScreen() {
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color={Colors.background} size="small" />
               ) : (
-                <Text style={styles.signUpButtonText}>Create Account</Text>
+                <Text style={[styles.signUpButtonText, { color: Colors.background }]}>Create Account</Text>
               )}
             </Pressable>
           </View>
@@ -191,7 +199,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 24,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surfaceElevated,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 20,
@@ -248,7 +256,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     padding: 16,
   },
   signUpButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.text,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: "center",
@@ -264,7 +272,6 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   signUpButtonText: {
     fontSize: 15,
     fontFamily: "Inter_600SemiBold",
-    color: "#FFFFFF",
   },
   footer: {
     flexDirection: "row",
@@ -280,6 +287,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   footerLink: {
     fontSize: 14,
     fontFamily: "Inter_600SemiBold",
-    color: Colors.primary,
+    color: Colors.text,
+    textDecorationLine: "underline",
   },
 });

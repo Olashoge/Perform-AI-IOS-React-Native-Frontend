@@ -74,7 +74,7 @@ export default function SignInScreen() {
         <View style={styles.content}>
           <View style={styles.header}>
             <View style={styles.iconContainer}>
-              <Ionicons name="flash" size={40} color={Colors.primary} />
+              <Ionicons name="flash" size={40} color={Colors.text} />
             </View>
             <Text style={styles.title}>Sign In</Text>
             <Text style={styles.subtitle}>Welcome back</Text>
@@ -140,7 +140,7 @@ export default function SignInScreen() {
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color={Colors.background} size="small" />
               ) : (
                 <Text style={styles.loginButtonText}>Sign In</Text>
               )}
@@ -180,7 +180,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 24,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surfaceElevated,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 20,
@@ -243,10 +243,10 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   forgotPasswordText: {
     fontSize: 13,
     fontFamily: "Inter_500Medium",
-    color: Colors.primary,
+    color: Colors.textSecondary,
   },
   loginButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.text,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: "center",
@@ -262,7 +262,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   loginButtonText: {
     fontSize: 15,
     fontFamily: "Inter_600SemiBold",
-    color: "#FFFFFF",
+    color: Colors.background,
   },
   footer: {
     flexDirection: "row",
@@ -278,6 +278,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   footerLink: {
     fontSize: 14,
     fontFamily: "Inter_600SemiBold",
-    color: Colors.primary,
+    color: Colors.text,
+    textDecorationLine: "underline",
   },
 });

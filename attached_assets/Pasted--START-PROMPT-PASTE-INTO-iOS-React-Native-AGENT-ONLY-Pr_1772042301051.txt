@@ -1,0 +1,142 @@
+===== START PROMPT (PASTE INTO iOS / React Native AGENT ONLY) =====
+
+Project: Perform AI (React Native + Expo Router). Goal: fix onboarding + auth flow + profile setup + theme tokens in one cohesive pass, and fix the “Expected integer, received float” error in onboarding.
+
+NON-NEGOTIABLES
+- Do NOT add new “tools/features” beyond what’s listed. This is a stabilization + polish pass.
+- Keep the aesthetic: elite / institutional / restrained (minimal, not playful, not neon, not gamified).
+- Prefer a single design system file with tokens used everywhere.
+- Any input that is an integer in the backend must be enforced/sanitized as integer in the app before submit.
+
+TASK A — AUTH ENTRY + SIGN UP (MISSING TODAY)
+1) Add a true arrival page (Welcome screen) as the first screen when the app opens if the user is logged out.
+   - Content: App mark + “Perform AI” + 1–2 line value statement.
+   - CTAs: “Sign In” (primary) and “Create Account” (secondary).
+   - Add a small “By continuing you agree…” line (no need to implement full legal pages right now; just placeholder links).
+
+2) Fix Login screen:
+   - Add “Create account” link/button under Sign In.
+   - Add “Forgot password?” link (can be placeholder route if backend isn’t ready; do not block launch).
+
+3) Create Signup screen:
+   - Required fields: Full Name, Email, Password.
+   - Validate:
+     - name length >= 2
+     - email basic format
+     - password >= 8
+   - On success: store auth token/session exactly like login does.
+
+4) Routing rules:
+   - Logged out → Welcome (not Login).
+   - Logged in + profile incomplete → Onboarding wizard.
+   - Logged in + profile complete → Dashboard.
+
+TASK B — ONBOARDING WIZARD (REPLACE “LONG PROFILE FIRST EXPERIENCE”)
+Create a multi-step onboarding flow (can be 5 steps like current screenshots) that collects minimum viable profile info needed to generate plans, then saves to backend and ends on Dashboard.
+
+Steps (keep simple, same structure across steps):
+Step 1: Basics
+- Unit system (Imperial / Metric)
+- Sex (Male / Female / Other)
+- Age (integer)
+- Height (Imperial: ft + in integers; Metric: cm integer)
+- Weight (lbs/kg integer)
+
+Step 2: Goal
+- Primary goal (existing options)
+- Target weight optional (integer; only show if Weight Loss / Muscle Gain)
+
+Step 3: Training
+- Training experience
+- Activity level
+- Training days (multi-select)
+- Session duration minutes (integer)
+- Workout location
+
+Step 4: Nutrition
+- Allergies & intolerances (chips)
+- Foods to avoid (chips + optional custom text)
+- Spice preference
+- Prep style
+
+Step 5: Lifestyle (optional fields but still captured)
+- Sleep hours (integer; whole hours only for MVP)
+- Stress level (Low/Moderate/High)
+
+On completion:
+- Persist all fields to the profile endpoint(s).
+- Mark profile as “onboardingComplete: true” (or equivalent existing flag) so the user never sees onboarding again unless they reset.
+
+TASK C — FIX THE “Expected integer, received float” ERROR
+This is blocking onboarding completion.
+
+1) Identify which field(s) are being sent as floats when backend validation expects integers.
+2) Enforce integer-only in the UI for these fields:
+   - age
+   - height ft/in OR cm
+   - weight
+   - target weight
+   - session duration
+   - sleep hours
+3) Sanitization approach (do this consistently):
+   - Use TextInput value as string.
+   - On change, strip non-digits: value.replace(/[^\d]/g, "")
+   - Convert with parseInt(str || "0", 10)
+   - If field is optional and empty, send null (not 0) where appropriate.
+4) Ensure the payload to backend uses integers (Number.isInteger must be true).
+5) If backend expects height in a specific shape (e.g., totalInches), compute it as integer:
+   - totalInches = feet*12 + inches
+6) Add client-side guard before submit:
+   - If any required integer field is missing/NaN, show a clean inline error (no system alert).
+
+TASK D — PREMIUM COLOR SYSTEM (UPDATE THEME ACROSS APP)
+Current blue accent feels generic. Move to a restrained “ink + stone + muted accents” palette, consistent across all tabs (Dashboard, Calendar, Create, Performance, More) and all components (buttons, pills, charts, badges).
+
+1) Create a single source of truth, e.g.:
+   - /src/theme/colors.ts (or /app/theme/colors.ts)
+   - /src/theme/typography.ts
+   - /src/theme/components.ts (button, chip, card styles)
+
+2) Token proposal (use exact hex, can tweak slightly if needed for contrast):
+   - bg: #F6F7F9
+   - surface: #FFFFFF
+   - ink (primary text / primary buttons): #111827
+   - inkSoft (secondary text): #4B5563
+   - divider / outline: #E5E7EB
+   - mutedFill: #F1F5F9
+
+   Accents (muted, premium):
+   - accentSage (meals / success): #3F6B4E
+   - accentBronze (workouts / training): #8A6A2F
+   - accentBrick (risk / low score): #8B3A3A
+   - accentNavy (links / focus state instead of bright blue): #0B1F3A
+
+3) Replace all bright-blue outlines/buttons/chips with accentNavy or ink.
+   - Primary CTA buttons: ink background + white text.
+   - Secondary buttons: surface background + ink border.
+   - Selected chips: ink or accentNavy border + subtle fill (not solid neon).
+   - Progress bars:
+     - default track: #E5E7EB
+     - fill uses accentSage / accentBronze / accentBrick depending on context.
+
+4) Icons:
+   - Keep icon tiles very subtle (mutedFill background + accent icon).
+   - Remove overly colorful icon backgrounds where possible.
+
+TASK E — SMALL UI POLISH (KEEP IT TIGHT)
+- Keep rounded corners consistent (e.g., cards 20–24, buttons 16–18).
+- Reduce heavy shadows; use soft elevation only.
+- Ensure tab bar matches the new palette (no bright blue selection).
+
+ACCEPTANCE CHECKLIST (MUST PASS)
+1) Fresh install → Welcome → Create Account → Signup → Onboarding → Dashboard.
+2) Login screen has a working “Create account” link.
+3) Onboarding “Finish” works with no integer/float errors.
+4) All numeric fields that must be integers are enforced and sent as integers.
+5) Theme is consistent across all screens; no leftover bright-blue accents.
+6) No new feature work outside this scope.
+
+Deliverables:
+- PR/commit with updated navigation/routes, Welcome + Signup screens, onboarding wizard, fixed input sanitization, centralized theme tokens, and updated component styles.
+
+===== END PROMPT =====

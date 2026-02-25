@@ -43,7 +43,7 @@ function ClassicTabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: Colors.primary,
+        tabBarActiveTintColor: Colors.tabIconSelected,
         tabBarInactiveTintColor: Colors.tabIconDefault,
         tabBarStyle: {
           position: "absolute",

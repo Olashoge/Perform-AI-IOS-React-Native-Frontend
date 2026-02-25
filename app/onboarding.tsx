@@ -26,7 +26,11 @@ const FOODS_TO_AVOID_OPTIONS = ["Pork", "Red Meat", "Chicken", "Mushrooms", "Gar
 const GOAL_OPTIONS = ["weight_loss", "muscle_gain", "performance", "maintenance", "energy", "general_fitness"];
 const GOAL_LABELS = ["Weight Loss", "Muscle Gain", "Performance", "Maintenance", "Energy", "General Fitness"];
 const DAY_OPTIONS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const DAY_VALUES = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+const DAY_VALUES = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+
+function intOnly(value: string): string {
+  return value.replace(/[^\d]/g, "");
+}
 
 function formatLabel(value: string): string {
   return value
@@ -48,28 +52,23 @@ function PillButton({
 }) {
   return (
     <Pressable
-      onPress={() => {
-        Haptics.selectionAsync();
-        onPress();
+      onPress={onPress}
+      style={{
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 10,
+        borderWidth: 1.5,
+        borderColor: selected ? Colors.text : Colors.border,
+        backgroundColor: selected ? Colors.text + "0A" : "transparent",
+        marginRight: 8,
+        marginBottom: 8,
       }}
-      style={[
-        {
-          paddingHorizontal: 16,
-          paddingVertical: 10,
-          borderRadius: 20,
-          borderWidth: 1.5,
-          borderColor: selected ? Colors.primary : Colors.border,
-          backgroundColor: selected ? Colors.primarySoft : Colors.surface,
-          marginRight: 8,
-          marginBottom: 8,
-        },
-      ]}
     >
       <Text
         style={{
           fontSize: 14,
-          fontWeight: selected ? ("600" as const) : ("400" as const),
-          color: selected ? Colors.primary : Colors.textSecondary,
+          fontWeight: selected ? "600" : "400",
+          color: selected ? Colors.text : Colors.textSecondary,
         }}
       >
         {label}
@@ -94,6 +93,7 @@ function PillGroup({
   Colors: ThemeColors;
 }) {
   const handlePress = (opt: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (multi) {
       const arr = Array.isArray(selected) ? selected : [];
       if (arr.includes(opt)) {
@@ -140,7 +140,9 @@ export default function OnboardingScreen() {
   const [unitSystem, setUnitSystem] = useState("imperial");
   const [sex, setSex] = useState("");
   const [ageText, setAgeText] = useState("");
-  const [heightText, setHeightText] = useState("");
+  const [heightFtText, setHeightFtText] = useState("");
+  const [heightInText, setHeightInText] = useState("");
+  const [heightCmText, setHeightCmText] = useState("");
   const [weightText, setWeightText] = useState("");
 
   const [primaryGoal, setPrimaryGoal] = useState("");
@@ -172,17 +174,35 @@ export default function OnboardingScreen() {
   const handleFinish = async () => {
     setSaving(true);
     try {
-      const age = ageText ? parseInt(ageText) : null;
-      const heightVal = heightText ? parseFloat(heightText) : null;
-      const weightVal = weightText ? parseFloat(weightText) : null;
-      const targetWeightVal = targetWeightText ? parseFloat(targetWeightText) : null;
-      const sessionDuration = sessionDurationText ? parseInt(sessionDurationText) : null;
-      const sleep = sleepText ? parseFloat(sleepText) : null;
+      const age = ageText ? parseInt(ageText, 10) : null;
+      const sessionDuration = sessionDurationText ? parseInt(sessionDurationText, 10) : null;
+      const sleep = sleepText ? parseInt(sleepText, 10) : null;
 
       const isImperial = unitSystem === "imperial";
-      const heightCm = heightVal != null ? (isImperial ? Math.round(heightVal * 2.54 * 10) / 10 : heightVal) : null;
-      const weightKg = weightVal != null ? (isImperial ? Math.round((weightVal / 2.20462) * 10) / 10 : weightVal) : null;
-      const targetWeightKg = targetWeightVal != null ? (isImperial ? Math.round((targetWeightVal / 2.20462) * 10) / 10 : targetWeightVal) : null;
+
+      let heightCm: number | null = null;
+      if (isImperial) {
+        const ft = heightFtText ? parseInt(heightFtText, 10) : 0;
+        const inches = heightInText ? parseInt(heightInText, 10) : 0;
+        const totalInches = ft * 12 + inches;
+        if (totalInches > 0) {
+          heightCm = Math.round(totalInches * 2.54);
+        }
+      } else {
+        heightCm = heightCmText ? parseInt(heightCmText, 10) : null;
+      }
+
+      let weightKg: number | null = null;
+      const weightVal = weightText ? parseInt(weightText, 10) : null;
+      if (weightVal != null && weightVal > 0) {
+        weightKg = isImperial ? Math.round(weightVal / 2.20462) : weightVal;
+      }
+
+      let targetWeightKg: number | null = null;
+      const targetVal = targetWeightText ? parseInt(targetWeightText, 10) : null;
+      if (targetVal != null && targetVal > 0) {
+        targetWeightKg = isImperial ? Math.round(targetVal / 2.20462) : targetVal;
+      }
 
       const raw: Record<string, any> = {
         unitSystem,
@@ -207,13 +227,21 @@ export default function OnboardingScreen() {
       const data: Partial<ProfileData> = {};
       for (const [key, value] of Object.entries(raw)) {
         if (value === null || value === undefined || value === "") continue;
+        if (Array.isArray(value) && value.length === 0) continue;
         (data as any)[key] = value;
       }
 
-      await updateProfile.mutateAsync(data);
+      const hasSubstantiveData = Object.keys(data).some(
+        (k) => k !== "unitSystem"
+      );
+      if (hasSubstantiveData) {
+        await updateProfile.mutateAsync(data);
+      }
       await AsyncStorage.setItem("perform_onboarding_complete", "true");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/(tabs)");
     } catch (err: any) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       const apiMsg = err?.response?.data?.message || err?.response?.data?.error;
       Alert.alert("Error", apiMsg || err?.message || "Failed to save profile");
     } finally {
@@ -248,34 +276,67 @@ export default function OnboardingScreen() {
       <TextInput
         style={styles.input}
         value={ageText}
-        onChangeText={setAgeText}
-        keyboardType="numeric"
+        onChangeText={(v) => setAgeText(intOnly(v))}
+        keyboardType="number-pad"
         placeholderTextColor={Colors.textTertiary}
-        placeholder="Enter your age"
+        placeholder="e.g. 28"
+        maxLength={3}
       />
 
-      <Text style={styles.fieldLabel}>
-        {unitSystem === "imperial" ? "Height (inches)" : "Height (cm)"}
-      </Text>
-      <TextInput
-        style={styles.input}
-        value={heightText}
-        onChangeText={setHeightText}
-        keyboardType="numeric"
-        placeholderTextColor={Colors.textTertiary}
-        placeholder={unitSystem === "imperial" ? "e.g. 70" : "e.g. 178"}
-      />
+      {unitSystem === "imperial" ? (
+        <>
+          <Text style={styles.fieldLabel}>Height</Text>
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <TextInput
+                style={styles.input}
+                value={heightFtText}
+                onChangeText={(v) => setHeightFtText(intOnly(v))}
+                keyboardType="number-pad"
+                placeholderTextColor={Colors.textTertiary}
+                placeholder="ft"
+                maxLength={1}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <TextInput
+                style={styles.input}
+                value={heightInText}
+                onChangeText={(v) => setHeightInText(intOnly(v))}
+                keyboardType="number-pad"
+                placeholderTextColor={Colors.textTertiary}
+                placeholder="in"
+                maxLength={2}
+              />
+            </View>
+          </View>
+        </>
+      ) : (
+        <>
+          <Text style={styles.fieldLabel}>Height (cm)</Text>
+          <TextInput
+            style={styles.input}
+            value={heightCmText}
+            onChangeText={(v) => setHeightCmText(intOnly(v))}
+            keyboardType="number-pad"
+            placeholderTextColor={Colors.textTertiary}
+            placeholder="e.g. 178"
+            maxLength={3}
+          />
+        </>
+      )}
 
       <Text style={styles.fieldLabel}>
-        {unitSystem === "imperial" ? "Weight (lbs)" : "Weight (kg)"}
+        Weight ({unitSystem === "imperial" ? "lbs" : "kg"})
       </Text>
       <TextInput
         style={styles.input}
         value={weightText}
-        onChangeText={setWeightText}
-        keyboardType="numeric"
+        onChangeText={(v) => setWeightText(intOnly(v))}
+        keyboardType="number-pad"
         placeholderTextColor={Colors.textTertiary}
         placeholder={unitSystem === "imperial" ? "e.g. 155" : "e.g. 70"}
+        maxLength={3}
       />
     </View>
   );
@@ -300,10 +361,11 @@ export default function OnboardingScreen() {
       <TextInput
         style={styles.input}
         value={targetWeightText}
-        onChangeText={setTargetWeightText}
-        keyboardType="numeric"
+        onChangeText={(v) => setTargetWeightText(intOnly(v))}
+        keyboardType="number-pad"
         placeholderTextColor={Colors.textTertiary}
         placeholder="Optional"
+        maxLength={3}
       />
     </View>
   );
@@ -324,8 +386,8 @@ export default function OnboardingScreen() {
 
       <Text style={styles.fieldLabel}>Activity Level</Text>
       <PillGroup
-        options={["sedentary", "lightly_active", "moderately_active", "very_active", "extra_active"]}
-        labels={["Sedentary", "Lightly Active", "Moderately Active", "Very Active", "Extra Active"]}
+        options={["sedentary", "moderate", "active"]}
+        labels={["Sedentary", "Moderate", "Active"]}
         selected={activityLevel}
         onSelect={(v) => setActivityLevel(v as string)}
         Colors={Colors}
@@ -345,10 +407,11 @@ export default function OnboardingScreen() {
       <TextInput
         style={styles.input}
         value={sessionDurationText}
-        onChangeText={setSessionDurationText}
-        keyboardType="numeric"
+        onChangeText={(v) => setSessionDurationText(intOnly(v))}
+        keyboardType="number-pad"
         placeholderTextColor={Colors.textTertiary}
         placeholder="45"
+        maxLength={3}
       />
 
       <Text style={styles.fieldLabel}>Workout Location</Text>
@@ -414,10 +477,11 @@ export default function OnboardingScreen() {
       <TextInput
         style={styles.input}
         value={sleepText}
-        onChangeText={setSleepText}
-        keyboardType="numeric"
+        onChangeText={(v) => setSleepText(intOnly(v))}
+        keyboardType="number-pad"
         placeholderTextColor={Colors.textTertiary}
-        placeholder="7-8"
+        placeholder="e.g. 7"
+        maxLength={2}
       />
 
       <Text style={styles.fieldLabel}>Stress Level</Text>
@@ -449,7 +513,7 @@ export default function OnboardingScreen() {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+      keyboardVerticalOffset={0}
     >
       <View style={[styles.topBar, { paddingTop: insets.top + webTopInset + 12 }]}>
         <Text style={styles.progressLabel}>Step {step} of {TOTAL_STEPS}</Text>
@@ -623,7 +687,7 @@ function createStyles(Colors: ThemeColors) {
       color: Colors.textSecondary,
     },
     nextButton: {
-      backgroundColor: Colors.primary,
+      backgroundColor: Colors.text,
       paddingHorizontal: 28,
       paddingVertical: 14,
       borderRadius: 12,
@@ -633,7 +697,7 @@ function createStyles(Colors: ThemeColors) {
     nextButtonText: {
       fontSize: 16,
       fontWeight: "600" as const,
-      color: "#FFFFFF",
+      color: Colors.background,
     },
   });
 }

@@ -29,7 +29,7 @@ const STATE_CONFIG: Record<PerformanceStateKey, {
 function getStateColor(key: PerformanceStateKey, Colors: ThemeColors): string {
   switch (key) {
     case "on_track": return Colors.accent;
-    case "building_momentum": return Colors.primary;
+    case "building_momentum": return Colors.accent;
     case "recovering": return Colors.warning;
     case "at_risk": return Colors.error;
     case "declining": return Colors.error;

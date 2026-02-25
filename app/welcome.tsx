@@ -15,8 +15,8 @@ export default function Welcome() {
   return (
     <View style={[styles.container, { backgroundColor: Colors.background, paddingTop: topInset, paddingBottom: bottomInset + 24 }]}>
       <View style={styles.content}>
-        <View style={[styles.iconContainer, { backgroundColor: Colors.primarySoft }]}>
-          <Ionicons name="flash" size={48} color={Colors.primary} />
+        <View style={[styles.iconContainer, { backgroundColor: Colors.surfaceElevated }]}>
+          <Ionicons name="flash" size={48} color={Colors.text} />
         </View>
         <Text style={[styles.title, { color: Colors.text }]}>Perform AI</Text>
         <Text style={[styles.subtitle, { color: Colors.textSecondary }]}>Structured performance, simplified.</Text>
@@ -24,18 +24,24 @@ export default function Welcome() {
 
       <View style={styles.buttons}>
         <Pressable
-          style={[styles.primaryButton, { backgroundColor: Colors.primary }]}
-          onPress={() => router.push('/auth/sign-up')}
+          style={[styles.primaryButton, { backgroundColor: Colors.text }]}
+          onPress={() => router.push('/auth/sign-in')}
         >
-          <Text style={styles.primaryButtonText}>Create Account</Text>
+          <Text style={[styles.primaryButtonText, { color: Colors.background }]}>Sign In</Text>
         </Pressable>
 
         <Pressable
           style={[styles.secondaryButton, { borderColor: Colors.border }]}
-          onPress={() => router.push('/auth/sign-in')}
+          onPress={() => router.push('/auth/sign-up')}
         >
-          <Text style={[styles.secondaryButtonText, { color: Colors.text }]}>Sign In</Text>
+          <Text style={[styles.secondaryButtonText, { color: Colors.text }]}>Create Account</Text>
         </Pressable>
+
+        <Text style={[styles.legalText, { color: Colors.textTertiary }]}>
+          By continuing you agree to our{' '}
+          <Text style={styles.legalLink}>Terms of Service</Text> and{' '}
+          <Text style={styles.legalLink}>Privacy Policy</Text>.
+        </Text>
       </View>
     </View>
   );
@@ -83,7 +89,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   primaryButtonText: {
-    color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '600' as const,
   },
@@ -97,5 +102,14 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     fontSize: 17,
     fontWeight: '600' as const,
+  },
+  legalText: {
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  legalLink: {
+    textDecorationLine: 'underline',
   },
 });
