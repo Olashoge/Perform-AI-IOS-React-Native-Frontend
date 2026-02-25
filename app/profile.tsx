@@ -91,7 +91,7 @@ function SegmentedControl({
             style={[styles.segmentedBtn, isSelected && styles.segmentedBtnActive]}
             onPress={() => {
               Haptics.selectionAsync();
-              onSelect(selected === opt ? "" : opt);
+              onSelect(opt);
             }}
           >
             <Text
@@ -135,7 +135,7 @@ function PillSelector({
         onSelect([...arr, opt]);
       }
     } else {
-      onSelect(selected === opt ? "" : opt);
+      onSelect(opt);
     }
   };
 
@@ -198,7 +198,7 @@ function TagInput({
             <View key={tag} style={styles.tag}>
               <Text style={styles.tagText}>{tag}</Text>
               <Pressable onPress={() => removeTag(tag)} hitSlop={6}>
-                <Ionicons name="close" size={14} color="#FFFFFF" />
+                <Ionicons name="close" size={14} color={Colors.text} />
               </Pressable>
             </View>
           ))}
@@ -1054,16 +1054,16 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderColor: Colors.border,
   },
   segmentedBtnActive: {
-    backgroundColor: Colors.text,
-    borderColor: Colors.text,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   segmentedBtnText: {
     fontSize: 12,
     fontFamily: "Inter_500Medium",
-    color: Colors.text,
+    color: Colors.textSecondary,
   },
   segmentedBtnTextActive: {
-    color: "#FFFFFF",
+    color: Colors.text,
     fontFamily: "Inter_600SemiBold",
   },
   pillWrap: {
@@ -1080,16 +1080,16 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderColor: Colors.border,
   },
   pillActive: {
-    backgroundColor: Colors.text,
-    borderColor: Colors.text,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   pillText: {
     fontSize: 11,
     fontFamily: "Inter_500Medium",
-    color: Colors.text,
+    color: Colors.textSecondary,
   },
   pillTextActive: {
-    color: "#FFFFFF",
+    color: Colors.text,
     fontFamily: "Inter_600SemiBold",
   },
   heightRow: {
@@ -1120,7 +1120,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: Colors.text,
+    backgroundColor: Colors.primary,
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -1128,7 +1128,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   tagText: {
     fontSize: 11,
     fontFamily: "Inter_500Medium",
-    color: "#FFFFFF",
+    color: Colors.text,
   },
   accordionSection: {
     marginBottom: 8,
@@ -1165,7 +1165,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     color: Colors.text,
   },
   saveButton: {
-    backgroundColor: Colors.text,
+    backgroundColor: Colors.primary,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: "center",
@@ -1178,7 +1178,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   saveButtonText: {
     fontSize: 15,
     fontFamily: "Inter_600SemiBold",
-    color: "#FFFFFF",
+    color: Colors.text,
   },
   bottomSection: {
     alignItems: "center",
