@@ -60,13 +60,14 @@ export default function SignUpScreen() {
       router.replace("/");
     } catch (err: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      const status = err.response?.status;
       const serverMsg = err.response?.data?.message || err.response?.data?.error;
       let message: string;
-      if (status === 409 || (serverMsg && /already|exists|duplicate|registered/i.test(serverMsg))) {
-        message = "An account with this email already exists. Try signing in.";
+      if (err.message && /already|exists|duplicate|registered/i.test(err.message)) {
+        message = err.message;
       } else if (serverMsg) {
         message = serverMsg;
+      } else if (err.message && err.message !== 'Network Error') {
+        message = err.message;
       } else {
         message = "Account creation failed. Please try again.";
       }

@@ -77,11 +77,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signup(name: string, email: string, password: string) {
-    await apiClient.post('/api/auth/signup', {
-      name,
-      email: email.toLowerCase(),
-      password,
-    });
+    try {
+      await apiClient.post('/api/auth/signup', {
+        name,
+        email: email.toLowerCase(),
+        password,
+      });
+    } catch (signupErr: any) {
+      const status = signupErr.response?.status;
+      const msg = signupErr.response?.data?.message || signupErr.response?.data?.error || '';
+      if (status === 409 || /already|exists|duplicate|registered/i.test(msg)) {
+        throw new Error('An account with this email already exists. Try signing in.');
+      }
+      throw signupErr;
+    }
     await login(email, password);
   }
 
