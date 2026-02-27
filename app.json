@@ -14,8 +14,9 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": false,
-      "bundleIdentifier": "com.myapp"
+      "supportsTablet": true,
+      "bundleIdentifier": "com.performaiwellness",
+      "buildNumber": "1"
     },
     "android": {
       "package": "com.myapp",
