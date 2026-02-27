@@ -35,6 +35,29 @@ The application is built with React Native and Expo Router for file-based naviga
 - **Budget/Allowance System**: `useAllowance()` hook fetches daily limits from `GET /api/allowance/current`. Meal plan detail screen shows a "Today's Budget" card with remaining swaps, day regens, and plan regens. Swap/regen buttons check budget before proceeding and disable when exhausted. On swap/regen success, the allowance query is invalidated to refresh counts. 403 errors from the backend are surfaced via Alert. Query key: `["allowance"]`.
 - **Meal Swap / Day Regen**: `useMealSwap(planId)` calls `POST /api/plan/:id/swap` with `{ dayIndex, mealType }`. `useDayRegen(planId)` calls `POST /api/plan/:id/regenerate-day` with `{ dayIndex }`. Both invalidate plan, grocery, and allowance queries on success.
 
+## How to Run
+
+### Expo Go (Physical Device — Tunnel Mode)
+Run the **Expo Tunnel** workflow, which executes:
+```
+EXPO_NO_DOCTOR=1 EXPO_PUBLIC_DOMAIN=$REPLIT_DEV_DOMAIN:5000 npx expo start --tunnel --clear --non-interactive
+```
+- Uses ngrok tunnel so Expo Go on your phone can connect regardless of network.
+- Scan the QR code shown in the terminal output with Expo Go (Android) or Camera (iOS).
+- The **Start Frontend** workflow must be stopped first (they share port 8081).
+- Requires `@expo/ngrok` (already installed as a dev dependency).
+
+### Web Preview (Browser Dev — Localhost Mode)
+Run the **Start Frontend** workflow:
+```
+EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN EXPO_PUBLIC_DOMAIN=$REPLIT_DEV_DOMAIN:5000 npx expo start --localhost
+```
+- Best for web browser development in Replit's webview.
+- The **Expo Tunnel** workflow must be stopped first (they share port 8081).
+
+### Backend
+Always run **Start Backend** (`npm run server:dev`) alongside either frontend workflow. It serves the Express API on port 5000.
+
 ## External Dependencies
 - **Auth Service**: `https://mealplanai.replit.app` (for user login and token refresh).
 - **Database**: PostgreSQL (Neon) accessed via Drizzle ORM.
