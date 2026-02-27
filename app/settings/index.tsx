@@ -135,7 +135,7 @@ export default function SettingsIndexScreen() {
 
     setDeletingAccount(true);
     try {
-      await apiClient.delete("/api/user", {
+      await apiClient.delete("/api/me", {
         data: isEmailUser ? { password: deletePassword } : undefined,
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -144,7 +144,25 @@ export default function SettingsIndexScreen() {
       await logout();
       router.replace("/welcome");
     } catch (err: any) {
-      const msg = err.response?.data?.message || err.response?.data?.error || "Failed to delete account.";
+      const responseData = err.response?.data;
+      const code = responseData?.code;
+      const msg = responseData?.message
+        || responseData?.error
+        || (!err.response ? "Unable to reach the server. Check your connection and try again." : "Failed to delete account.");
+
+      if (code === "AUTH_REQUIRED") {
+        setDeleteModalVisible(false);
+        if (Platform.OS === "web") {
+          alert(msg);
+        } else {
+          Alert.alert("Session Expired", msg);
+        }
+        await logout();
+        queryClient.clear();
+        router.replace("/welcome");
+        return;
+      }
+
       if (Platform.OS === "web") {
         alert(msg);
       } else {
