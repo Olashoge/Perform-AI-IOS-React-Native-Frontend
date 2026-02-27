@@ -189,97 +189,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/refresh", proxyToExternal);
   app.post("/api/auth/change-password", proxyToExternal);
 
-  app.delete("/api/me", async (req: any, res: any) => {
+  app.delete("/api/user", async (req: any, res: any) => {
     const userId = extractUserId(req);
     if (!userId) {
-      console.log("[DELETE /api/me] No userId extracted from token");
-      return res.status(401).json({
-        success: false,
-        code: "AUTH_REQUIRED",
-        message: "Your session expired. Please log in again.",
-      });
+      return res.status(401).json({ error: "Unauthorized" });
     }
-
-    console.log(`[DELETE /api/me] Delete request for user ${userId}`);
 
     try {
-      const deleted = await db.delete(completions).where(eq(completions.userId, userId));
-      console.log(`[DELETE /api/me] Cleaned up local completions for user ${userId}`);
+      await db.delete(completions).where(eq(completions.userId, userId));
+      console.log(`[DELETE] Cleaned up local completions for user ${userId}`);
     } catch (err) {
-      console.error("[DELETE /api/me] Error cleaning up local completions:", err);
+      console.error("Error cleaning up local completions:", err);
     }
 
-    const targetUrl = new URL("/api/user", EXTERNAL_BACKEND);
-    const bodyStr = req.body && Object.keys(req.body).length > 0 ? JSON.stringify(req.body) : "";
-    const options: https.RequestOptions = {
-      hostname: targetUrl.hostname,
-      port: 443,
-      path: targetUrl.pathname,
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        ...(bodyStr ? { "Content-Length": String(Buffer.byteLength(bodyStr)) } : {}),
-        ...(req.headers.authorization ? { Authorization: req.headers.authorization } : {}),
-      },
-    };
-
-    const proxyReq = https.request(options, (proxyRes) => {
-      let body = "";
-      proxyRes.on("data", (chunk: Buffer) => { body += chunk.toString(); });
-      proxyRes.on("end", () => {
-        const status = proxyRes.statusCode || 500;
-        console.log(`[DELETE /api/me] External backend responded ${status}: ${body.substring(0, 200)}`);
-
-        if (status >= 200 && status < 300) {
-          return res.status(200).json({ success: true });
-        }
-
-        let parsed: any = {};
-        try { parsed = JSON.parse(body); } catch {}
-
-        if (status === 401) {
-          return res.status(401).json({
-            success: false,
-            code: "AUTH_REQUIRED",
-            message: "Your session expired. Please log in again.",
-          });
-        }
-        if (status === 404) {
-          return res.status(404).json({
-            success: false,
-            code: "USER_NOT_FOUND",
-            message: "Account not found.",
-          });
-        }
-        if (status === 409) {
-          return res.status(409).json({
-            success: false,
-            code: "DELETE_BLOCKED",
-            message: "Account cannot be deleted right now. Please try again.",
-          });
-        }
-
-        return res.status(500).json({
-          success: false,
-          code: "SERVER_ERROR",
-          message: parsed.message || "Something went wrong on our side. Please try again.",
-        });
-      });
-    });
-
-    proxyReq.on("error", (err) => {
-      console.error("[DELETE /api/me] Proxy error:", err.message);
-      res.status(500).json({
-        success: false,
-        code: "SERVER_ERROR",
-        message: "Something went wrong on our side. Please try again.",
-      });
-    });
-
-    if (bodyStr) {
-      proxyReq.write(bodyStr);
-    }
-    proxyReq.end();
+    proxyToExternal(req, res);
   });
 
   app.get("/api/weekly-summary", (req, res) => {
