@@ -19,6 +19,7 @@ import { Icon } from "@/components/Icon";
 import { Pill, PillGrid } from "@/components/Pill";
 import { useUpdateProfile, ProfileData } from "@/lib/api-hooks";
 import { useAuth } from "@/lib/auth-context";
+import { EQUIPMENT_CATEGORIES, getEquipmentForLocation, mergeEquipmentDefaults } from "@/lib/equipment-presets";
 
 const TOTAL_STEPS = 5;
 
@@ -117,6 +118,24 @@ export default function OnboardingScreen() {
   const [trainingDays, setTrainingDays] = useState<string[]>([]);
   const [sessionDurationText, setSessionDurationText] = useState("");
   const [workoutLocation, setWorkoutLocation] = useState("");
+  const [equipmentAvailable, setEquipmentAvailable] = useState<string[]>([]);
+  const [hasEditedEquipment, setHasEditedEquipment] = useState(false);
+
+  const handleLocationChange = (location: string) => {
+    setWorkoutLocation(location);
+    if (!hasEditedEquipment) {
+      setEquipmentAvailable(getEquipmentForLocation(location));
+    } else {
+      setEquipmentAvailable((prev) => mergeEquipmentDefaults(prev, location));
+    }
+  };
+
+  const handleEquipmentToggle = (item: string) => {
+    setHasEditedEquipment(true);
+    setEquipmentAvailable((prev) =>
+      prev.includes(item) ? prev.filter((v) => v !== item) : [...prev, item]
+    );
+  };
 
   const [allergies, setAllergies] = useState<string[]>([]);
   const [foodsToAvoid, setFoodsToAvoid] = useState<string[]>([]);
@@ -268,6 +287,7 @@ export default function OnboardingScreen() {
         trainingDaysOfWeek: trainingDays.length > 0 ? trainingDays : undefined,
         sessionDurationMinutes: sessionDuration,
         workoutLocationDefault: workoutLocation,
+        equipmentAvailable: equipmentAvailable.length > 0 ? equipmentAvailable : undefined,
         allergiesIntolerances: allergies,
         foodsToAvoid,
         spicePreference,
@@ -471,8 +491,38 @@ export default function OnboardingScreen() {
         options={["gym", "home", "outdoors"]}
         labels={["Gym", "Home", "Outdoors"]}
         selected={workoutLocation}
-        onSelect={(v) => setWorkoutLocation(v as string)}
+        onSelect={(v) => handleLocationChange(v as string)}
       />
+
+      {workoutLocation ? (
+        <>
+          <Text style={styles.fieldLabel}>Equipment Available</Text>
+          <Text style={[styles.fieldHint, { color: Colors.textTertiary }]}>
+            {equipmentAvailable.length} selected
+          </Text>
+          {EQUIPMENT_CATEGORIES.map((cat) => {
+            const count = cat.items.filter((item) => equipmentAvailable.includes(item)).length;
+            return (
+              <View key={cat.name} style={{ marginBottom: 8 }}>
+                <Text style={[styles.fieldLabel, { fontSize: 12, marginBottom: 4 }]}>
+                  {cat.name} ({count}/{cat.items.length})
+                </Text>
+                <PillGrid>
+                  {cat.items.map((item) => (
+                    <Pill
+                      key={item}
+                      label={item}
+                      selected={equipmentAvailable.includes(item)}
+                      onPress={() => handleEquipmentToggle(item)}
+                      variant="compact"
+                    />
+                  ))}
+                </PillGrid>
+              </View>
+            );
+          })}
+        </>
+      ) : null}
     </View>
   );
 
@@ -685,6 +735,11 @@ function createStyles(Colors: ThemeColors) {
       marginTop: 16,
       textTransform: "uppercase" as const,
       letterSpacing: 0.5,
+    },
+    fieldHint: {
+      fontSize: 11,
+      marginBottom: 8,
+      marginTop: -4,
     },
     input: {
       backgroundColor: Colors.inputBg,

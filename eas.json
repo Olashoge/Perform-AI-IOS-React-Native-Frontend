@@ -1,7 +1,18 @@
 {
   "build": {
     "production": {
-      "distribution": "store"
+      "ios": {
+        "distribution": "store"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "jideshogelola@gmail.com",
+        "ascAppId": "6759759584",
+        "appleTeamId": "X7N4L8QN62"
+      }
     }
   }
 }
