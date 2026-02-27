@@ -27,7 +27,7 @@ The application is built with React Native and Expo Router for file-based naviga
     - Calendar view for daily and weekly activity tracking.
     - Daily detail view for meal and workout completion toggles, with "Plan This Day" generation.
     - Comprehensive plan management for Wellness, Meals, and Workouts, including creation wizards and detailed plan views.
-    - Settings with profile, preferences (food, exercise), week start, theme customization, security (change password), and account deletion.
+    - Settings with profile, preferences (food, exercise), week start, and theme customization.
     - Developer diagnostics screen for monitoring API calls and application state.
     - Adaptive Plan placeholder screen (`app/adaptive-plan.tsx`) for future AI-driven plan adjustments.
 - **Completion Toggle Architecture**: PATCH requests for meal/workout completions are handled locally, updating a PostgreSQL database. GET requests for data (weekly-summary, week-data, day-data) merge external backend data with local completion states. Optimistic updates are used with React Query, invalidating relevant caches on success.

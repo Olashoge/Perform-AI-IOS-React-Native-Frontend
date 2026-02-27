@@ -60,7 +60,6 @@ const ICON_MAP = {
   nutrition: "nutrition-outline",
   hourglass: "hourglass-outline",
   chevronDown: "chevron-down-outline",
-  chevronUp: "chevron-up-outline",
   bug: "bug-outline",
   medkit: "medkit-outline",
   location: "location-outline",

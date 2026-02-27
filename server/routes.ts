@@ -187,8 +187,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/token-login", proxyToExternal);
   app.post("/api/auth/signup", proxyToExternal);
   app.post("/api/auth/refresh", proxyToExternal);
-  app.post("/api/auth/change-password", proxyToExternal);
-  app.delete("/api/user", proxyToExternal);
 
   app.get("/api/weekly-summary", (req, res) => {
     proxyAndTransform(req, res, async (data, userId) => {
