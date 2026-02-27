@@ -133,7 +133,7 @@ function PillSelector({
         onSelect([...arr, opt]);
       }
     } else {
-      onSelect(opt);
+      onSelect(selected === opt ? "" : opt);
     }
   };
 
