@@ -135,23 +135,47 @@ export default function SettingsIndexScreen() {
 
     setDeletingAccount(true);
     try {
-      await apiClient.delete("/api/user", {
+      const response = await apiClient.delete("/api/me", {
         data: isEmailUser ? { password: deletePassword } : undefined,
       });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setDeleteModalVisible(false);
-      queryClient.clear();
-      await logout();
-      router.replace("/welcome");
-    } catch (err: any) {
-      const msg = err.response?.data?.message || err.response?.data?.error || "Failed to delete account.";
-      if (Platform.OS === "web") {
-        alert(msg);
+
+      if (response.data?.success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setDeleteModalVisible(false);
+        queryClient.clear();
+        await logout();
+        router.replace("/welcome");
       } else {
-        Alert.alert("Error", msg);
+        const msg = response.data?.message || "Something went wrong. Please try again.";
+        showAlert("Error", msg);
       }
+    } catch (err: any) {
+      let msg = "Unable to reach the server. Check your connection and try again.";
+      const data = err.response?.data;
+
+      if (data && typeof data === "object") {
+        msg = data.message || msg;
+
+        if (data.code === "AUTH_REQUIRED") {
+          showAlert("Session Expired", msg);
+          queryClient.clear();
+          await logout();
+          router.replace("/welcome");
+          return;
+        }
+      }
+
+      showAlert("Error", msg);
     } finally {
       setDeletingAccount(false);
+    }
+  };
+
+  const showAlert = (title: string, message: string) => {
+    if (Platform.OS === "web") {
+      alert(message);
+    } else {
+      Alert.alert(title, message);
     }
   };
 

@@ -189,10 +189,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/refresh", proxyToExternal);
   app.post("/api/auth/change-password", proxyToExternal);
 
-  app.delete("/api/user", async (req: any, res: any) => {
+  app.delete("/api/me", async (req: any, res: any) => {
     const userId = extractUserId(req);
     if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ success: false, code: "AUTH_REQUIRED", message: "Your session expired. Please log in again." });
     }
 
     try {
