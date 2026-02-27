@@ -80,7 +80,9 @@ outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "EXPO_NO_DOCTOR=1 EXPO_PUBLIC_DOMAIN=$REPLIT_DEV_DOMAIN:5000 npx expo start --tunnel --clear --non-interactive"
+args = """
+EXPO_NO_DOCTOR=1 EXPO_PUBLIC_DOMAIN=$REPLIT_DEV_DOMAIN:5000 npx expo start --tunnel --clear <<< $'
+'"""
 
 [[workflows.workflow]]
 name = "Start Frontend"

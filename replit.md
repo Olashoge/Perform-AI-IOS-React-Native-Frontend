@@ -40,7 +40,7 @@ The application is built with React Native and Expo Router for file-based naviga
 ### Expo Go (Physical Device — Tunnel Mode)
 Run the **Expo Tunnel** workflow, which executes:
 ```
-EXPO_NO_DOCTOR=1 EXPO_PUBLIC_DOMAIN=$REPLIT_DEV_DOMAIN:5000 npx expo start --tunnel --clear --non-interactive
+EXPO_NO_DOCTOR=1 EXPO_PUBLIC_DOMAIN=$REPLIT_DEV_DOMAIN:5000 npx expo start --tunnel --clear <<< $'\n'
 ```
 - Uses ngrok tunnel so Expo Go on your phone can connect regardless of network.
 - Scan the QR code shown in the terminal output with Expo Go (Android) or Camera (iOS).
