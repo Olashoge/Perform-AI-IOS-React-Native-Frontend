@@ -16,6 +16,7 @@ import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 import { Icon } from "@/components/Icon";
+import { Pill, PillGrid } from "@/components/Pill";
 import { useUpdateProfile, ProfileData } from "@/lib/api-hooks";
 import { useAuth } from "@/lib/auth-context";
 
@@ -39,58 +40,18 @@ function formatLabel(value: string): string {
     .join(" ");
 }
 
-function PillButton({
-  label,
-  selected,
-  onPress,
-  Colors,
-}: {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-  Colors: ThemeColors;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderRadius: 999,
-        borderWidth: 1.5,
-        borderColor: selected ? Colors.text : Colors.border,
-        backgroundColor: selected ? Colors.text : Colors.surface,
-        marginRight: 8,
-        marginBottom: 8,
-      }}
-    >
-      <Text
-        style={{
-          fontSize: 14,
-          fontWeight: selected ? "600" : "500",
-          color: selected ? "#FFFFFF" : Colors.text,
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
 function PillGroup({
   options,
   labels,
   selected,
   onSelect,
   multi,
-  Colors,
 }: {
   options: string[];
   labels?: string[];
   selected: string | string[];
   onSelect: (val: string | string[]) => void;
   multi?: boolean;
-  Colors: ThemeColors;
 }) {
   const handlePress = (opt: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -112,17 +73,17 @@ function PillGroup({
   };
 
   return (
-    <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+    <PillGrid>
       {options.map((opt, i) => (
-        <PillButton
+        <Pill
           key={opt}
           label={labels ? labels[i] : formatLabel(opt)}
           selected={isSelected(opt)}
           onPress={() => handlePress(opt)}
-          Colors={Colors}
+          variant="rounded"
         />
       ))}
-    </View>
+    </PillGrid>
   );
 }
 
@@ -261,7 +222,6 @@ export default function OnboardingScreen() {
         labels={["Imperial", "Metric"]}
         selected={unitSystem}
         onSelect={(v) => setUnitSystem(v as string)}
-        Colors={Colors}
       />
 
       <Text style={styles.fieldLabel}>Sex</Text>
@@ -270,7 +230,6 @@ export default function OnboardingScreen() {
         labels={["Male", "Female", "Other"]}
         selected={sex}
         onSelect={(v) => setSex(v as string)}
-        Colors={Colors}
       />
 
       <Text style={styles.fieldLabel}>Age</Text>
@@ -353,7 +312,6 @@ export default function OnboardingScreen() {
         labels={GOAL_LABELS}
         selected={primaryGoal}
         onSelect={(v) => setPrimaryGoal(v as string)}
-        Colors={Colors}
       />
 
       <Text style={styles.fieldLabel}>
@@ -382,7 +340,6 @@ export default function OnboardingScreen() {
         labels={["Beginner", "Intermediate", "Advanced"]}
         selected={experience}
         onSelect={(v) => setExperience(v as string)}
-        Colors={Colors}
       />
 
       <Text style={styles.fieldLabel}>Activity Level</Text>
@@ -391,7 +348,6 @@ export default function OnboardingScreen() {
         labels={["Sedentary", "Moderate", "Active"]}
         selected={activityLevel}
         onSelect={(v) => setActivityLevel(v as string)}
-        Colors={Colors}
       />
 
       <Text style={styles.fieldLabel}>Training Days</Text>
@@ -401,7 +357,6 @@ export default function OnboardingScreen() {
         selected={trainingDays}
         onSelect={(v) => setTrainingDays(v as string[])}
         multi
-        Colors={Colors}
       />
 
       <Text style={styles.fieldLabel}>Session Duration (minutes)</Text>
@@ -421,7 +376,6 @@ export default function OnboardingScreen() {
         labels={["Gym", "Home", "Outdoors"]}
         selected={workoutLocation}
         onSelect={(v) => setWorkoutLocation(v as string)}
-        Colors={Colors}
       />
     </View>
   );
@@ -437,7 +391,6 @@ export default function OnboardingScreen() {
         selected={allergies}
         onSelect={(v) => setAllergies(v as string[])}
         multi
-        Colors={Colors}
       />
 
       <Text style={styles.fieldLabel}>Foods to Avoid</Text>
@@ -446,7 +399,6 @@ export default function OnboardingScreen() {
         selected={foodsToAvoid}
         onSelect={(v) => setFoodsToAvoid(v as string[])}
         multi
-        Colors={Colors}
       />
 
       <Text style={styles.fieldLabel}>Spice Preference</Text>
@@ -455,7 +407,6 @@ export default function OnboardingScreen() {
         labels={["Mild", "Medium", "Spicy"]}
         selected={spicePreference}
         onSelect={(v) => setSpicePreference(v as string)}
-        Colors={Colors}
       />
 
       <Text style={styles.fieldLabel}>Prep Style</Text>
@@ -464,7 +415,6 @@ export default function OnboardingScreen() {
         labels={["Cook Daily", "Batch Prep"]}
         selected={prepStyle}
         onSelect={(v) => setPrepStyle(v as string)}
-        Colors={Colors}
       />
     </View>
   );
@@ -491,7 +441,6 @@ export default function OnboardingScreen() {
         labels={["Low", "Moderate", "High"]}
         selected={stressLevel}
         onSelect={(v) => setStressLevel(v as string)}
-        Colors={Colors}
       />
     </View>
   );

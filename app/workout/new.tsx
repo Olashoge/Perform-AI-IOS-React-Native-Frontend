@@ -25,6 +25,7 @@ import {
   ProfileData,
 } from "@/lib/api-hooks";
 import CalendarPickerField from "@/components/CalendarPickerField";
+import { Pill, PillGrid } from "@/components/Pill";
 
 const WEB_TOP_INSET = 67;
 
@@ -358,95 +359,88 @@ export default function NewWorkoutPlanScreen() {
         <ProfileSummaryCard profile={profile} />
 
         <Text style={styles.sectionTitle}>Your Goal</Text>
-        <View style={styles.pillGrid}>
+        <PillGrid>
           {GOAL_OPTIONS.map((opt) => (
-            <Pressable
+            <Pill
               key={opt.value}
-              style={[styles.pill, goal === opt.value && styles.pillActive]}
+              label={opt.label}
+              selected={goal === opt.value}
               onPress={() => { Haptics.selectionAsync(); setGoal(opt.value); }}
-            >
-              <Text style={[styles.pillText, goal === opt.value && styles.pillTextActive]}>{opt.label}</Text>
-            </Pressable>
+            />
           ))}
-        </View>
+        </PillGrid>
 
         <Text style={styles.sectionTitle}>Location</Text>
-        <View style={styles.pillGrid}>
+        <PillGrid>
           {LOCATION_OPTIONS.map((opt) => (
-            <Pressable
+            <Pill
               key={opt.value}
-              style={[styles.pill, location === opt.value && styles.pillActive]}
+              label={opt.label}
+              selected={location === opt.value}
               onPress={() => { Haptics.selectionAsync(); setLocation(opt.value); }}
-            >
-              <Text style={[styles.pillText, location === opt.value && styles.pillTextActive]}>{opt.label}</Text>
-            </Pressable>
+            />
           ))}
-        </View>
+        </PillGrid>
 
         <Text style={styles.sectionTitle}>Training Mode</Text>
-        <View style={styles.pillGrid}>
+        <PillGrid>
           {TRAINING_MODE_OPTIONS.map((opt) => (
-            <Pressable
+            <Pill
               key={opt.value}
-              style={[styles.pill, trainingMode === opt.value && styles.pillActive]}
+              label={opt.label}
+              selected={trainingMode === opt.value}
               onPress={() => { Haptics.selectionAsync(); setTrainingMode(opt.value); }}
-            >
-              <Text style={[styles.pillText, trainingMode === opt.value && styles.pillTextActive]}>{opt.label}</Text>
-            </Pressable>
+            />
           ))}
-        </View>
+        </PillGrid>
 
         <Text style={styles.sectionTitle}>Experience Level</Text>
-        <View style={styles.pillGrid}>
+        <PillGrid>
           {EXPERIENCE_OPTIONS.map((opt) => (
-            <Pressable
+            <Pill
               key={opt.value}
-              style={[styles.pill, experienceLevel === opt.value && styles.pillActive]}
+              label={opt.label}
+              selected={experienceLevel === opt.value}
               onPress={() => { Haptics.selectionAsync(); setExperienceLevel(opt.value); }}
-            >
-              <Text style={[styles.pillText, experienceLevel === opt.value && styles.pillTextActive]}>{opt.label}</Text>
-            </Pressable>
+            />
           ))}
-        </View>
+        </PillGrid>
 
         <Text style={styles.sectionTitle}>Training Days</Text>
-        <View style={styles.pillGrid}>
+        <PillGrid>
           {DAYS_OF_WEEK.map((day) => (
-            <Pressable
+            <Pill
               key={day}
-              style={[styles.pill, daysOfWeek.includes(day) && styles.pillActive, { minWidth: 48 }]}
+              label={day}
+              selected={daysOfWeek.includes(day)}
               onPress={() => handleDayToggle(day)}
-            >
-              <Text style={[styles.pillText, daysOfWeek.includes(day) && styles.pillTextActive]}>{day}</Text>
-            </Pressable>
+            />
           ))}
-        </View>
+        </PillGrid>
 
         <Text style={styles.sectionTitle}>Session Duration</Text>
-        <View style={styles.pillGrid}>
+        <PillGrid>
           {SESSION_LENGTH_OPTIONS.map((opt) => (
-            <Pressable
+            <Pill
               key={opt.value}
-              style={[styles.pill, sessionLength === opt.value && styles.pillActive]}
+              label={opt.label}
+              selected={sessionLength === opt.value}
               onPress={() => { Haptics.selectionAsync(); setSessionLength(opt.value); }}
-            >
-              <Text style={[styles.pillText, sessionLength === opt.value && styles.pillTextActive]}>{opt.label}</Text>
-            </Pressable>
+            />
           ))}
-        </View>
+        </PillGrid>
 
         <Text style={styles.sectionTitle}>Focus Areas</Text>
-        <View style={styles.pillGrid}>
+        <PillGrid>
           {FOCUS_AREAS.map((area) => (
-            <Pressable
+            <Pill
               key={area}
-              style={[styles.pill, focusAreas.includes(area) && styles.pillActive]}
+              label={area}
+              selected={focusAreas.includes(area)}
               onPress={() => handleFocusToggle(area)}
-            >
-              <Text style={[styles.pillText, focusAreas.includes(area) && styles.pillTextActive]}>{area}</Text>
-            </Pressable>
+            />
           ))}
-        </View>
+        </PillGrid>
 
         <Text style={styles.sectionTitle}>Injuries / Limitations</Text>
         <TextInput
@@ -473,17 +467,17 @@ export default function NewWorkoutPlanScreen() {
             {EQUIPMENT_CATEGORIES.map((cat) => (
               <View key={cat.title} style={styles.equipmentCategory}>
                 <Text style={styles.equipmentCategoryTitle}>{cat.title}</Text>
-                <View style={styles.pillGrid}>
+                <PillGrid>
                   {cat.items.map((item) => (
-                    <Pressable
+                    <Pill
                       key={item}
-                      style={[styles.pill, equipmentAvailable.includes(item) && styles.pillActive, { paddingHorizontal: 10, paddingVertical: 6 }]}
+                      label={item}
+                      selected={equipmentAvailable.includes(item)}
                       onPress={() => handleEquipmentToggle(item)}
-                    >
-                      <Text style={[styles.pillTextSm, equipmentAvailable.includes(item) && styles.pillTextActive]}>{item}</Text>
-                    </Pressable>
+                      variant="compact"
+                    />
                   ))}
-                </View>
+                </PillGrid>
               </View>
             ))}
           </View>
@@ -552,17 +546,6 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   sectionHint: {
     fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textTertiary, marginBottom: 10,
   },
-  pillGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  pill: {
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10,
-    backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
-  },
-  pillActive: { backgroundColor: Colors.primary + "20", borderColor: Colors.primary },
-  pillConflict: { backgroundColor: Colors.error + "10", borderColor: Colors.error + "40" },
-  pillText: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.textSecondary },
-  pillTextSm: { fontSize: 10, fontFamily: "Inter_500Medium", color: Colors.textSecondary },
-  pillTextActive: { color: Colors.primary },
-  pillTextConflict: { color: Colors.error, textDecorationLine: "line-through" },
   textInput: {
     backgroundColor: Colors.surface, borderRadius: 12, padding: 14, fontSize: 12,
     fontFamily: "Inter_400Regular", color: Colors.text, borderWidth: 1,

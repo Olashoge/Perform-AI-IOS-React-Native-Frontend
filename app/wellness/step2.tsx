@@ -17,6 +17,7 @@ import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useProfile, ProfileData } from "@/lib/api-hooks";
 import { useWellness } from "@/lib/wellness-context";
+import { Pill, PillGrid } from "@/components/Pill";
 
 const DIET_STYLE_OPTIONS = [
   "No Preference",
@@ -269,40 +270,28 @@ export default function Step2Screen() {
         {profile && <ProfileSummaryCard profile={profile} />}
 
         <Text style={styles.sectionLabel}>Diet / Cuisine Styles</Text>
-        <View style={styles.pillGrid}>
-          {DIET_STYLE_OPTIONS.map((style) => {
-            const selected = mealForm.dietStyles.includes(style);
-            return (
-              <Pressable
-                key={style}
-                style={[styles.pill, selected && styles.pillActive]}
-                onPress={() => handleDietStyleToggle(style)}
-              >
-                <Text style={[styles.pillText, selected && styles.pillTextActive]}>
-                  {style}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <PillGrid>
+          {DIET_STYLE_OPTIONS.map((style) => (
+            <Pill
+              key={style}
+              label={style}
+              selected={mealForm.dietStyles.includes(style)}
+              onPress={() => handleDietStyleToggle(style)}
+            />
+          ))}
+        </PillGrid>
 
         <Text style={styles.sectionLabel}>Foods to Avoid</Text>
-        <View style={styles.pillGrid}>
-          {FOODS_TO_AVOID_OPTIONS.map((food) => {
-            const selected = mealForm.foodsToAvoid.includes(food);
-            return (
-              <Pressable
-                key={food}
-                style={[styles.pill, selected && styles.pillActive]}
-                onPress={() => handleFoodToggle(food)}
-              >
-                <Text style={[styles.pillText, selected && styles.pillTextActive]}>
-                  {food}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <PillGrid>
+          {FOODS_TO_AVOID_OPTIONS.map((food) => (
+            <Pill
+              key={food}
+              label={food}
+              selected={mealForm.foodsToAvoid.includes(food)}
+              onPress={() => handleFoodToggle(food)}
+            />
+          ))}
+        </PillGrid>
 
         <Text style={styles.sectionLabel}>Allergies & Intolerances</Text>
         <TextInput
@@ -593,32 +582,6 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     letterSpacing: 0.5,
     marginTop: 24,
     marginBottom: 10,
-  },
-  pillGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  pill: {
-    backgroundColor: Colors.surface,
-    borderRadius: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderWidth: 1.5,
-    borderColor: "transparent",
-  },
-  pillActive: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + "18",
-  },
-  pillText: {
-    fontSize: 11,
-    fontFamily: "Inter_500Medium",
-    color: Colors.textSecondary,
-  },
-  pillTextActive: {
-    color: Colors.primary,
-    fontFamily: "Inter_600SemiBold",
   },
   textInput: {
     backgroundColor: Colors.surface,

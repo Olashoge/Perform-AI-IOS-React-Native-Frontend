@@ -16,6 +16,7 @@ import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useProfile, ProfileData } from "@/lib/api-hooks";
 import { useWellness, LOCATION_PRESETS } from "@/lib/wellness-context";
+import { Pill, PillGrid } from "@/components/Pill";
 
 const LOCATION_OPTIONS: { value: string; label: string }[] = [
   { value: "gym", label: "Gym" },
@@ -283,22 +284,16 @@ export default function Step3Screen() {
         {EQUIPMENT_CATEGORIES.map((cat) => (
           <View key={cat.title} style={styles.equipmentCategory}>
             <Text style={styles.equipmentCategoryTitle}>{cat.title}</Text>
-            <View style={styles.pillGrid}>
-              {cat.items.map((item) => {
-                const selected = workoutForm.equipmentAvailable.includes(item);
-                return (
-                  <Pressable
-                    key={item}
-                    style={[styles.pill, selected && styles.pillActive]}
-                    onPress={() => handleEquipmentToggle(item)}
-                  >
-                    <Text style={[styles.pillText, selected && styles.pillTextActive]}>
-                      {item}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
+            <PillGrid>
+              {cat.items.map((item) => (
+                <Pill
+                  key={item}
+                  label={item}
+                  selected={workoutForm.equipmentAvailable.includes(item)}
+                  onPress={() => handleEquipmentToggle(item)}
+                />
+              ))}
+            </PillGrid>
           </View>
         ))}
 
@@ -342,22 +337,16 @@ export default function Step3Screen() {
         </View>
 
         <Text style={styles.sectionLabel}>Focus Areas</Text>
-        <View style={styles.pillGrid}>
-          {availableFocusAreas.map((area) => {
-            const selected = workoutForm.focusAreas.includes(area);
-            return (
-              <Pressable
-                key={area}
-                style={[styles.pill, selected && styles.pillActive]}
-                onPress={() => handleFocusAreaToggle(area)}
-              >
-                <Text style={[styles.pillText, selected && styles.pillTextActive]}>
-                  {area}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <PillGrid>
+          {availableFocusAreas.map((area) => (
+            <Pill
+              key={area}
+              label={area}
+              selected={workoutForm.focusAreas.includes(area)}
+              onPress={() => handleFocusAreaToggle(area)}
+            />
+          ))}
+        </PillGrid>
 
         <Text style={styles.sectionLabel}>Workout Days</Text>
         <View style={styles.daysRow}>
@@ -509,32 +498,6 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     color: Colors.textSecondary,
   },
   toggleBtnTextActive: {
-    color: Colors.primary,
-    fontFamily: "Inter_600SemiBold",
-  },
-  pillGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  pill: {
-    backgroundColor: Colors.surface,
-    borderRadius: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderWidth: 1.5,
-    borderColor: "transparent",
-  },
-  pillActive: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + "18",
-  },
-  pillText: {
-    fontSize: 11,
-    fontFamily: "Inter_500Medium",
-    color: Colors.textSecondary,
-  },
-  pillTextActive: {
     color: Colors.primary,
     fontFamily: "Inter_600SemiBold",
   },

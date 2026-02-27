@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon, IconName } from "@/components/Icon";
+import { Pill, PillGrid } from "@/components/Pill";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
@@ -122,9 +123,6 @@ function PillSelector({
   onSelect: (val: string | string[]) => void;
   multi?: boolean;
 }) {
-  const Colors = useColors();
-  const styles = useMemo(() => createStyles(Colors), [Colors]);
-
   const handlePress = (opt: string) => {
     Haptics.selectionAsync();
     if (multi) {
@@ -147,21 +145,17 @@ function PillSelector({
   };
 
   return (
-    <View style={styles.pillWrap}>
+    <PillGrid>
       {options.map((opt, i) => (
-        <Pressable
+        <Pill
           key={opt}
-          style={[styles.pill, isSelected(opt) && styles.pillActive]}
+          label={labels ? labels[i] : formatLabel(opt)}
+          selected={isSelected(opt)}
           onPress={() => handlePress(opt)}
-        >
-          <Text
-            style={[styles.pillText, isSelected(opt) && styles.pillTextActive]}
-          >
-            {labels ? labels[i] : formatLabel(opt)}
-          </Text>
-        </Pressable>
+          variant="rounded"
+        />
       ))}
-    </View>
+    </PillGrid>
   );
 }
 
@@ -297,25 +291,23 @@ function EquipmentAccordion({
               )}
             </Pressable>
             {isOpen && (
-              <View style={styles.pillWrap}>
+              <PillGrid>
                 {cat.items.map((item) => {
                   const active = selected.includes(item);
                   return (
-                    <Pressable
+                    <Pill
                       key={item}
-                      style={[styles.pill, active && styles.pillActive]}
+                      label={item}
+                      selected={active}
                       onPress={() => {
                         Haptics.selectionAsync();
                         onToggle(item);
                       }}
-                    >
-                      <Text style={[styles.pillText, active && styles.pillTextActive]}>
-                        {item}
-                      </Text>
-                    </Pressable>
+                      variant="rounded"
+                    />
                   );
                 })}
-              </View>
+              </PillGrid>
             )}
           </View>
         );
@@ -1059,32 +1051,6 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     color: Colors.textSecondary,
   },
   segmentedBtnTextActive: {
-    color: "#FFFFFF",
-    fontFamily: "Inter_600SemiBold",
-  },
-  pillWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  pill: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: Colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  pillActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  pillText: {
-    fontSize: 11,
-    fontFamily: "Inter_500Medium",
-    color: Colors.textSecondary,
-  },
-  pillTextActive: {
     color: "#FFFFFF",
     fontFamily: "Inter_600SemiBold",
   },

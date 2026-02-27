@@ -25,6 +25,7 @@ import {
   ProfileData,
 } from "@/lib/api-hooks";
 import CalendarPickerField from "@/components/CalendarPickerField";
+import { Pill, PillGrid } from "@/components/Pill";
 
 const WEB_TOP_INSET = 67;
 
@@ -345,75 +346,68 @@ export default function NewMealPlanScreen() {
         <ProfileSummaryCard profile={profile} />
 
         <Text style={styles.sectionTitle}>Your Goal</Text>
-        <View style={styles.pillGrid}>
+        <PillGrid>
           {GOAL_OPTIONS.map((opt) => (
-            <Pressable
+            <Pill
               key={opt.value}
-              style={[styles.pill, goal === opt.value && styles.pillActive]}
+              label={opt.label}
+              selected={goal === opt.value}
               onPress={() => { Haptics.selectionAsync(); setGoal(opt.value); }}
-            >
-              <Text style={[styles.pillText, goal === opt.value && styles.pillTextActive]}>{opt.label}</Text>
-            </Pressable>
+            />
           ))}
-        </View>
+        </PillGrid>
 
         <Text style={styles.sectionTitle}>Meals Per Day</Text>
-        <View style={styles.pillGrid}>
+        <PillGrid>
           {[2, 3].map((n) => (
-            <Pressable
+            <Pill
               key={n}
-              style={[styles.pill, mealsPerDay === n && styles.pillActive]}
+              label={`${n} meals`}
+              selected={mealsPerDay === n}
               onPress={() => { Haptics.selectionAsync(); setMealsPerDay(n); if (n === 3) setMealSlots([]); }}
-            >
-              <Text style={[styles.pillText, mealsPerDay === n && styles.pillTextActive]}>{n} meals</Text>
-            </Pressable>
+            />
           ))}
-        </View>
+        </PillGrid>
 
         {mealsPerDay === 2 && (
           <>
             <Text style={styles.sectionSubLabel}>Select 2 meals</Text>
-            <View style={styles.pillGrid}>
+            <PillGrid>
               {MEAL_SLOT_OPTIONS.map((slot) => (
-                <Pressable
+                <Pill
                   key={slot}
-                  style={[styles.pill, mealSlots.includes(slot) && styles.pillActive]}
+                  label={slot.charAt(0).toUpperCase() + slot.slice(1)}
+                  selected={mealSlots.includes(slot)}
                   onPress={() => handleMealSlotToggle(slot)}
-                >
-                  <Text style={[styles.pillText, mealSlots.includes(slot) && styles.pillTextActive]}>
-                    {slot.charAt(0).toUpperCase() + slot.slice(1)}
-                  </Text>
-                </Pressable>
+                />
               ))}
-            </View>
+            </PillGrid>
           </>
         )}
 
         <Text style={styles.sectionTitle}>Cuisine Style</Text>
-        <View style={styles.pillGrid}>
+        <PillGrid>
           {DIET_STYLE_OPTIONS.map((style) => (
-            <Pressable
+            <Pill
               key={style}
-              style={[styles.pill, dietStyles.includes(style) && styles.pillActive]}
+              label={style}
+              selected={dietStyles.includes(style)}
               onPress={() => handleDietStyleToggle(style)}
-            >
-              <Text style={[styles.pillText, dietStyles.includes(style) && styles.pillTextActive]}>{style}</Text>
-            </Pressable>
+            />
           ))}
-        </View>
+        </PillGrid>
 
         <Text style={styles.sectionTitle}>Foods to Avoid</Text>
-        <View style={styles.pillGrid}>
+        <PillGrid>
           {FOODS_TO_AVOID_OPTIONS.map((food) => (
-            <Pressable
+            <Pill
               key={food}
-              style={[styles.pill, foodsToAvoid.includes(food) && styles.pillActive]}
+              label={food}
+              selected={foodsToAvoid.includes(food)}
               onPress={() => handleFoodToggle(food)}
-            >
-              <Text style={[styles.pillText, foodsToAvoid.includes(food) && styles.pillTextActive]}>{food}</Text>
-            </Pressable>
+            />
           ))}
-        </View>
+        </PillGrid>
 
         <Text style={styles.sectionTitle}>Allergies & Intolerances</Text>
         <TextInput
@@ -436,30 +430,28 @@ export default function NewMealPlanScreen() {
         />
 
         <Text style={styles.sectionTitle}>Spice Level</Text>
-        <View style={styles.pillGrid}>
+        <PillGrid>
           {SPICE_LEVEL_OPTIONS.map((opt) => (
-            <Pressable
+            <Pill
               key={opt.value}
-              style={[styles.pill, spiceLevel === opt.value && styles.pillActive]}
+              label={opt.label}
+              selected={spiceLevel === opt.value}
               onPress={() => { Haptics.selectionAsync(); setSpiceLevel(opt.value); }}
-            >
-              <Text style={[styles.pillText, spiceLevel === opt.value && styles.pillTextActive]}>{opt.label}</Text>
-            </Pressable>
+            />
           ))}
-        </View>
+        </PillGrid>
 
         <Text style={styles.sectionTitle}>Prep Style</Text>
-        <View style={styles.pillGrid}>
+        <PillGrid>
           {PREP_STYLE_OPTIONS.map((opt) => (
-            <Pressable
+            <Pill
               key={opt.value}
-              style={[styles.pill, prepStyle === opt.value && styles.pillActive]}
+              label={opt.label}
+              selected={prepStyle === opt.value}
               onPress={() => { Haptics.selectionAsync(); setPrepStyle(opt.value); }}
-            >
-              <Text style={[styles.pillText, prepStyle === opt.value && styles.pillTextActive]}>{opt.label}</Text>
-            </Pressable>
+            />
           ))}
-        </View>
+        </PillGrid>
 
         <Pressable
           style={styles.advancedToggle}
@@ -472,56 +464,52 @@ export default function NewMealPlanScreen() {
         {showAdvanced && (
           <View style={styles.advancedSection}>
             <Text style={styles.sectionTitle}>Budget</Text>
-            <View style={styles.pillGrid}>
+            <PillGrid>
               {BUDGET_OPTIONS.map((opt) => (
-                <Pressable
+                <Pill
                   key={opt.value}
-                  style={[styles.pill, budgetMode === opt.value && styles.pillActive]}
+                  label={opt.label}
+                  selected={budgetMode === opt.value}
                   onPress={() => { Haptics.selectionAsync(); setBudgetMode(opt.value); }}
-                >
-                  <Text style={[styles.pillText, budgetMode === opt.value && styles.pillTextActive]}>{opt.label}</Text>
-                </Pressable>
+                />
               ))}
-            </View>
+            </PillGrid>
 
             <Text style={styles.sectionTitle}>Cooking Time</Text>
-            <View style={styles.pillGrid}>
+            <PillGrid>
               {COOKING_TIME_OPTIONS.map((opt) => (
-                <Pressable
+                <Pill
                   key={opt.value}
-                  style={[styles.pill, cookingTime === opt.value && styles.pillActive]}
+                  label={opt.label}
+                  selected={cookingTime === opt.value}
                   onPress={() => { Haptics.selectionAsync(); setCookingTime(opt.value); }}
-                >
-                  <Text style={[styles.pillText, cookingTime === opt.value && styles.pillTextActive]}>{opt.label}</Text>
-                </Pressable>
+                />
               ))}
-            </View>
+            </PillGrid>
 
             <Text style={styles.sectionTitle}>Recipe Style</Text>
-            <View style={styles.pillGrid}>
+            <PillGrid>
               {AUTHENTICITY_OPTIONS.map((opt) => (
-                <Pressable
+                <Pill
                   key={opt.value}
-                  style={[styles.pill, authenticityMode === opt.value && styles.pillActive]}
+                  label={opt.label}
+                  selected={authenticityMode === opt.value}
                   onPress={() => { Haptics.selectionAsync(); setAuthenticityMode(opt.value); }}
-                >
-                  <Text style={[styles.pillText, authenticityMode === opt.value && styles.pillTextActive]}>{opt.label}</Text>
-                </Pressable>
+                />
               ))}
-            </View>
+            </PillGrid>
 
             <Text style={styles.sectionTitle}>Household Size</Text>
-            <View style={styles.pillGrid}>
+            <PillGrid>
               {[1, 2, 3, 4, 5, 6].map((n) => (
-                <Pressable
+                <Pill
                   key={n}
-                  style={[styles.pill, householdSize === n && styles.pillActive, { minWidth: 44 }]}
+                  label={String(n)}
+                  selected={householdSize === n}
                   onPress={() => { Haptics.selectionAsync(); setHouseholdSize(n); }}
-                >
-                  <Text style={[styles.pillText, householdSize === n && styles.pillTextActive]}>{n}</Text>
-                </Pressable>
+                />
               ))}
-            </View>
+            </PillGrid>
           </View>
         )}
 
@@ -594,16 +582,6 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   sectionHint: {
     fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textTertiary, marginBottom: 10,
   },
-  pillGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  pill: {
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10,
-    backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
-  },
-  pillActive: { backgroundColor: Colors.primary + "20", borderColor: Colors.primary },
-  pillConflict: { backgroundColor: Colors.error + "10", borderColor: Colors.error + "40" },
-  pillText: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.textSecondary },
-  pillTextActive: { color: Colors.primary },
-  pillTextConflict: { color: Colors.error, textDecorationLine: "line-through" },
   textInput: {
     backgroundColor: Colors.surface, borderRadius: 12, padding: 14, fontSize: 12,
     fontFamily: "Inter_400Regular", color: Colors.text, borderWidth: 1,
