@@ -1,0 +1,33 @@
+ASK: Fix onboarding workout-location -> equipment auto-preselect behavior.
+
+PROBLEM:
+In Profile, selecting workout location (Home/Gym/etc) automatically preselects Equipment Available defaults and it works.
+In Signup Onboarding, workout location defaults to Home (or user selects it) but equipment is NOT auto-preselected. I need onboarding to behave exactly like Profile.
+
+REQUIREMENTS:
+1) When onboarding workout location is selected/changed, auto-preselect the same default equipment set as Profile does for that location.
+2) Do not keep overriding equipment after the user manually changes equipment selections.
+   - Add a boolean flag like hasEditedEquipment (per onboarding flow) or equivalent.
+   - Only apply defaults if hasEditedEquipment is false.
+   - If the user changes location after editing equipment, do NOT wipe their selections. Optionally only ADD missing defaults for the new location but never remove existing user selections.
+3) The logic must be shared between Profile and Onboarding (no duplication).
+   - Extract the profile defaulting logic into a shared utility/module and reuse it from both screens.
+4) Support back/forward navigation in onboarding: state should persist and not re-override on re-render unless rules say so.
+
+WHAT TO CHANGE:
+- Find where Profile handles workoutLocation -> equipment defaults. Extract into shared function.
+- In Onboarding step that captures workout location (or the profile builder state), add a location-change handler or useEffect:
+  - on workoutLocation change:
+    - if !hasEditedEquipment: set equipment = defaultsForLocation
+    - else: merge-in defaults (optional) without removing user selections
+- Ensure equipment “pills” remain toggleable on/off normally.
+
+DELIVERABLES:
+- Code changes implementing the above
+- Identify files touched
+- Short explanation of how the shared utility is used in both Profile and Onboarding
+- Confirm manual equipment edits are not overridden
+
+DO NOT:
+- Change the visual design
+- Change the backend contracts unless required
