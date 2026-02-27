@@ -365,7 +365,7 @@ export default function NewWorkoutPlanScreen() {
               key={opt.value}
               label={opt.label}
               selected={goal === opt.value}
-              onPress={() => { Haptics.selectionAsync(); setGoal(opt.value); }}
+              onPress={() => { Haptics.selectionAsync(); setGoal(goal === opt.value ? "" : opt.value); }}
             />
           ))}
         </PillGrid>
@@ -377,7 +377,7 @@ export default function NewWorkoutPlanScreen() {
               key={opt.value}
               label={opt.label}
               selected={location === opt.value}
-              onPress={() => { Haptics.selectionAsync(); setLocation(opt.value); }}
+              onPress={() => { Haptics.selectionAsync(); setLocation(location === opt.value ? "" : opt.value); }}
             />
           ))}
         </PillGrid>
@@ -389,7 +389,7 @@ export default function NewWorkoutPlanScreen() {
               key={opt.value}
               label={opt.label}
               selected={trainingMode === opt.value}
-              onPress={() => { Haptics.selectionAsync(); setTrainingMode(opt.value); }}
+              onPress={() => { Haptics.selectionAsync(); setTrainingMode(trainingMode === opt.value ? "" : opt.value); }}
             />
           ))}
         </PillGrid>
@@ -401,7 +401,7 @@ export default function NewWorkoutPlanScreen() {
               key={opt.value}
               label={opt.label}
               selected={experienceLevel === opt.value}
-              onPress={() => { Haptics.selectionAsync(); setExperienceLevel(opt.value); }}
+              onPress={() => { Haptics.selectionAsync(); setExperienceLevel(experienceLevel === opt.value ? "" : opt.value); }}
             />
           ))}
         </PillGrid>
@@ -425,7 +425,7 @@ export default function NewWorkoutPlanScreen() {
               key={opt.value}
               label={opt.label}
               selected={sessionLength === opt.value}
-              onPress={() => { Haptics.selectionAsync(); setSessionLength(opt.value); }}
+              onPress={() => { Haptics.selectionAsync(); setSessionLength(sessionLength === opt.value ? 0 : opt.value); }}
             />
           ))}
         </PillGrid>

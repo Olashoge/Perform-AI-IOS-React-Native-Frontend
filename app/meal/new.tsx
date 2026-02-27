@@ -352,7 +352,7 @@ export default function NewMealPlanScreen() {
               key={opt.value}
               label={opt.label}
               selected={goal === opt.value}
-              onPress={() => { Haptics.selectionAsync(); setGoal(opt.value); }}
+              onPress={() => { Haptics.selectionAsync(); setGoal(goal === opt.value ? "" : opt.value); }}
             />
           ))}
         </PillGrid>
@@ -364,7 +364,7 @@ export default function NewMealPlanScreen() {
               key={n}
               label={`${n} meals`}
               selected={mealsPerDay === n}
-              onPress={() => { Haptics.selectionAsync(); setMealsPerDay(n); if (n === 3) setMealSlots([]); }}
+              onPress={() => { Haptics.selectionAsync(); setMealsPerDay(mealsPerDay === n ? 0 : n); if (n === 3) setMealSlots([]); }}
             />
           ))}
         </PillGrid>
@@ -436,7 +436,7 @@ export default function NewMealPlanScreen() {
               key={opt.value}
               label={opt.label}
               selected={spiceLevel === opt.value}
-              onPress={() => { Haptics.selectionAsync(); setSpiceLevel(opt.value); }}
+              onPress={() => { Haptics.selectionAsync(); setSpiceLevel(spiceLevel === opt.value ? "" : opt.value); }}
             />
           ))}
         </PillGrid>
@@ -448,7 +448,7 @@ export default function NewMealPlanScreen() {
               key={opt.value}
               label={opt.label}
               selected={prepStyle === opt.value}
-              onPress={() => { Haptics.selectionAsync(); setPrepStyle(opt.value); }}
+              onPress={() => { Haptics.selectionAsync(); setPrepStyle(prepStyle === opt.value ? "" : opt.value); }}
             />
           ))}
         </PillGrid>
@@ -470,7 +470,7 @@ export default function NewMealPlanScreen() {
                   key={opt.value}
                   label={opt.label}
                   selected={budgetMode === opt.value}
-                  onPress={() => { Haptics.selectionAsync(); setBudgetMode(opt.value); }}
+                  onPress={() => { Haptics.selectionAsync(); setBudgetMode(budgetMode === opt.value ? "" : opt.value); }}
                 />
               ))}
             </PillGrid>
@@ -482,7 +482,7 @@ export default function NewMealPlanScreen() {
                   key={opt.value}
                   label={opt.label}
                   selected={cookingTime === opt.value}
-                  onPress={() => { Haptics.selectionAsync(); setCookingTime(opt.value); }}
+                  onPress={() => { Haptics.selectionAsync(); setCookingTime(cookingTime === opt.value ? "" : opt.value); }}
                 />
               ))}
             </PillGrid>
@@ -494,7 +494,7 @@ export default function NewMealPlanScreen() {
                   key={opt.value}
                   label={opt.label}
                   selected={authenticityMode === opt.value}
-                  onPress={() => { Haptics.selectionAsync(); setAuthenticityMode(opt.value); }}
+                  onPress={() => { Haptics.selectionAsync(); setAuthenticityMode(authenticityMode === opt.value ? "" : opt.value); }}
                 />
               ))}
             </PillGrid>
@@ -506,7 +506,7 @@ export default function NewMealPlanScreen() {
                   key={n}
                   label={String(n)}
                   selected={householdSize === n}
-                  onPress={() => { Haptics.selectionAsync(); setHouseholdSize(n); }}
+                  onPress={() => { Haptics.selectionAsync(); setHouseholdSize(householdSize === n ? 0 : n); }}
                 />
               ))}
             </PillGrid>
