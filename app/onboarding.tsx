@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -98,6 +98,8 @@ export default function OnboardingScreen() {
 
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const [unitSystem, setUnitSystem] = useState("imperial");
   const [sex, setSex] = useState("");
@@ -133,7 +135,94 @@ export default function OnboardingScreen() {
     if (step > 1) setStep(step - 1);
   };
 
+  const clearFieldError = (field: string) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const validateFields = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (ageText) {
+      const age = parseInt(ageText, 10);
+      if (isNaN(age) || age < 1 || age > 120) {
+        errors.age = "Age must be a number between 1 and 120";
+      }
+    }
+
+    const isImperial = unitSystem === "imperial";
+
+    if (isImperial) {
+      if (heightFtText) {
+        const ft = parseInt(heightFtText, 10);
+        if (isNaN(ft) || ft < 1 || ft > 8) {
+          errors.heightFt = "Feet must be between 1 and 8";
+        }
+      }
+      if (heightInText) {
+        const inches = parseInt(heightInText, 10);
+        if (isNaN(inches) || inches < 0 || inches > 11) {
+          errors.heightIn = "Inches must be between 0 and 11";
+        }
+      }
+    } else {
+      if (heightCmText) {
+        const cm = parseInt(heightCmText, 10);
+        if (isNaN(cm) || cm < 50 || cm > 300) {
+          errors.heightCm = "Height must be between 50 and 300 cm";
+        }
+      }
+    }
+
+    if (weightText) {
+      const w = parseInt(weightText, 10);
+      const maxW = isImperial ? 700 : 320;
+      const unit = isImperial ? "lbs" : "kg";
+      if (isNaN(w) || w < 1 || w > maxW) {
+        errors.weight = `Weight must be a number between 1 and ${maxW} ${unit}`;
+      }
+    }
+
+    if (targetWeightText) {
+      const tw = parseInt(targetWeightText, 10);
+      const maxTW = isImperial ? 700 : 320;
+      const unit = isImperial ? "lbs" : "kg";
+      if (isNaN(tw) || tw < 1 || tw > maxTW) {
+        errors.targetWeight = `Target weight must be between 1 and ${maxTW} ${unit}`;
+      }
+    }
+
+    if (sessionDurationText) {
+      const sd = parseInt(sessionDurationText, 10);
+      if (isNaN(sd) || sd < 5 || sd > 300) {
+        errors.sessionDuration = "Session duration must be between 5 and 300 minutes";
+      }
+    }
+
+    if (sleepText) {
+      const sl = parseInt(sleepText, 10);
+      if (isNaN(sl) || sl < 1 || sl > 24) {
+        errors.sleep = "Sleep must be a number between 1 and 24 hours";
+      }
+    }
+
+    setFieldErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+      return false;
+    }
+    return true;
+  };
+
   const handleFinish = async () => {
+    if (!validateFields()) return;
+
     setSaving(true);
     try {
       const age = ageText ? parseInt(ageText, 10) : null;
@@ -205,7 +294,7 @@ export default function OnboardingScreen() {
     } catch (err: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       const apiMsg = err?.response?.data?.message || err?.response?.data?.error;
-      Alert.alert("Error", apiMsg || err?.message || "Failed to save profile");
+      Alert.alert("Something went wrong", apiMsg || "Failed to save your profile. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -234,14 +323,15 @@ export default function OnboardingScreen() {
 
       <Text style={styles.fieldLabel}>Age</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, fieldErrors.age && styles.inputError]}
         value={ageText}
-        onChangeText={(v) => setAgeText(intOnly(v))}
+        onChangeText={(v) => { setAgeText(intOnly(v)); clearFieldError("age"); }}
         keyboardType="number-pad"
         placeholderTextColor={Colors.textTertiary}
         placeholder="e.g. 28"
         maxLength={3}
       />
+      {fieldErrors.age ? <Text style={styles.errorText}>{fieldErrors.age}</Text> : null}
 
       {unitSystem === "imperial" ? (
         <>
@@ -249,25 +339,27 @@ export default function OnboardingScreen() {
           <View style={{ flexDirection: "row", gap: 12 }}>
             <View style={{ flex: 1 }}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, fieldErrors.heightFt && styles.inputError]}
                 value={heightFtText}
-                onChangeText={(v) => setHeightFtText(intOnly(v))}
+                onChangeText={(v) => { setHeightFtText(intOnly(v)); clearFieldError("heightFt"); }}
                 keyboardType="number-pad"
                 placeholderTextColor={Colors.textTertiary}
                 placeholder="ft"
                 maxLength={1}
               />
+              {fieldErrors.heightFt ? <Text style={styles.errorText}>{fieldErrors.heightFt}</Text> : null}
             </View>
             <View style={{ flex: 1 }}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, fieldErrors.heightIn && styles.inputError]}
                 value={heightInText}
-                onChangeText={(v) => setHeightInText(intOnly(v))}
+                onChangeText={(v) => { setHeightInText(intOnly(v)); clearFieldError("heightIn"); }}
                 keyboardType="number-pad"
                 placeholderTextColor={Colors.textTertiary}
                 placeholder="in"
                 maxLength={2}
               />
+              {fieldErrors.heightIn ? <Text style={styles.errorText}>{fieldErrors.heightIn}</Text> : null}
             </View>
           </View>
         </>
@@ -275,14 +367,15 @@ export default function OnboardingScreen() {
         <>
           <Text style={styles.fieldLabel}>Height (cm)</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, fieldErrors.heightCm && styles.inputError]}
             value={heightCmText}
-            onChangeText={(v) => setHeightCmText(intOnly(v))}
+            onChangeText={(v) => { setHeightCmText(intOnly(v)); clearFieldError("heightCm"); }}
             keyboardType="number-pad"
             placeholderTextColor={Colors.textTertiary}
             placeholder="e.g. 178"
             maxLength={3}
           />
+          {fieldErrors.heightCm ? <Text style={styles.errorText}>{fieldErrors.heightCm}</Text> : null}
         </>
       )}
 
@@ -290,14 +383,15 @@ export default function OnboardingScreen() {
         Weight ({unitSystem === "imperial" ? "lbs" : "kg"})
       </Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, fieldErrors.weight && styles.inputError]}
         value={weightText}
-        onChangeText={(v) => setWeightText(intOnly(v))}
+        onChangeText={(v) => { setWeightText(intOnly(v)); clearFieldError("weight"); }}
         keyboardType="number-pad"
         placeholderTextColor={Colors.textTertiary}
         placeholder={unitSystem === "imperial" ? "e.g. 155" : "e.g. 70"}
         maxLength={3}
       />
+      {fieldErrors.weight ? <Text style={styles.errorText}>{fieldErrors.weight}</Text> : null}
     </View>
   );
 
@@ -318,14 +412,15 @@ export default function OnboardingScreen() {
         Target Weight ({unitSystem === "imperial" ? "lbs" : "kg"}) — optional
       </Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, fieldErrors.targetWeight && styles.inputError]}
         value={targetWeightText}
-        onChangeText={(v) => setTargetWeightText(intOnly(v))}
+        onChangeText={(v) => { setTargetWeightText(intOnly(v)); clearFieldError("targetWeight"); }}
         keyboardType="number-pad"
         placeholderTextColor={Colors.textTertiary}
         placeholder="Optional"
         maxLength={3}
       />
+      {fieldErrors.targetWeight ? <Text style={styles.errorText}>{fieldErrors.targetWeight}</Text> : null}
     </View>
   );
 
@@ -361,14 +456,15 @@ export default function OnboardingScreen() {
 
       <Text style={styles.fieldLabel}>Session Duration (minutes)</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, fieldErrors.sessionDuration && styles.inputError]}
         value={sessionDurationText}
-        onChangeText={(v) => setSessionDurationText(intOnly(v))}
+        onChangeText={(v) => { setSessionDurationText(intOnly(v)); clearFieldError("sessionDuration"); }}
         keyboardType="number-pad"
         placeholderTextColor={Colors.textTertiary}
         placeholder="45"
         maxLength={3}
       />
+      {fieldErrors.sessionDuration ? <Text style={styles.errorText}>{fieldErrors.sessionDuration}</Text> : null}
 
       <Text style={styles.fieldLabel}>Workout Location</Text>
       <PillGroup
@@ -426,14 +522,15 @@ export default function OnboardingScreen() {
 
       <Text style={styles.fieldLabel}>Sleep (hours per night)</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, fieldErrors.sleep && styles.inputError]}
         value={sleepText}
-        onChangeText={(v) => setSleepText(intOnly(v))}
+        onChangeText={(v) => { setSleepText(intOnly(v)); clearFieldError("sleep"); }}
         keyboardType="number-pad"
         placeholderTextColor={Colors.textTertiary}
         placeholder="e.g. 7"
         maxLength={2}
       />
+      {fieldErrors.sleep ? <Text style={styles.errorText}>{fieldErrors.sleep}</Text> : null}
 
       <Text style={styles.fieldLabel}>Stress Level</Text>
       <PillGroup
@@ -473,6 +570,7 @@ export default function OnboardingScreen() {
       </View>
 
       <ScrollView
+        ref={scrollViewRef}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom + webBottomInset }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -597,6 +695,16 @@ function createStyles(Colors: ThemeColors) {
       paddingVertical: 12,
       fontSize: 16,
       color: Colors.text,
+    },
+    inputError: {
+      borderColor: Colors.error,
+      borderWidth: 1.5,
+    },
+    errorText: {
+      fontSize: 12,
+      color: Colors.error,
+      marginTop: 4,
+      fontFamily: "Inter_500Medium",
     },
     bottomBar: {
       position: "absolute" as const,
