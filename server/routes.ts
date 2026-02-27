@@ -187,6 +187,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/token-login", proxyToExternal);
   app.post("/api/auth/signup", proxyToExternal);
   app.post("/api/auth/refresh", proxyToExternal);
+  app.post("/api/auth/change-password", proxyToExternal);
+
+  app.delete("/api/user", async (req: any, res: any) => {
+    const userId = extractUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      await db.delete(completions).where(eq(completions.userId, userId));
+      console.log(`[DELETE] Cleaned up local completions for user ${userId}`);
+    } catch (err) {
+      console.error("Error cleaning up local completions:", err);
+    }
+
+    proxyToExternal(req, res);
+  });
 
   app.get("/api/weekly-summary", (req, res) => {
     proxyAndTransform(req, res, async (data, userId) => {

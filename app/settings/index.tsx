@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,9 @@ import {
   Pressable,
   Platform,
   Alert,
+  TextInput,
+  ActivityIndicator,
+  Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "@/components/Icon";
@@ -17,6 +20,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useWeekStart } from "@/lib/week-start-context";
 import { useProfile } from "@/lib/api-hooks";
 import { useQueryClient } from "@tanstack/react-query";
+import apiClient from "@/lib/api-client";
 
 function SegmentedControl({
   options,
@@ -69,6 +73,87 @@ export default function SettingsIndexScreen() {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const userEmail = user?.email || (profile as any)?.email || "Not set";
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
+  const isEmailUser = !user?.provider || user?.provider === "email";
+  const deleteDisabled = deleteConfirmText !== "DELETE" || deletingAccount || (isEmailUser && !deletePassword);
+
+  const handleChangePassword = async () => {
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      setPasswordError("All fields are required.");
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPasswordError("New password must be at least 8 characters.");
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setPasswordError("New passwords do not match.");
+      return;
+    }
+    if (currentPassword === newPassword) {
+      setPasswordError("New password must be different from current password.");
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      await apiClient.post("/api/auth/change-password", {
+        currentPassword,
+        newPassword,
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setPasswordSuccess("Password changed successfully.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.response?.data?.error || "Failed to change password.";
+      setPasswordError(msg);
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE") return;
+    if (isEmailUser && !deletePassword) return;
+
+    setDeletingAccount(true);
+    try {
+      await apiClient.delete("/api/user", {
+        data: isEmailUser ? { password: deletePassword } : undefined,
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setDeleteModalVisible(false);
+      queryClient.clear();
+      await logout();
+      router.replace("/welcome");
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.response?.data?.error || "Failed to delete account.";
+      if (Platform.OS === "web") {
+        alert(msg);
+      } else {
+        Alert.alert("Error", msg);
+      }
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
 
   const handleLogout = () => {
     const doLogout = async () => {
@@ -160,6 +245,69 @@ export default function SettingsIndexScreen() {
         </Text>
       </View>
 
+      <Text style={styles.sectionTitle}>SECURITY</Text>
+      <View style={styles.card}>
+        {isEmailUser ? (
+          <>
+            <TextInput
+              style={styles.input}
+              placeholder="Current password"
+              placeholderTextColor={Colors.textTertiary}
+              secureTextEntry
+              value={currentPassword}
+              onChangeText={(t) => { setCurrentPassword(t); setPasswordError(""); setPasswordSuccess(""); }}
+              autoCapitalize="none"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="New password"
+              placeholderTextColor={Colors.textTertiary}
+              secureTextEntry
+              value={newPassword}
+              onChangeText={(t) => { setNewPassword(t); setPasswordError(""); setPasswordSuccess(""); }}
+              autoCapitalize="none"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Confirm new password"
+              placeholderTextColor={Colors.textTertiary}
+              secureTextEntry
+              value={confirmNewPassword}
+              onChangeText={(t) => { setConfirmNewPassword(t); setPasswordError(""); setPasswordSuccess(""); }}
+              autoCapitalize="none"
+            />
+            {!!passwordError && (
+              <Text style={styles.errorText}>{passwordError}</Text>
+            )}
+            {!!passwordSuccess && (
+              <Text style={styles.successText}>{passwordSuccess}</Text>
+            )}
+            <Pressable
+              style={({ pressed }) => [
+                styles.changePasswordBtn,
+                pressed && { opacity: 0.8 },
+                changingPassword && { opacity: 0.6 },
+              ]}
+              onPress={handleChangePassword}
+              disabled={changingPassword}
+            >
+              {changingPassword ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.changePasswordBtnText}>Change Password</Text>
+              )}
+            </Pressable>
+          </>
+        ) : (
+          <View style={styles.providerRow}>
+            <Icon name="lock" size={20} color={Colors.textSecondary} />
+            <Text style={styles.providerText}>
+              Password is managed by your sign-in provider.
+            </Text>
+          </View>
+        )}
+      </View>
+
       <Pressable
         style={({ pressed }) => [styles.signOutButton, pressed && { opacity: 0.8 }]}
         onPress={handleLogout}
@@ -167,6 +315,90 @@ export default function SettingsIndexScreen() {
         <Icon name="logOut" size={20} color={Colors.error} />
         <Text style={styles.signOutText}>Sign Out</Text>
       </Pressable>
+
+      <Text style={[styles.sectionTitle, { color: Colors.error }]}>DANGER ZONE</Text>
+      <View style={[styles.card, { borderWidth: 1, borderColor: Colors.error + "30" }]}>
+        <Text style={styles.dangerDescription}>
+          Permanently delete your account and all associated data. This action cannot be undone.
+        </Text>
+        <Pressable
+          style={({ pressed }) => [styles.deleteAccountBtn, pressed && { opacity: 0.8 }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+            setDeleteConfirmText("");
+            setDeletePassword("");
+            setDeleteModalVisible(true);
+          }}
+        >
+          <Icon name="trash" size={20} color="#FFFFFF" />
+          <Text style={styles.deleteAccountBtnText}>Delete Account</Text>
+        </Pressable>
+      </View>
+
+      <Modal
+        visible={deleteModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDeleteModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: Colors.surface }]}>
+            <Text style={styles.modalTitle}>Delete Account</Text>
+            <Text style={styles.modalDescription}>
+              This will permanently delete your account, plans, preferences, and all data. This cannot be undone.
+            </Text>
+
+            {isEmailUser && (
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your password"
+                placeholderTextColor={Colors.textTertiary}
+                secureTextEntry
+                value={deletePassword}
+                onChangeText={setDeletePassword}
+                autoCapitalize="none"
+              />
+            )}
+
+            <Text style={styles.modalLabel}>
+              Type <Text style={{ fontFamily: "Inter_700Bold" }}>DELETE</Text> to confirm
+            </Text>
+            <TextInput
+              style={styles.input}
+              placeholder="DELETE"
+              placeholderTextColor={Colors.textTertiary}
+              value={deleteConfirmText}
+              onChangeText={setDeleteConfirmText}
+              autoCapitalize="characters"
+            />
+
+            <View style={styles.modalButtons}>
+              <Pressable
+                style={({ pressed }) => [styles.modalCancelBtn, pressed && { opacity: 0.8 }]}
+                onPress={() => setDeleteModalVisible(false)}
+                disabled={deletingAccount}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.modalDeleteBtn,
+                  pressed && !deleteDisabled && { opacity: 0.8 },
+                  deleteDisabled && { opacity: 0.4 },
+                ]}
+                onPress={handleDeleteAccount}
+                disabled={deleteDisabled}
+              >
+                {deletingAccount ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.modalDeleteText}>Delete Account</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
     </View>
   );
@@ -288,5 +520,132 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     fontSize: 14,
     fontFamily: "Inter_600SemiBold",
     color: Colors.error,
+  },
+  input: {
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
+    fontFamily: "Inter_500Medium",
+    color: Colors.text,
+    marginBottom: 10,
+  },
+  errorText: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: Colors.error,
+    marginBottom: 10,
+  },
+  successText: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: Colors.accent,
+    marginBottom: 10,
+  },
+  changePasswordBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginTop: 4,
+  },
+  changePasswordBtnText: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: "#FFFFFF",
+  },
+  providerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  providerText: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    color: Colors.textSecondary,
+    flex: 1,
+  },
+  dangerDescription: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textSecondary,
+    marginBottom: 14,
+    lineHeight: 18,
+  },
+  deleteAccountBtn: {
+    backgroundColor: Colors.error,
+    borderRadius: 10,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  deleteAccountBtnText: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: "#FFFFFF",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  modalContent: {
+    width: "100%",
+    maxWidth: 400,
+    borderRadius: 20,
+    padding: 24,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontFamily: "Inter_700Bold",
+    color: Colors.error,
+    marginBottom: 8,
+  },
+  modalDescription: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textSecondary,
+    marginBottom: 20,
+    lineHeight: 18,
+  },
+  modalLabel: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    color: Colors.text,
+    marginBottom: 8,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 8,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  modalCancelText: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.text,
+  },
+  modalDeleteBtn: {
+    flex: 1,
+    backgroundColor: Colors.error,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  modalDeleteText: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: "#FFFFFF",
   },
 });
