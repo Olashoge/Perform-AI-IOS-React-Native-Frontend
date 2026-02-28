@@ -10,6 +10,7 @@ import {
   Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { Icon } from "@/components/Icon";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -67,6 +68,8 @@ export default function Step4Screen() {
   const { state } = useWellness();
   const generateMutation = useGenerateGoalPlan();
   const [submitting, setSubmitting] = useState(false);
+  const [showMealAdvanced, setShowMealAdvanced] = useState(false);
+  const [showTrainingAdvanced, setShowTrainingAdvanced] = useState(false);
 
   const stepCount = getStepCount(state.planType);
   const currentStep = stepCount;
@@ -222,18 +225,35 @@ export default function Step4Screen() {
               label="Foods to Avoid"
               value={state.mealForm.foodsToAvoid.length > 0 ? state.mealForm.foodsToAvoid.join(", ") : "None"}
             />
-            <ReviewRow
-              label="Allergies"
-              value={state.mealForm.allergies || "None"}
-            />
             <ReviewRow label="Meals per Day" value={mealSlotsDisplay()} />
             <ReviewRow label="Prep Style" value={formatLabel(state.mealForm.prepStyle)} />
-            <ReviewRow label="Budget" value={formatLabel(state.mealForm.budgetMode)} />
-            <ReviewRow label="Cooking Time" value={formatLabel(state.mealForm.cookingTime)} />
-            <ReviewRow label="Spice Level" value={formatLabel(state.mealForm.spiceLevel)} />
-            <ReviewRow label="Recipe Style" value={formatLabel(state.mealForm.authenticityMode)} />
-            {state.mealForm.householdSize > 1 && (
-              <ReviewRow label="Household Size" value={String(state.mealForm.householdSize)} />
+            <Pressable
+              style={styles.advancedToggle}
+              onPress={() => setShowMealAdvanced((v) => !v)}
+            >
+              <Text style={styles.advancedToggleText}>
+                {showMealAdvanced ? "Hide details" : "More details"}
+              </Text>
+              <Ionicons
+                name={showMealAdvanced ? "chevron-up-outline" : "chevron-down-outline"}
+                size={14}
+                color={Colors.primary}
+              />
+            </Pressable>
+            {showMealAdvanced && (
+              <>
+                <ReviewRow
+                  label="Allergies"
+                  value={state.mealForm.allergies || "None"}
+                />
+                <ReviewRow label="Budget" value={formatLabel(state.mealForm.budgetMode)} />
+                <ReviewRow label="Cooking Time" value={formatLabel(state.mealForm.cookingTime)} />
+                <ReviewRow label="Spice Level" value={formatLabel(state.mealForm.spiceLevel)} />
+                <ReviewRow label="Recipe Style" value={formatLabel(state.mealForm.authenticityMode)} />
+                {state.mealForm.householdSize > 1 && (
+                  <ReviewRow label="Household Size" value={String(state.mealForm.householdSize)} />
+                )}
+              </>
             )}
           </View>
         )}
@@ -248,7 +268,6 @@ export default function Step4Screen() {
             </View>
             <ReviewRow label="Location" value={formatLabel(state.workoutForm.location || "Not set")} />
             <ReviewRow label="Training Mode" value={formatLabel(state.workoutForm.trainingMode)} />
-            <ReviewRow label="Experience Level" value={formatLabel(state.workoutForm.experienceLevel)} />
             <ReviewRow
               label="Focus Areas"
               value={state.workoutForm.focusAreas.join(", ") || "None"}
@@ -258,11 +277,29 @@ export default function Step4Screen() {
               value={state.workoutForm.daysOfWeek.join(", ") || "None"}
             />
             <ReviewRow label="Session Length" value={`${state.workoutForm.sessionLength}min`} />
-            <ReviewRow label="Equipment" value={equipmentDisplay()} />
-            <ReviewRow
-              label="Limitations"
-              value={state.workoutForm.limitations || "None"}
-            />
+            <Pressable
+              style={styles.advancedToggle}
+              onPress={() => setShowTrainingAdvanced((v) => !v)}
+            >
+              <Text style={styles.advancedToggleText}>
+                {showTrainingAdvanced ? "Hide details" : "More details"}
+              </Text>
+              <Ionicons
+                name={showTrainingAdvanced ? "chevron-up-outline" : "chevron-down-outline"}
+                size={14}
+                color={Colors.primary}
+              />
+            </Pressable>
+            {showTrainingAdvanced && (
+              <>
+                <ReviewRow label="Experience Level" value={formatLabel(state.workoutForm.experienceLevel)} />
+                <ReviewRow label="Equipment" value={equipmentDisplay()} />
+                <ReviewRow
+                  label="Limitations"
+                  value={state.workoutForm.limitations || "None"}
+                />
+              </>
+            )}
           </View>
         )}
       </ScrollView>
@@ -374,9 +411,22 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    paddingVertical: 8,
+    paddingVertical: 6,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.border,
+  },
+  advancedToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    paddingVertical: 8,
+    marginTop: 4,
+  },
+  advancedToggleText: {
+    fontSize: 11,
+    fontFamily: "Inter_500Medium",
+    color: Colors.primary,
   },
   reviewLabel: {
     fontSize: 12,

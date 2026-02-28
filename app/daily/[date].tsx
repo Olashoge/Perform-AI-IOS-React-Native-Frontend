@@ -1160,8 +1160,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     borderColor: Colors.primary,
   },
   itemNameCompleted: {
-    color: Colors.textSecondary,
-    textDecorationLine: "line-through",
+    opacity: 0.55,
   },
   workoutBadgeRow: {
     flexDirection: "row",
@@ -1415,18 +1414,17 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   generatingBanner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    backgroundColor: Colors.primary + "15",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: Colors.primary + "30",
+    gap: 10,
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 16,
   },
   generatingText: {
     fontSize: 12,
-    fontFamily: "Inter_500Medium",
-    color: Colors.primary,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textSecondary,
     flex: 1,
   },
   sheetOverlay: {

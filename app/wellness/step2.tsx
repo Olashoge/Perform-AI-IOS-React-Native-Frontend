@@ -15,36 +15,38 @@ import { Icon } from "@/components/Icon";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
-import { useProfile, ProfileData } from "@/lib/api-hooks";
+import { useProfile } from "@/lib/api-hooks";
 import { useWellness } from "@/lib/wellness-context";
 import { Pill, PillGrid } from "@/components/Pill";
+import { ExpandableChipSection } from "@/components/ExpandableChipSection";
+import { PlanWizardSummaryBar } from "@/components/PlanWizardSummaryBar";
 
 const DIET_STYLE_OPTIONS = [
   "No Preference",
-  "Nigerian",
+  "American",
   "Mediterranean",
+  "Mexican",
+  "Italian",
+  "Nigerian",
   "Vegetarian",
   "Vegan",
   "Keto",
   "Paleo",
   "Indian",
   "Chinese",
-  "Mexican",
   "Japanese",
   "Korean",
   "Thai",
-  "Italian",
-  "American",
 ];
 
 const FOODS_TO_AVOID_OPTIONS = [
-  "Pork",
-  "Shellfish",
-  "Dairy",
   "Gluten",
-  "Soy",
-  "Eggs",
+  "Dairy",
+  "Shellfish",
   "Nuts",
+  "Eggs",
+  "Soy",
+  "Pork",
   "Red Meat",
   "Fish",
   "Mushrooms",
@@ -85,8 +87,6 @@ const AUTHENTICITY_OPTIONS: { value: string; label: string }[] = [
 
 const MEAL_SLOT_OPTIONS = ["breakfast", "lunch", "dinner"];
 
-import { kgToLbs } from "@/lib/weight-utils";
-
 function formatLabel(value: string): string {
   return value
     .split("_")
@@ -98,59 +98,6 @@ function getStepCount(planType: string): number {
   return planType === "both" ? 4 : 3;
 }
 
-function ProfileSummaryCard({ profile }: { profile: ProfileData }) {
-  const Colors = useColors();
-  const styles = useMemo(() => createStyles(Colors), [Colors]);
-
-  const isImperial = profile.unitSystem === "imperial";
-  const weightDisplay =
-    profile.weightKg != null
-      ? isImperial
-        ? `${kgToLbs(profile.weightKg)} lbs`
-        : `${profile.weightKg} kg`
-      : null;
-
-  const items: { label: string; value: string }[] = [];
-  if (profile.age != null) items.push({ label: "Age", value: String(profile.age) });
-  if (weightDisplay) items.push({ label: "Weight", value: weightDisplay });
-  if (profile.primaryGoal) items.push({ label: "Goal", value: formatLabel(profile.primaryGoal) });
-  if (profile.trainingExperience) items.push({ label: "Experience", value: formatLabel(profile.trainingExperience) });
-  if (profile.trainingDaysOfWeek?.length)
-    items.push({ label: "Training days", value: profile.trainingDaysOfWeek.map((d) => d.charAt(0).toUpperCase() + d.slice(1)).join(", ") });
-  if (profile.allergiesIntolerances?.length)
-    items.push({ label: "Allergies", value: profile.allergiesIntolerances.join(", ") });
-  if (profile.foodsToAvoid?.length)
-    items.push({ label: "Foods to avoid", value: profile.foodsToAvoid.join(", ") });
-  if (profile.healthConstraints?.length)
-    items.push({ label: "Health constraints", value: profile.healthConstraints.join(", ") });
-  if (profile.favoriteMealsText)
-    items.push({ label: "Favorite meals", value: profile.favoriteMealsText });
-  if (profile.bodyContext)
-    items.push({ label: "Body notes", value: profile.bodyContext });
-
-  if (items.length === 0) return null;
-
-  return (
-    <View style={styles.profileCard}>
-      <View style={styles.profileCardHeader}>
-        <Text style={styles.profileCardTitle}>Your Profile</Text>
-        <Pressable onPress={() => router.push("/(tabs)/profile")}>
-          <Text style={styles.profileEditLink}>Edit</Text>
-        </Pressable>
-      </View>
-      <View style={styles.profileCardGrid}>
-        {items.map((item) => (
-          <View key={item.label} style={styles.profileCardItem}>
-            <Text style={styles.profileCardLabel}>{item.label}</Text>
-            <Text style={styles.profileCardValue} numberOfLines={2}>
-              {item.value}
-            </Text>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-}
 
 export default function Step2Screen() {
   const Colors = useColors();
@@ -265,31 +212,23 @@ export default function Step2Screen() {
           Customize your meal plan preferences
         </Text>
 
-        {profile && <ProfileSummaryCard profile={profile} />}
+        {profile && <PlanWizardSummaryBar profile={profile} />}
 
         <Text style={styles.sectionLabel}>Diet / Cuisine Styles</Text>
-        <PillGrid>
-          {DIET_STYLE_OPTIONS.map((style) => (
-            <Pill
-              key={style}
-              label={style}
-              selected={mealForm.dietStyles.includes(style)}
-              onPress={() => handleDietStyleToggle(style)}
-            />
-          ))}
-        </PillGrid>
+        <ExpandableChipSection
+          items={DIET_STYLE_OPTIONS}
+          selectedItems={mealForm.dietStyles}
+          onToggle={handleDietStyleToggle}
+          initialVisibleCount={6}
+        />
 
         <Text style={styles.sectionLabel}>Foods to Avoid</Text>
-        <PillGrid>
-          {FOODS_TO_AVOID_OPTIONS.map((food) => (
-            <Pill
-              key={food}
-              label={food}
-              selected={mealForm.foodsToAvoid.includes(food)}
-              onPress={() => handleFoodToggle(food)}
-            />
-          ))}
-        </PillGrid>
+        <ExpandableChipSection
+          items={FOODS_TO_AVOID_OPTIONS}
+          selectedItems={mealForm.foodsToAvoid}
+          onToggle={handleFoodToggle}
+          initialVisibleCount={6}
+        />
 
         <Text style={styles.sectionLabel}>Allergies & Intolerances</Text>
         <TextInput
@@ -748,49 +687,5 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     fontSize: 14,
     fontFamily: "Inter_600SemiBold",
     color: "#fff",
-  },
-  profileCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 4,
-  },
-  profileCardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  profileCardTitle: {
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
-    color: Colors.textSecondary,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  profileEditLink: {
-    fontSize: 11,
-    fontFamily: "Inter_500Medium",
-    color: Colors.primary,
-  },
-  profileCardGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  profileCardItem: {
-    width: "48%" as any,
-    flexBasis: "47%",
-  },
-  profileCardLabel: {
-    fontSize: 9,
-    fontFamily: "Inter_500Medium",
-    color: Colors.textTertiary,
-    marginBottom: 2,
-  },
-  profileCardValue: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    color: Colors.text,
   },
 });

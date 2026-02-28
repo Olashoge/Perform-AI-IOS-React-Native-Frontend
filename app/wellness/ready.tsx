@@ -194,6 +194,6 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   primaryButtonText: {
     fontSize: 15,
     fontFamily: "Inter_600SemiBold",
-    color: Colors.text,
+    color: "#fff",
   },
 });

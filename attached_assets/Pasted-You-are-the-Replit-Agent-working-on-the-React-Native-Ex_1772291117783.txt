@@ -1,0 +1,181 @@
+You are the Replit Agent working on the React Native (Expo) iOS app for Perform AI.
+
+Goal: implement UI/UX cleanups to reduce cognitive load and improve premium feel.
+IMPORTANT: Do NOT change any logic related to “Meals per Day” consistency (#9). Ignore that entirely.
+
+Work in small commits. After each section, run the app and verify on iPhone simulator (or Expo Go). Do not refactor unrelated code.
+
+=====================================================================
+CLEANUP SET A — Reduce pill overload across setup flows (HIGH PRIORITY)
+=====================================================================
+
+Problem:
+Setup screens use too many chips/pills at once (Goal, Cuisine, Foods to Avoid, Equipment, Training Days, etc.). It feels visually saturated.
+
+Approach:
+Implement “progressive disclosure”:
+1) Keep top 6 most common options visible.
+2) Put the rest behind “Show more” / “Show less”.
+3) Convert some large option grids into collapsible “Advanced filters” sections.
+
+Implementation requirements:
+- Create a reusable component:
+  - <ExpandableChipSection title="Cuisine Styles" items=[...] initialVisibleCount={6} />
+  - supports show more/less
+  - supports multi-select and single-select modes
+  - retains selection state when collapsed
+- Apply to:
+  - Nutrition Setup: Diet/Cuisine Styles, Foods to Avoid
+  - Training Setup: Equipment (Cardio + Free Weights + Machines)
+- For “Foods to Avoid”: keep only the most common visible (Gluten, Dairy, Shellfish, Nuts, Eggs, Soy). Everything else under show more.
+- For Cuisine Styles: keep (No Preference, American, Mediterranean, Mexican, Italian, Nigerian) visible. Everything else under show more.
+
+Acceptance criteria:
+- On first render, each chip section shows max 6 chips + a Show more link if more exist.
+- Sections remain visually stable; no layout jumping beyond the section.
+- Selections persist across expand/collapse and navigation back/forward.
+
+=====================================================================
+CLEANUP SET B — Collapse repeated “Your Profile” blocks on setup screens
+=====================================================================
+
+Problem:
+Each setup screen repeats the same “Your Profile” card at top, increasing vertical clutter.
+
+Approach:
+- Show full profile card only on the first screen of the wizard (Wellness Overview).
+- On subsequent steps, replace with a compact one-line summary row:
+  “Muscle Gain • Beginner • Gym • 3 days/week • 155 lb” + “Edit” action.
+- The compact summary row should be small and not dominate the screen.
+
+Implementation requirements:
+- Create reusable component:
+  - <PlanWizardSummaryBar profile=... onEdit=... />
+- Replace “Your Profile” large card on:
+  - Nutrition Setup
+  - Training Setup
+  - Review & Submit (optional: use compact summary at top only)
+
+Acceptance criteria:
+- Only first step shows the full profile card.
+- All other steps show compact summary bar.
+- Edit action still works and navigates correctly.
+
+=====================================================================
+CLEANUP SET C — Simplify Equipment UI via progressive disclosure
+=====================================================================
+
+Problem:
+Equipment selection looks like a catalog (too many options visible).
+
+Approach:
+Make equipment selection staged:
+1) Ask Location first (Gym/Home/Outdoors).
+2) Then show only relevant groups, collapsed by default:
+   - Cardio (collapsed)
+   - Free Weights (collapsed)
+   - Machines (collapsed)
+3) Each group shows 4 common items visible + “Show more”.
+4) Preselect sensible defaults based on location:
+   - Gym: Dumbbells, Barbells, Bench, Treadmill (selected)
+   - Home: Dumbbells, Adjustable dumbbells, Jump rope (selected)
+   - Outdoors: Jump rope + Bodyweight (if exists) (selected)
+(If the app doesn’t have Bodyweight as equipment, skip it.)
+
+Implementation requirements:
+- Use the ExpandableChipSection or a similar <ExpandableAccordionSection>.
+- Implement defaults carefully:
+  - Apply defaults only when user has no equipment selected yet (avoid overwriting existing saved prefs).
+- Keep selection UI identical (outline chips), just less exposed.
+
+Acceptance criteria:
+- Equipment screen feels 40–60% shorter on first view.
+- Defaults appear only on first time / empty state.
+- User can still access all equipment options via expand.
+
+=====================================================================
+CLEANUP SET D — Tighten Review & Submit density
+=====================================================================
+
+Problem:
+Review page feels dense and “administrative”.
+
+Approach:
+- Convert long table-like blocks into compact “Summary Rows”:
+  Section header + 4–6 rows max.
+- Hide rarely changed fields under “Advanced” accordion.
+
+Implementation requirements:
+- Create component:
+  - <SummaryCard title="Nutrition" rows=[{label, value}] onEdit=... />
+- Keep primary CTA fixed (Generate My Plan) but add breathing space above it.
+- Reduce vertical padding inside large containers slightly (5–10%) to remove “spreadsheet feel”.
+
+Acceptance criteria:
+- Review page shows at-a-glance essentials without feeling like a form.
+- Advanced section collapses cleanly.
+
+=====================================================================
+CLEANUP SET E — Refine Today screen visuals (completed state + workout generating)
+=====================================================================
+
+Problems:
+1) Completed meals use strikethrough (harsh).
+2) “Generating your workout…” block looks like an error.
+
+Approach:
+1) Replace strikethrough with:
+   - title opacity ~0.55–0.65
+   - keep text readable
+   - keep check icon state
+2) For workout generating:
+   - Use a subtle inline loader row:
+     icon spinner + “Workout loading…” + subtext “Finishing details”
+   - It should not look like a disabled alert panel.
+
+Implementation requirements:
+- Identify meal item component used on Today view and adjust completed styling.
+- Ensure accessibility: completed items still have adequate contrast in light mode.
+- Replace the current “Generating your workout…” container with a lighter, slimmer component.
+
+Acceptance criteria:
+- Completed items no longer use strikethrough.
+- Workout-loading UI looks intentional, not like a warning state.
+
+=====================================================================
+CLEANUP SET F — Global guardrails for text overflow / container overshoot
+=====================================================================
+
+Problem:
+Some pages (ex: Workout Plan list) allow text to overshoot containers.
+
+Approach:
+Add consistent text constraints in reusable list rows/cards:
+- Title: numberOfLines={2} ellipsizeMode="tail"
+- Subtitle/description: numberOfLines={2–3}
+- Ensure row uses flexShrink: 1 and proper maxWidth rules.
+- Ensure icons/actions on right don’t push text outside bounds.
+
+Implementation requirements:
+- Find components rendering:
+  - Workout plan day cards
+  - Plan list rows (Meal Plans / Training Plans / Wellness Plans)
+- Apply consistent layout:
+  - left content in a flex container with flex: 1, minWidth: 0
+  - right actions fixed width
+- Add a small utility style:
+  - textContainer: { flex: 1, minWidth: 0 }
+  - titleText: { flexShrink: 1 }
+- Verify on smallest iPhone width.
+
+Acceptance criteria:
+- No text crosses card bounds anywhere in screenshots’ screens.
+- Long plan titles truncate gracefully.
+
+After plans have been generated the button to click to go view the newly created plan is currently not allowing the text to show obviously because of color. The text color and the button color is very similar. Can you make sure that on light screen, the text on the button is very obvious to read and also on dark screen the text is still very obvious to read my making sure the color combination makes sense. Keep button colors for both but update text colors
+=====================================================================
+Deliverables
+=====================================================================
+1) Commit(s) implementing A–F above (excluding #9).
+2) Short changelog in final message listing each fix and where it applies.
+3) Screens verified: Wellness Overview, Nutrition Setup, Training Setup, Review & Submit, Today, Plans lists, Workout Plan view.
