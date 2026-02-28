@@ -22,7 +22,6 @@ import { useProfile } from "@/lib/api-hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/lib/api-client";
 import { getApiUrl } from "@/lib/query-client";
-import { getAccessToken } from "@/lib/api-client";
 
 function SegmentedControl({
   options,
@@ -136,13 +135,11 @@ export default function SettingsIndexScreen() {
     if (isEmailUser && !deletePassword) return;
 
     setDeletingAccount(true);
+    const baseURL = getApiUrl();
+    if (__DEV__) console.log(`[DeleteAccount] DELETE ${baseURL}api/me`);
+
     try {
-      const token = await getAccessToken();
-      const proxyUrl = getApiUrl();
-      const response = await apiClient.delete("/api/me", {
-        baseURL: proxyUrl,
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      const response = await apiClient.delete("/api/me", { baseURL });
 
       if (response.data?.success) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -159,6 +156,7 @@ export default function SettingsIndexScreen() {
       const data = err.response?.data;
 
       if (data && typeof data === "object") {
+        if (__DEV__) console.log(`[DeleteAccount] Failed: status=${err.response?.status} code=${data.code}`);
         msg = data.message || msg;
 
         if (data.code === "AUTH_REQUIRED") {
