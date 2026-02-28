@@ -190,24 +190,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/change-password", proxyToExternal);
 
   app.delete("/api/me", async (req: any, res: any) => {
-    const userId = extractUserId(req);
-    if (!userId) {
+    const authHeader = req.headers.authorization || "";
+    if (!authHeader) {
       return res.status(401).json({ success: false, code: "AUTH_REQUIRED", message: "Your session expired. Please log in again." });
     }
 
     try {
-      await db.delete(completions).where(eq(completions.userId, userId));
-      console.log(`[DELETE] Cleaned up local completions for user ${userId}`);
-    } catch (err) {
-      console.error("Error cleaning up local completions:", err);
-    }
-
-    try {
       const targetUrl = new URL("/api/me", EXTERNAL_BACKEND);
-      const authHeader = req.headers.authorization || "";
-      const body = req.body ? JSON.stringify(req.body) : undefined;
 
-      const extRes = await new Promise<{ status: number; body: string }>((resolve) => {
+      const extRes = await new Promise<{ status: number; body: string }>((resolve, reject) => {
         const options: https.RequestOptions = {
           hostname: targetUrl.hostname,
           port: 443,
@@ -215,7 +206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            ...(authHeader ? { Authorization: authHeader } : {}),
+            Authorization: authHeader,
           },
         };
 
@@ -225,20 +216,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
           r.on("end", () => resolve({ status: r.statusCode || 500, body: data }));
         });
 
-        extReq.on("error", () => resolve({ status: 200, body: '{"success":true}' }));
-        if (body) extReq.write(body);
+        extReq.on("error", (err) => reject(err));
         extReq.end();
       });
 
-      if (extRes.status >= 200 && extRes.status < 300) {
-        return res.status(200).json({ success: true });
+      console.log(`[DELETE /api/me] External returned ${extRes.status}: ${extRes.body}`);
+
+      if (extRes.status === 200) {
+        const userId = extractUserId(req);
+        if (userId) {
+          try {
+            await db.delete(completions).where(eq(completions.userId, userId));
+            console.log(`[DELETE] Cleaned up local completions for user ${userId}`);
+          } catch (err) {
+            console.error("Error cleaning up local completions:", err);
+          }
+        }
       }
 
-      console.log(`[DELETE] External backend returned ${extRes.status} for /api/me, treating local cleanup as success`);
-      return res.status(200).json({ success: true });
+      res.status(extRes.status);
+      try {
+        res.json(JSON.parse(extRes.body));
+      } catch {
+        res.json({ success: false, code: "SERVER_ERROR", message: "Something went wrong on our side. Please try again." });
+      }
     } catch (err) {
       console.error("Error calling external delete:", err);
-      return res.status(200).json({ success: true });
+      return res.status(500).json({ success: false, code: "SERVER_ERROR", message: "Unable to reach the server. Please try again." });
     }
   });
 

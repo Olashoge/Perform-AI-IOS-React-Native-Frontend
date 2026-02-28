@@ -141,7 +141,6 @@ export default function SettingsIndexScreen() {
       const proxyUrl = getApiUrl();
       const response = await apiClient.delete("/api/me", {
         baseURL: proxyUrl,
-        data: isEmailUser ? { password: deletePassword } : undefined,
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
