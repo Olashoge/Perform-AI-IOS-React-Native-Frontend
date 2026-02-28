@@ -21,6 +21,8 @@ import { useWeekStart } from "@/lib/week-start-context";
 import { useProfile } from "@/lib/api-hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/lib/api-client";
+import { getApiUrl } from "@/lib/query-client";
+import { getAccessToken } from "@/lib/api-client";
 
 function SegmentedControl({
   options,
@@ -135,8 +137,12 @@ export default function SettingsIndexScreen() {
 
     setDeletingAccount(true);
     try {
+      const token = await getAccessToken();
+      const proxyUrl = getApiUrl();
       const response = await apiClient.delete("/api/me", {
+        baseURL: proxyUrl,
         data: isEmailUser ? { password: deletePassword } : undefined,
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
       if (response.data?.success) {
