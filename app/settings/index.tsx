@@ -20,7 +20,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useWeekStart } from "@/lib/week-start-context";
 import { useProfile } from "@/lib/api-hooks";
 import { useQueryClient } from "@tanstack/react-query";
-import apiClient from "@/lib/api-client";
+import apiClient, { API_BASE_URL, getAccessToken } from "@/lib/api-client";
 import { getApiUrl } from "@/lib/query-client";
 
 function SegmentedControl({
@@ -135,11 +135,17 @@ export default function SettingsIndexScreen() {
     if (isEmailUser && !deletePassword) return;
 
     setDeletingAccount(true);
-    const baseURL = getApiUrl();
-    if (__DEV__) console.log(`[DeleteAccount] DELETE ${baseURL}api/me`);
+    const isNative = Platform.OS !== "web";
+    const deleteBaseURL = isNative ? API_BASE_URL : getApiUrl();
+    if (__DEV__) {
+      const hasToken = !!(await getAccessToken());
+      console.log(`[DeleteAccount] platform=${Platform.OS} baseURL=${deleteBaseURL}`);
+      console.log(`[DeleteAccount] DELETE ${deleteBaseURL}/api/me`);
+      console.log(`[DeleteAccount] hasToken=${hasToken}`);
+    }
 
     try {
-      const response = await apiClient.delete("/api/me", { baseURL });
+      const response = await apiClient.delete("/api/me", { baseURL: deleteBaseURL });
 
       if (response.data?.success) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
