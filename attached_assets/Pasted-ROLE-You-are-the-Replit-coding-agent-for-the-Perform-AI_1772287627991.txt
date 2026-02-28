@@ -1,0 +1,97 @@
+ROLE
+You are the Replit coding agent for the Perform AI iOS app (React Native + Expo Router). Make targeted fixes only. Do not redesign UI. Preserve the premium, minimal aesthetic and outline-icon consistency.
+
+OBJECTIVE
+Fix the following UI/UX/data issues across Profile, Onboarding, and Plan creation flows. Implement with clean, reusable patterns (shared components/utils), not one-off hacks.
+
+TASKS (DO ALL)
+
+1) Weight fields changing values (155 -> 154.3, 165 -> 165.3)
+- Problem: numeric parsing/formatting is altering user input after save (likely float conversion + formatting or unit conversion).
+- Required behavior:
+  - If unit system is Imperial and the weight input is an integer, persist and display exactly that integer (e.g., "155").
+  - If user enters a decimal, preserve up to 1 decimal place max (e.g., "154.3").
+  - No silent rounding to a different value.
+- Implementation requirements:
+  - Identify the shared weight input component(s) used in: Profile, Onboarding, “New Wellness Plan”, “New Workout Plan”, “New Nutrition Plan” (and any other “current weight / target weight” screens).
+  - Standardize parsing:
+    - store numeric as number, but apply a consistent formatter for display.
+    - when saving, do not recompute from other fields unless explicitly converting units.
+  - Add a single utility:
+    - parseWeightInput(str) -> number | null
+    - formatWeightDisplay(number, unitSystem) -> string
+  - Add quick unit tests (or a small local test harness) validating:
+    - "155" stays 155 and displays "155"
+    - "165" stays 165 and displays "165"
+    - "154.3" stays 154.3 and displays "154.3"
+    - empty input stays null and displays "" (placeholder)
+
+2) Profile header shows email twice
+- Required behavior:
+  - Top line: Name (fallback to something sensible like “User” if name missing)
+  - Second line: Email
+  - Do not show email twice anywhere in the header block.
+- Implementation:
+  - Locate the Profile header component and replace the duplicated email rendering with name.
+  - Ensure it works for: name present, name missing, email present.
+
+3) Text overshooting containers (e.g., Workout Plan cards)
+- Required behavior:
+  - Text must never overflow the card/container bounds.
+  - Use line clamping/numberOfLines and ellipsizeMode where appropriate.
+  - Maintain readable hierarchy: title can be 1–2 lines, subtitle/description 2–3 lines.
+- Implementation:
+  - Audit key card components (Workout Plan day cards, plan list cards, any reusable Card component).
+  - Apply:
+    - numberOfLines + ellipsizeMode="tail"
+    - proper flexShrink: 1, minWidth: 0 on text wrappers where needed
+    - avoid fixed heights that force overflow
+  - Verify in both light and dark mode.
+
+4) Workout Plan per-day description repeats the title
+- Problem: the “why this helps you” section is using the title field again or the wrong property.
+- Required behavior:
+  - Display:
+    - Title: the workout name (short)
+    - Description: a goal-relevant explanation (not a repeat of the title)
+- Implementation steps:
+  - Trace the data model returned from the API for a workout day (fields like title/name vs description/rationale/benefit).
+  - If the API already includes a proper description/rationale field, render that.
+  - If it does NOT exist and the client is currently mapping title -> description:
+    - update the client mapping to use the best available field (e.g., “details”, “notes”, “purpose”, “why”, etc.).
+    - if absolutely no field exists, implement a fallback generator on client:
+      - createWorkoutBenefitText(day, userGoal) that produces 1–2 sentences aligned to the user’s primary goal (Weight Loss, Muscle Gain, Performance, etc.) using day type (strength/cardio/rest) and duration.
+      - This fallback must be deterministic and not call AI at runtime.
+  - Add a small snapshot check: ensure description != title for at least 5 sample days.
+
+5) “New Wellness Plan / New Workout Plan / New Nutrition Plan” button icons invisible in dark mode
+- Problem: icons are white and disappear on light button background in dark mode.
+- Required behavior:
+  - Icon color must match adjacent text color (black/dark on light button surface).
+  - Must work in light mode + dark mode + system mode.
+- Implementation:
+  - Identify the button component used for these “New … Plan” CTAs.
+  - Ensure the icon uses the same computed color token as the label text (not hardcoded).
+  - Keep outline icon style.
+
+QUALITY BAR / ACCEPTANCE CRITERIA
+- No regression in navigation or saving profile.
+- Verified on iOS simulator/device:
+  - Weight inputs persist exactly as typed (integer stays integer).
+  - Profile header shows Name then Email.
+  - No text overflow on Workout Plan day cards (long titles/descriptions clamp nicely).
+  - Workout description is not a duplicate of title.
+  - CTA icons are visible in dark mode and match text color.
+- Keep changes minimal and centralized (shared component + utils). Avoid scattering fixes.
+
+DELIVERABLES
+- Implement changes with clear commits.
+- At the end, report:
+  - files changed (list)
+  - brief explanation per task
+  - screenshots (or simulator captures) showing each fix in dark mode and light mode.
+
+START NOW
+- First, locate the relevant components and data mappings.
+- Then implement tasks 1–5 in order.
+- Do not stop to ask questions—make reasonable code-based decisions and document them.
