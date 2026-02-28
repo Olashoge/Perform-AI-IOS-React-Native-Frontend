@@ -78,9 +78,7 @@ const SESSION_LENGTH_OPTIONS: { value: number; label: string }[] = [
   { value: 60, label: "60 min" },
 ];
 
-function kgToLbs(kg: number): number {
-  return Math.round(kg * 2.20462);
-}
+import { kgToLbs } from "@/lib/weight-utils";
 
 function formatLabel(value: string): string {
   return value

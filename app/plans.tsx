@@ -271,7 +271,7 @@ function MealPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () => v
       <View style={[styles.simplePlanIcon, { backgroundColor: Colors.warning + "20" }]}>
         <Icon name="restaurant" size={20} color={Colors.warning} />
       </View>
-      <View style={{ flex: 1, gap: 4 }}>
+      <View style={{ flex: 1, gap: 4, minWidth: 0 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
           <Text style={styles.simplePlanName} numberOfLines={2}>{name}</Text>
           <StatusBadge startDate={startDate} backendStatus={status} Colors={Colors} />
@@ -316,7 +316,7 @@ function WorkoutPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () =
       <View style={[styles.simplePlanIcon, { backgroundColor: Colors.accent + "20" }]}>
         <Icon name="barbell" size={20} color={Colors.accent} />
       </View>
-      <View style={{ flex: 1, gap: 4 }}>
+      <View style={{ flex: 1, gap: 4, minWidth: 0 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
           <Text style={styles.simplePlanName} numberOfLines={2}>{name}</Text>
           <StatusBadge startDate={startDate} backendStatus={status} Colors={Colors} />
@@ -409,7 +409,7 @@ function WellnessPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
             router.push("/(tabs)/create" as any);
           }}
         >
-          <Icon name="sparkles" size={16} color="#fff" />
+          <Icon name="sparkles" size={16} color={Colors.background} />
           <Text style={styles.newPlanButtonText}>New Wellness Plan</Text>
         </Pressable>
       </View>
@@ -484,7 +484,7 @@ function NutritionPage({ Colors, styles }: { Colors: ThemeColors; styles: any })
             router.push("/(tabs)/create" as any);
           }}
         >
-          <Icon name="sparkles" size={16} color="#fff" />
+          <Icon name="sparkles" size={16} color={Colors.background} />
           <Text style={styles.newPlanButtonText}>New Meal Plan</Text>
         </Pressable>
       </View>
@@ -560,7 +560,7 @@ function TrainingPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
             router.push("/(tabs)/create" as any);
           }}
         >
-          <Icon name="sparkles" size={16} color="#fff" />
+          <Icon name="sparkles" size={16} color={Colors.background} />
           <Text style={styles.newPlanButtonText}>New Workout Plan</Text>
         </Pressable>
       </View>

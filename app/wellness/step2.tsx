@@ -85,9 +85,7 @@ const AUTHENTICITY_OPTIONS: { value: string; label: string }[] = [
 
 const MEAL_SLOT_OPTIONS = ["breakfast", "lunch", "dinner"];
 
-function kgToLbs(kg: number): number {
-  return Math.round(kg * 2.20462);
-}
+import { kgToLbs } from "@/lib/weight-utils";
 
 function formatLabel(value: string): string {
   return value

@@ -482,6 +482,26 @@ function formatWorkoutDayDate(startDate: string | undefined, dayIndex: number): 
   }
 }
 
+function createWorkoutBenefitText(day: any, session: any): string {
+  const focus = (session?.focus ?? "").toLowerCase();
+  const duration = session?.durationMinutes ?? session?.estimatedDuration ?? null;
+  const isRest = !day?.isWorkoutDay;
+  if (isRest) return "Allow your body to recover and rebuild for the next session.";
+
+  const durationNote = duration ? ` in about ${duration} minutes` : "";
+  if (focus.includes("strength") || focus.includes("upper") || focus.includes("lower") || focus.includes("push") || focus.includes("pull") || focus.includes("legs") || focus.includes("chest") || focus.includes("back"))
+    return `Build strength and muscle with targeted resistance training${durationNote}.`;
+  if (focus.includes("cardio") || focus.includes("hiit") || focus.includes("conditioning"))
+    return `Boost cardiovascular fitness and burn calories${durationNote}.`;
+  if (focus.includes("mobility") || focus.includes("flexibility") || focus.includes("yoga") || focus.includes("stretch"))
+    return `Improve range of motion and reduce injury risk${durationNote}.`;
+  if (focus.includes("core") || focus.includes("abs"))
+    return `Strengthen your core for better stability and posture${durationNote}.`;
+  if (focus.includes("full body") || focus.includes("total body"))
+    return `A balanced full-body session to build overall fitness${durationNote}.`;
+  return `A focused training session to support your fitness goals${durationNote}.`;
+}
+
 function DayCard({
   day,
   dayIndex,
@@ -521,7 +541,7 @@ function DayCard({
       <View style={styles.dayCard}>
         <View style={styles.dayHeaderRow}>
           <View style={styles.dayLabelContainer}>
-            <Text>
+            <Text numberOfLines={2} ellipsizeMode="tail">
               <Text style={styles.dayLabel}>
                 {dayLabel}{dayOfWeek ? ` - ${dayOfWeek}` : ""} ({dayType})
               </Text>
@@ -549,7 +569,7 @@ function DayCard({
     <View style={styles.dayCard}>
       <Pressable onPress={onToggle} style={styles.dayHeaderRow}>
         <View style={styles.dayLabelContainer}>
-          <Text>
+          <Text numberOfLines={2} ellipsizeMode="tail">
             <Text style={styles.dayLabel}>
               {dayLabel}{dayOfWeek ? ` - ${dayOfWeek}` : ""} ({dayType})
             </Text>
@@ -590,10 +610,15 @@ function DayCard({
 
       {session && (
         <View style={styles.sessionPreview}>
-          <Text style={styles.sessionTitle}>{session.sessionTitle ?? session.title ?? session.name ?? session.focus ?? "Training Session"}</Text>
-          {(session.description || session.summary) ? (
-            <Text style={styles.sessionDescription}>{session.description ?? session.summary}</Text>
-          ) : null}
+          <Text style={styles.sessionTitle} numberOfLines={2} ellipsizeMode="tail">{session.sessionTitle ?? session.title ?? session.name ?? session.focus ?? "Training Session"}</Text>
+          {(() => {
+            const title = session.sessionTitle ?? session.title ?? session.name ?? session.focus ?? "";
+            const desc = session.description ?? session.summary ?? session.rationale ?? session.benefit ?? session.purpose ?? "";
+            const displayDesc = desc && desc.trim().toLowerCase() !== title.trim().toLowerCase() ? desc : createWorkoutBenefitText(day, session);
+            return displayDesc ? (
+              <Text style={styles.sessionDescription} numberOfLines={3} ellipsizeMode="tail">{displayDesc}</Text>
+            ) : null;
+          })()}
           <View style={styles.sessionMeta}>
             {session.focus ? (
               <View style={styles.metaTag}>
@@ -696,8 +721,8 @@ function ExerciseCard({ exercise, index, onSwap, swapDisabled, isSwapping }: { e
         <View style={styles.exerciseIndex}>
           <Text style={styles.exerciseIndexText}>{index + 1}</Text>
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.exerciseName}>{name}</Text>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={styles.exerciseName} numberOfLines={2} ellipsizeMode="tail">{name}</Text>
         </View>
         <LikeDislikeButtons exerciseName={name} />
         {onSwap && (

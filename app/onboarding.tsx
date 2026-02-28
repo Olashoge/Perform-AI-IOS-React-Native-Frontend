@@ -20,6 +20,7 @@ import { Pill, PillGrid } from "@/components/Pill";
 import { useUpdateProfile, ProfileData } from "@/lib/api-hooks";
 import { useAuth } from "@/lib/auth-context";
 import { EQUIPMENT_CATEGORIES, getEquipmentForLocation, mergeEquipmentDefaults } from "@/lib/equipment-presets";
+import { lbsToKg } from "@/lib/weight-utils";
 
 const TOTAL_STEPS = 5;
 
@@ -265,13 +266,13 @@ export default function OnboardingScreen() {
       let weightKg: number | null = null;
       const weightVal = weightText ? parseInt(weightText, 10) : null;
       if (weightVal != null && weightVal > 0) {
-        weightKg = isImperial ? Math.round(weightVal / 2.20462) : weightVal;
+        weightKg = isImperial ? lbsToKg(weightVal) : weightVal;
       }
 
       let targetWeightKg: number | null = null;
       const targetVal = targetWeightText ? parseInt(targetWeightText, 10) : null;
       if (targetVal != null && targetVal > 0) {
-        targetWeightKg = isImperial ? Math.round(targetVal / 2.20462) : targetVal;
+        targetWeightKg = isImperial ? lbsToKg(targetVal) : targetVal;
       }
 
       const raw: Record<string, any> = {

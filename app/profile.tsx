@@ -333,13 +333,7 @@ function feetInchesToCm(feet: number, inches: number): number {
   return Math.round((feet * 12 + inches) * 2.54 * 10) / 10;
 }
 
-function kgToLbs(kg: number): number {
-  return Math.round(kg * 2.20462 * 10) / 10;
-}
-
-function lbsToKg(lbs: number): number {
-  return Math.round((lbs / 2.20462) * 10) / 10;
-}
+import { kgToLbs, lbsToKg, formatWeightDisplay, parseWeightInput } from "@/lib/weight-utils";
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -368,8 +362,8 @@ export default function ProfileScreen() {
       setFormData(d);
       setLoaded(true);
       const imp = d.unitSystem === "imperial";
-      setWeightText(d.weightKg != null ? String(imp ? kgToLbs(d.weightKg) : d.weightKg) : "");
-      setTargetWeightText(d.targetWeightKg != null ? String(imp ? kgToLbs(d.targetWeightKg) : d.targetWeightKg) : "");
+      setWeightText(formatWeightDisplay(d.weightKg, imp ? "imperial" : "metric"));
+      setTargetWeightText(formatWeightDisplay(d.targetWeightKg, imp ? "imperial" : "metric"));
       setAgeText(d.age != null ? String(d.age) : "");
       setHeightCmText(d.heightCm != null ? String(d.heightCm) : "");
       if (d.heightCm != null) {
@@ -393,8 +387,8 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     if (!loaded) return;
-    setWeightText(formData.weightKg != null ? String(isImperial ? kgToLbs(formData.weightKg) : formData.weightKg) : "");
-    setTargetWeightText(formData.targetWeightKg != null ? String(isImperial ? kgToLbs(formData.targetWeightKg) : formData.targetWeightKg) : "");
+    setWeightText(formatWeightDisplay(formData.weightKg, isImperial ? "imperial" : "metric"));
+    setTargetWeightText(formatWeightDisplay(formData.targetWeightKg, isImperial ? "imperial" : "metric"));
     if (formData.heightCm != null) {
       if (isImperial) {
         const fi = cmToFeetInches(formData.heightCm);
@@ -416,12 +410,18 @@ export default function ProfileScreen() {
 
   const commitWeight = (key: "weightKg" | "targetWeightKg") => {
     const text = key === "weightKg" ? weightText : targetWeightText;
-    const num = parseFloat(text);
-    if (text === "" || isNaN(num)) {
+    const parsed = parseWeightInput(text);
+    if (parsed == null) {
       updateField(key, null);
+      if (key === "weightKg") setWeightText("");
+      else setTargetWeightText("");
       return;
     }
-    updateField(key, isImperial ? lbsToKg(num) : num);
+    const inKg = isImperial ? lbsToKg(parsed) : parsed;
+    updateField(key, inKg);
+    const displayVal = formatWeightDisplay(inKg, isImperial ? "imperial" : "metric");
+    if (key === "weightKg") setWeightText(displayVal);
+    else setTargetWeightText(displayVal);
   };
 
   const handleLocationChange = (location: string) => {
@@ -537,7 +537,7 @@ export default function ProfileScreen() {
             <Icon name="person" size={28} color={Colors.primary} />
           </View>
           <Text style={styles.userName}>
-            {user?.name || user?.email || "User"}
+            {user?.name || "User"}
           </Text>
           {user?.email && <Text style={styles.userEmail}>{user.email}</Text>}
         </View>

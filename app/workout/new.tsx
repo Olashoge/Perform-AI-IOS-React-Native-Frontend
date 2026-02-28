@@ -103,9 +103,7 @@ function formatLabel(value: string): string {
   return value.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 }
 
-function kgToLbs(kg: number): number {
-  return Math.round(kg * 2.20462);
-}
+import { kgToLbs } from "@/lib/weight-utils";
 
 function wouldOverlap(startDate: string, conflictDates: string[]): boolean {
   const conflicts = new Set(conflictDates);

@@ -57,9 +57,7 @@ function snapToNearest(val: number): number {
   return closest;
 }
 
-function kgToLbs(kg: number): number {
-  return Math.round(kg * 2.20462);
-}
+import { kgToLbs, formatWeightDisplay } from "@/lib/weight-utils";
 
 function formatLabel(value: string): string {
   return value
@@ -80,9 +78,7 @@ function ProfileSummaryCard({ profile }: { profile: ProfileData }) {
   const isImperial = profile.unitSystem === "imperial";
   const weightDisplay =
     profile.weightKg != null
-      ? isImperial
-        ? `${kgToLbs(profile.weightKg)} lbs`
-        : `${profile.weightKg} kg`
+      ? `${formatWeightDisplay(profile.weightKg, isImperial ? "imperial" : "metric")} ${isImperial ? "lbs" : "kg"}`
       : null;
 
   const items: { label: string; value: string }[] = [];
