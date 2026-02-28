@@ -483,23 +483,24 @@ function formatWorkoutDayDate(startDate: string | undefined, dayIndex: number): 
 }
 
 function createWorkoutBenefitText(day: any, session: any): string {
-  const focus = (session?.focus ?? "").toLowerCase();
-  const duration = session?.durationMinutes ?? session?.estimatedDuration ?? null;
   const isRest = !day?.isWorkoutDay;
   if (isRest) return "Allow your body to recover and rebuild for the next session.";
 
-  const durationNote = duration ? ` in about ${duration} minutes` : "";
-  if (focus.includes("strength") || focus.includes("upper") || focus.includes("lower") || focus.includes("push") || focus.includes("pull") || focus.includes("legs") || focus.includes("chest") || focus.includes("back"))
-    return `Build strength and muscle with targeted resistance training${durationNote}.`;
-  if (focus.includes("cardio") || focus.includes("hiit") || focus.includes("conditioning"))
-    return `Boost cardiovascular fitness and burn calories${durationNote}.`;
-  if (focus.includes("mobility") || focus.includes("flexibility") || focus.includes("yoga") || focus.includes("stretch"))
-    return `Improve range of motion and reduce injury risk${durationNote}.`;
-  if (focus.includes("core") || focus.includes("abs"))
-    return `Strengthen your core for better stability and posture${durationNote}.`;
-  if (focus.includes("full body") || focus.includes("total body"))
-    return `A balanced full-body session to build overall fitness${durationNote}.`;
-  return `A focused training session to support your fitness goals${durationNote}.`;
+  const mode = (session?.mode ?? "").toLowerCase();
+  const intensity = (session?.intensity ?? "").toLowerCase();
+  const duration = session?.durationMinutes ?? session?.estimatedDuration ?? null;
+  const parts: string[] = [];
+
+  if (intensity) parts.push(`${intensity.charAt(0).toUpperCase() + intensity.slice(1)} intensity`);
+  if (mode === "strength") parts.push("strength training");
+  else if (mode === "cardio") parts.push("cardio session");
+  else if (mode === "mixed") parts.push("strength and cardio");
+  else if (mode === "flexibility" || mode === "mobility") parts.push("mobility work");
+  else if (mode) parts.push(`${mode} training`);
+  if (duration) parts.push(`${duration} min`);
+
+  if (parts.length > 0) return parts.join(" · ");
+  return "Targeted training session";
 }
 
 function DayCard({
@@ -620,12 +621,6 @@ function DayCard({
             ) : null;
           })()}
           <View style={styles.sessionMeta}>
-            {session.focus ? (
-              <View style={styles.metaTag}>
-                <Icon name="body" size={16} color={Colors.textSecondary} />
-                <Text style={styles.metaText}>{session.focus}</Text>
-              </View>
-            ) : null}
             {(session.durationMinutes || session.estimatedDuration) ? (
               <View style={styles.metaTag}>
                 <Icon name="time" size={16} color={Colors.textSecondary} />
