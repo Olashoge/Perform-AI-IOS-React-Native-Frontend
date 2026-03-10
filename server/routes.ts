@@ -4,7 +4,7 @@ import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import https from "node:https";
 import { db } from "./db";
-import { completions } from "@shared/schema";
+import { completions, planSchedules } from "@shared/schema";
 import { eq, and, like } from "drizzle-orm";
 
 function getGitCommitHash(): string {
@@ -415,13 +415,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/plan", proxyToExternal);
   app.get("/api/plan/:id", proxyToExternal);
   app.get("/api/plan/:id/status", proxyToExternal);
+  app.patch("/api/plans/:id/schedule", async (req, res) => {
+    const userId = extractUserId(req);
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    const planId = req.params.id;
+    const { startDate } = req.body;
+    try {
+      if (startDate === null || startDate === undefined) {
+        await db.delete(planSchedules).where(and(eq(planSchedules.planId, planId), eq(planSchedules.userId, userId)));
+        console.log(`[Schedule] Unscheduled meal plan ${planId} for user ${userId}`);
+      } else {
+        const existing = await db.select().from(planSchedules).where(and(eq(planSchedules.planId, planId), eq(planSchedules.userId, userId)));
+        if (existing.length > 0) {
+          await db.update(planSchedules).set({ startDate }).where(and(eq(planSchedules.planId, planId), eq(planSchedules.userId, userId)));
+        } else {
+          await db.insert(planSchedules).values({ planId, userId, planType: "meal", startDate });
+        }
+        console.log(`[Schedule] Scheduled meal plan ${planId} to ${startDate} for user ${userId}`);
+      }
+      res.json({ success: true, planId, startDate: startDate || null });
+    } catch (err: any) {
+      console.error("Error updating meal plan schedule:", err);
+      res.status(500).json({ error: "Failed to update schedule" });
+    }
+  });
+
   app.patch("/api/plans/:id", proxyToExternal);
   app.delete("/api/plans/:id", proxyToExternal);
   app.get("/api/workouts", proxyToExternal);
   app.post("/api/workout", proxyToExternal);
   app.get("/api/workout/:id", proxyToExternal);
   app.get("/api/workout/:id/status", proxyToExternal);
-  app.patch("/api/workouts/:id/schedule", proxyToExternal);
+
+  app.patch("/api/workouts/:id/schedule", async (req, res) => {
+    const userId = extractUserId(req);
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    const planId = req.params.id;
+    const { startDate } = req.body;
+    try {
+      if (startDate === null || startDate === undefined) {
+        await db.delete(planSchedules).where(and(eq(planSchedules.planId, planId), eq(planSchedules.userId, userId)));
+        console.log(`[Schedule] Unscheduled workout plan ${planId} for user ${userId}`);
+      } else {
+        const existing = await db.select().from(planSchedules).where(and(eq(planSchedules.planId, planId), eq(planSchedules.userId, userId)));
+        if (existing.length > 0) {
+          await db.update(planSchedules).set({ startDate }).where(and(eq(planSchedules.planId, planId), eq(planSchedules.userId, userId)));
+        } else {
+          await db.insert(planSchedules).values({ planId, userId, planType: "workout", startDate });
+        }
+        console.log(`[Schedule] Scheduled workout plan ${planId} to ${startDate} for user ${userId}`);
+      }
+      res.json({ success: true, planId, startDate: startDate || null });
+    } catch (err: any) {
+      console.error("Error updating workout plan schedule:", err);
+      res.status(500).json({ error: "Failed to update schedule" });
+    }
+  });
+
   app.delete("/api/workouts/:id", proxyToExternal);
   app.post("/api/workout/:id/swap", proxyToExternal);
   app.post("/api/workout/:id/regenerate-session", proxyToExternal);
@@ -445,6 +495,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/plan/:id/swap", proxyToExternal);
   app.post("/api/plan/:id/regenerate-day", proxyToExternal);
+
+  app.get("/api/local/plan-schedules", async (req, res) => {
+    const userId = extractUserId(req);
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const schedules = await db.select().from(planSchedules).where(eq(planSchedules.userId, userId));
+      const map: Record<string, string | null> = {};
+      for (const s of schedules) {
+        map[s.planId] = s.startDate;
+      }
+      res.json(map);
+    } catch (err: any) {
+      console.error("Error fetching plan schedules:", err);
+      res.status(500).json({ error: "Failed to fetch schedules" });
+    }
+  });
 
   app.get("/api/meta", (_req, res) => {
     const commitHash = getGitCommitHash();

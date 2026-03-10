@@ -1,8 +1,34 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Alert } from "react-native";
-import apiClient, { getAccessToken } from "./api-client";
+import { Alert, Platform } from "react-native";
+import apiClient, { getAccessToken, API_BASE_URL } from "./api-client";
 import { logApiCall } from "./api-log";
 import { getWeekStartUTC, getWeekEndUTC, computeWeekStartForDate } from "./week-utils";
+
+function getLocalServerUrl(): string {
+  const domain = process.env.EXPO_PUBLIC_DOMAIN;
+  if (domain) return `https://${domain}`;
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    return `${window.location.protocol}//${window.location.hostname}:5000`;
+  }
+  return API_BASE_URL;
+}
+
+async function localServerRequest(method: string, path: string, data?: any): Promise<any> {
+  const baseUrl = getLocalServerUrl();
+  const token = await getAccessToken();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const response = await fetch(`${baseUrl}${path}`, {
+    method,
+    headers,
+    body: data !== undefined ? JSON.stringify(data) : undefined,
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(text || `Request failed with status ${response.status}`);
+  }
+  try { return JSON.parse(text); } catch { return text; }
+}
 
 function normalizeId(item: any): string | null {
   return item?.id ?? item?.mealId ?? item?.workoutId ?? item?._id ?? null;
@@ -966,8 +992,41 @@ export function useWellnessPlans() {
   });
 }
 
-export function useMealPlans() {
+export function useLocalSchedules() {
   return useQuery({
+    queryKey: ["local-schedules"],
+    queryFn: async () => {
+      try {
+        return await localServerRequest("GET", "/api/local/plan-schedules");
+      } catch {
+        return {};
+      }
+    },
+    staleTime: 30000,
+  });
+}
+
+function mergeLocalSchedules(plans: any[], schedules: Record<string, string | null>): any[] {
+  if (!schedules || Object.keys(schedules).length === 0) return plans;
+  return plans.map((p) => {
+    const id = p.id || p._id;
+    if (id && id in schedules) {
+      const localStart = schedules[id];
+      const numDays = p.planJson?.days?.length || 7;
+      let endDate = null;
+      if (localStart && numDays > 0) {
+        const sd = new Date(localStart + "T12:00:00Z");
+        sd.setUTCDate(sd.getUTCDate() + numDays - 1);
+        endDate = sd.toISOString().slice(0, 10);
+      }
+      return { ...p, startDate: localStart, endDate: localStart ? endDate : null };
+    }
+    return p;
+  });
+}
+
+export function useMealPlans() {
+  const plansQuery = useQuery({
     queryKey: ["plans:meal"],
     queryFn: async () => {
       const response = await apiClient.get("/api/plans");
@@ -977,10 +1036,13 @@ export function useMealPlans() {
     },
     staleTime: 30000,
   });
+  const schedulesQuery = useLocalSchedules();
+  const data = plansQuery.data ? mergeLocalSchedules(plansQuery.data, schedulesQuery.data || {}) : undefined;
+  return { ...plansQuery, data: data as any[] | undefined };
 }
 
 export function useWorkoutPlans() {
-  return useQuery({
+  const plansQuery = useQuery({
     queryKey: ["plans:workout"],
     queryFn: async () => {
       const response = await apiClient.get("/api/workouts");
@@ -990,6 +1052,9 @@ export function useWorkoutPlans() {
     },
     staleTime: 30000,
   });
+  const schedulesQuery = useLocalSchedules();
+  const data = plansQuery.data ? mergeLocalSchedules(plansQuery.data, schedulesQuery.data || {}) : undefined;
+  return { ...plansQuery, data: data as any[] | undefined };
 }
 
 export function useUpdateGoalPlan() {
@@ -1034,16 +1099,21 @@ export function useDeleteMealPlan() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await apiClient.delete(`/api/plans/${id}`);
-      logApiCall("DELETE", `/api/plans/${id}`, response.status);
-      return response.data;
+      const result = await localServerRequest("DELETE", `/api/plans/${id}`);
+      logApiCall("DELETE", `/api/plans/${id}`, 200);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["plans:meal"] });
       queryClient.invalidateQueries({ queryKey: ["plans:wellness"] });
+      queryClient.invalidateQueries({ queryKey: ["local-schedules"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
       queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
+    },
+    onError: (error: any) => {
+      const msg = error?.message || "Could not delete meal plan";
+      Alert.alert("Delete Failed", msg);
     },
   });
 }
@@ -1052,16 +1122,21 @@ export function useDeleteWorkoutPlan() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await apiClient.delete(`/api/workouts/${id}`);
-      logApiCall("DELETE", `/api/workouts/${id}`, response.status);
-      return response.data;
+      const result = await localServerRequest("DELETE", `/api/workouts/${id}`);
+      logApiCall("DELETE", `/api/workouts/${id}`, 200);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["plans:workout"] });
       queryClient.invalidateQueries({ queryKey: ["plans:wellness"] });
+      queryClient.invalidateQueries({ queryKey: ["local-schedules"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
       queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
+    },
+    onError: (error: any) => {
+      const msg = error?.message || "Could not delete workout plan";
+      Alert.alert("Delete Failed", msg);
     },
   });
 }
@@ -1487,17 +1562,29 @@ export function useUpdateMealPlanSchedule() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, startDate }: { id: string; startDate: string | null }) => {
-      const response = await apiClient.patch(`/api/plans/${id}`, { startDate });
-      logApiCall("PATCH", `/api/plans/${id}`, response.status);
-      return response.data;
+      const result = await localServerRequest("PATCH", `/api/plans/${id}/schedule`, { startDate });
+      logApiCall("PATCH", `/api/plans/${id}/schedule`, 200);
+      return result;
     },
     onSuccess: (_data, variables) => {
+      queryClient.setQueryData(["plans:meal"], (old: any[] | undefined) => {
+        if (!old) return old;
+        return old.map((p: any) =>
+          (p.id === variables.id || p._id === variables.id)
+            ? { ...p, startDate: variables.startDate }
+            : p
+        );
+      });
       queryClient.invalidateQueries({ queryKey: ["meal-plan", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["plans:meal"] });
+      queryClient.invalidateQueries({ queryKey: ["local-schedules"] });
       queryClient.invalidateQueries({ queryKey: ["occupied-dates"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
       queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
+    },
+    onError: (error: any) => {
+      const msg = error?.message || "Could not update schedule";
+      Alert.alert("Schedule Error", msg);
     },
   });
 }
@@ -1506,17 +1593,29 @@ export function useUpdateWorkoutPlanSchedule() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, startDate }: { id: string; startDate: string | null }) => {
-      const response = await apiClient.patch(`/api/workouts/${id}/schedule`, { startDate });
-      logApiCall("PATCH", `/api/workouts/${id}/schedule`, response.status);
-      return response.data;
+      const result = await localServerRequest("PATCH", `/api/workouts/${id}/schedule`, { startDate });
+      logApiCall("PATCH", `/api/workouts/${id}/schedule`, 200);
+      return result;
     },
     onSuccess: (_data, variables) => {
+      queryClient.setQueryData(["plans:workout"], (old: any[] | undefined) => {
+        if (!old) return old;
+        return old.map((p: any) =>
+          (p.id === variables.id || p._id === variables.id)
+            ? { ...p, startDate: variables.startDate }
+            : p
+        );
+      });
       queryClient.invalidateQueries({ queryKey: ["workout-plan", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["plans:workout"] });
+      queryClient.invalidateQueries({ queryKey: ["local-schedules"] });
       queryClient.invalidateQueries({ queryKey: ["occupied-dates"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
       queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
+    },
+    onError: (error: any) => {
+      const msg = error?.message || "Could not update schedule";
+      Alert.alert("Schedule Error", msg);
     },
   });
 }

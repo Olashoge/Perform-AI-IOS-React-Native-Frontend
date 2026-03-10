@@ -18,6 +18,13 @@ export const completions = pgTable("completions", {
   completed: boolean("completed").notNull().default(false),
 });
 
+export const planSchedules = pgTable("plan_schedules", {
+  planId: varchar("plan_id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  planType: varchar("plan_type").notNull(),
+  startDate: varchar("start_date"),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,

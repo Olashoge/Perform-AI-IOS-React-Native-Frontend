@@ -11,7 +11,7 @@ The application is built with React Native and Expo Router for file-based naviga
 - **Frontend**: Expo Router with React Native.
 - **Auth Backend**: External API for user authentication and token management.
 - **Data Backend**: A local Express.js server handles core data operations and acts as a proxy for certain external backend calls, merging data with local completion states.
-- **Database**: PostgreSQL (Neon) with Drizzle ORM for storing user-specific completion states and other dynamic data.
+- **Database**: PostgreSQL (Neon) with Drizzle ORM for storing user-specific completion states, plan schedules, and other dynamic data.
 - **Authentication**: JWT tokens stored in `expo-secure-store`, with an automatic refresh mechanism upon 401 errors.
 - **State Management**: React Query manages server-side data caching and synchronization, while React Context handles global authentication and theme-related states.
 - **HTTP Clients**: Axios instances (`apiClient` for authentication, `dataClient` for data operations) are configured with JWT interceptors for seamless token handling.
@@ -30,7 +30,7 @@ The application is built with React Native and Expo Router for file-based naviga
     - Calendar view for daily and weekly activity tracking.
     - Daily detail view for meal and workout completion toggles, with "Plan This Day" generation. Completed meals use opacity (not strikethrough). Subtle inline generating banner.
     - Daily plan creation forms (`app/daily-meal-form.tsx`, `app/daily-workout-form.tsx`) with date picker and relevant options before generating.
-    - Comprehensive plan management for Wellness, Meals, and Workouts, including creation wizards and detailed plan views. Plan scheduling: Schedule/Reschedule/Unschedule/Delete via three-dot menu on plan detail and list screens. Uses `useUpdateGoalPlan`, `useUpdateMealPlanSchedule`, `useUpdateWorkoutPlanSchedule` hooks.
+    - Comprehensive plan management for Wellness, Meals, and Workouts, including creation wizards and detailed plan views. Plan scheduling: Schedule/Reschedule/Unschedule/Delete via three-dot menu on plan detail and list screens. Uses `useUpdateGoalPlan`, `useUpdateMealPlanSchedule`, `useUpdateWorkoutPlanSchedule` hooks. Meal/workout schedules are stored locally in PostgreSQL `plan_schedules` table (not on external backend). The `useLocalSchedules` hook fetches local schedules and `mergeLocalSchedules` overlays them onto plan data from the external API. MealPlanCard/WorkoutPlanCard use View container with sibling Pressables to avoid nested Pressable issues on iOS.
     - Dashboard greeting: Time-based "Good morning/afternoon/evening, {firstName}" with date subtitle. Empty state card when no active plans.
     - Settings with profile, preferences (food, exercise), week start, theme customization, change password (Security section), and delete account (Danger Zone section with confirmation modal).
     - Forgot password screen (`app/auth/forgot-password.tsx`) linked from login. Proxies to external backend.

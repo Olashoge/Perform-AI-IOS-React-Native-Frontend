@@ -276,8 +276,7 @@ function MealPlanCard({ plan, onDelete, onSchedule, Colors }: { plan: any; onDel
   const endDate = plan.endDate || plan.end_date;
   const id = plan._id || plan.id;
 
-  const handleShowMenu = (e: any) => {
-    e.stopPropagation?.();
+  const handleShowMenu = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const options: { text: string; style?: "destructive" | "cancel"; onPress?: () => void }[] = [];
     if (startDate) {
@@ -296,30 +295,32 @@ function MealPlanCard({ plan, onDelete, onSchedule, Colors }: { plan: any; onDel
   };
 
   return (
-    <Pressable
-      style={styles.simplePlanCard}
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        router.push(`/plan/meal/${id}` as any);
-      }}
-    >
-      <View style={[styles.simplePlanIcon, { backgroundColor: Colors.warning + "20" }]}>
-        <Icon name="restaurant" size={20} color={Colors.warning} />
-      </View>
-      <View style={{ flex: 1, gap: 4, minWidth: 0 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-          <Text style={styles.simplePlanName} numberOfLines={2}>{name}</Text>
-          <StatusBadge startDate={startDate} backendStatus={status} Colors={Colors} />
+    <View style={styles.simplePlanCard}>
+      <Pressable
+        style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 12 }}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          router.push(`/plan/meal/${id}` as any);
+        }}
+      >
+        <View style={[styles.simplePlanIcon, { backgroundColor: Colors.warning + "20" }]}>
+          <Icon name="restaurant" size={20} color={Colors.warning} />
         </View>
-        {startDate && (
-          <Text style={styles.simplePlanDate}>{formatDateRange(startDate, endDate)}</Text>
-        )}
-      </View>
-      <Pressable onPress={handleShowMenu} hitSlop={10} style={{ padding: 6 }}>
+        <View style={{ flex: 1, gap: 4, minWidth: 0 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <Text style={styles.simplePlanName} numberOfLines={2}>{name}</Text>
+            <StatusBadge startDate={startDate} backendStatus={status} Colors={Colors} />
+          </View>
+          {startDate && (
+            <Text style={styles.simplePlanDate}>{formatDateRange(startDate, endDate)}</Text>
+          )}
+        </View>
+        <Icon name="forward" size={20} color={Colors.textTertiary} />
+      </Pressable>
+      <Pressable onPress={handleShowMenu} hitSlop={12} style={{ padding: 6 }}>
         <Ionicons name="ellipsis-horizontal" size={20} color={Colors.textTertiary} />
       </Pressable>
-      <Icon name="forward" size={20} color={Colors.textTertiary} />
-    </Pressable>
+    </View>
   );
 }
 
@@ -332,8 +333,7 @@ function WorkoutPlanCard({ plan, onDelete, onSchedule, Colors }: { plan: any; on
   const planType = plan.planType || plan.type || "";
   const id = plan._id || plan.id;
 
-  const handleShowMenu = (e: any) => {
-    e.stopPropagation?.();
+  const handleShowMenu = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const options: { text: string; style?: "destructive" | "cancel"; onPress?: () => void }[] = [];
     if (startDate) {
@@ -352,33 +352,35 @@ function WorkoutPlanCard({ plan, onDelete, onSchedule, Colors }: { plan: any; on
   };
 
   return (
-    <Pressable
-      style={styles.simplePlanCard}
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        router.push(`/plan/workout/${id}` as any);
-      }}
-    >
-      <View style={[styles.simplePlanIcon, { backgroundColor: Colors.accent + "20" }]}>
-        <Icon name="barbell" size={20} color={Colors.accent} />
-      </View>
-      <View style={{ flex: 1, gap: 4, minWidth: 0 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-          <Text style={styles.simplePlanName} numberOfLines={2}>{name}</Text>
-          <StatusBadge startDate={startDate} backendStatus={status} Colors={Colors} />
+    <View style={styles.simplePlanCard}>
+      <Pressable
+        style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 12 }}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          router.push(`/plan/workout/${id}` as any);
+        }}
+      >
+        <View style={[styles.simplePlanIcon, { backgroundColor: Colors.accent + "20" }]}>
+          <Icon name="barbell" size={20} color={Colors.accent} />
         </View>
-        {startDate && (
-          <Text style={styles.simplePlanDate}>
-            {formatDateRange(startDate, endDate)}
-            {planType ? `  ${planType.charAt(0).toUpperCase() + planType.slice(1)}` : ""}
-          </Text>
-        )}
-      </View>
-      <Pressable onPress={handleShowMenu} hitSlop={10} style={{ padding: 6 }}>
+        <View style={{ flex: 1, gap: 4, minWidth: 0 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+            <Text style={styles.simplePlanName} numberOfLines={2}>{name}</Text>
+            <StatusBadge startDate={startDate} backendStatus={status} Colors={Colors} />
+          </View>
+          {startDate && (
+            <Text style={styles.simplePlanDate}>
+              {formatDateRange(startDate, endDate)}
+              {planType ? `  ${planType.charAt(0).toUpperCase() + planType.slice(1)}` : ""}
+            </Text>
+          )}
+        </View>
+        <Icon name="forward" size={20} color={Colors.textTertiary} />
+      </Pressable>
+      <Pressable onPress={handleShowMenu} hitSlop={12} style={{ padding: 6 }}>
         <Ionicons name="ellipsis-horizontal" size={20} color={Colors.textTertiary} />
       </Pressable>
-      <Icon name="forward" size={20} color={Colors.textTertiary} />
-    </Pressable>
+    </View>
   );
 }
 
