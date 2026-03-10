@@ -114,7 +114,6 @@ function WeekScoreCard({ weekStart, days, Colors }: { weekStart: string; days: D
       <View style={styles.splitStatsRow}>
         <View style={[styles.splitStatCard, { borderColor: Colors.accent + "30" }]}>
           <View style={styles.splitStatHeader}>
-            <Text style={styles.splitStatIcon}>🍽</Text>
             <Text style={styles.splitStatTitle}>Meals</Text>
             <Text style={[styles.splitStatPct, { color: getScoreColor(mealPct, Colors) }]}>{mealPct}%</Text>
           </View>
