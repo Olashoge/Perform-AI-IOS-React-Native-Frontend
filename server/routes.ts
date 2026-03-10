@@ -373,6 +373,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return applyCompletionsToDay(day, completionMap, date);
       });
 
+
       if (localSchedules.size > 0) {
         const dayMap = new Map<string, any>();
         for (const day of transformed) {
@@ -392,11 +393,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         for (const [planId, schedule] of localSchedules) {
           if (schedule.startDate) {
             const planDates = computeDatesForPlan(schedule.startDate, 14);
-            for (const pd of planDates) {
-              if (weekDates.has(pd)) affectedPlanIds.add(planId);
+            const overlap = planDates.filter((pd) => weekDates.has(pd));
+            if (overlap.length > 0) {
+              affectedPlanIds.add(planId);
+
             }
           }
         }
+
 
         if (affectedPlanIds.size > 0) {
           const planCache = new Map<string, any>();
@@ -447,7 +451,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               if (planData) planCache.set(planId, planData);
             }
             const planData = planCache.get(planId);
-            if (!planData) continue;
+            if (!planData) {
+              continue;
+            }
 
             let pj: any = null;
             try {
@@ -455,12 +461,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             } catch { pj = null; }
             const days = pj?.days || planData?.days || [];
             const planDuration = Array.isArray(days) && days.length > 0 ? days.length : 7;
-            const localDates = computeDatesForPlan(sched.startDate, planDuration);
+            const localDates = computeDatesForPlan(sched.startDate!, planDuration);
             const datesInWeek = localDates.filter((d) => weekDates.has(d));
             if (datesInWeek.length === 0) continue;
 
             for (const targetDate of datesInWeek) {
-              const dayIdx = getDayIndex(sched.startDate, targetDate);
+              const dayIdx = getDayIndex(sched.startDate!, targetDate);
               if (dayIdx < 0 || dayIdx >= days.length) continue;
               const planDay = days[dayIdx];
               if (!planDay) continue;

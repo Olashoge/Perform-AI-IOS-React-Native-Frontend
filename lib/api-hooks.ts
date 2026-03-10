@@ -341,11 +341,9 @@ export function useWeekData(weekStart?: string) {
       const params = weekStart ? `?weekStart=${weekStart}` : "";
       const url = `/api/week-data${params}`;
       try {
-        console.log("FETCHING =>", (apiClient.defaults.baseURL || "") + url);
         const response = await apiClient.get(url);
         logApiCall("GET", url, response.status);
         const responseData = response.data;
-        console.log("Calendar API raw response:", JSON.stringify(responseData).slice(0, 300));
         const rawArr = responseData?.weekData ?? responseData?.days ?? responseData;
         const daysArray = Array.isArray(rawArr)
           ? rawArr
@@ -355,7 +353,6 @@ export function useWeekData(weekStart?: string) {
         const normalized: DayData[] = daysArray.map((day: any) =>
           normalizeDayData(day, day?.date ?? "unknown")
         );
-        console.log("Normalized week sample meal:", JSON.stringify(normalized[0]?.meals?.[0]));
         return normalized;
       } catch (err: any) {
         logApiCall("GET", url, err.response?.status ?? "ERR");

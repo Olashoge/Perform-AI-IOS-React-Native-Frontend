@@ -5,18 +5,17 @@ import { Platform } from 'react-native';
 export const API_BASE_URL = 'https://mealplanai.replit.app';
 
 function getEffectiveBaseUrl(): string {
+  const domain = process.env.EXPO_PUBLIC_DOMAIN;
+  if (domain) return `https://${domain}`;
   if (Platform.OS === 'web') {
     if (typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname)) {
       return `${window.location.protocol}//${window.location.hostname}:5000`;
     }
-    return API_BASE_URL;
   }
   return API_BASE_URL;
 }
 
 const EFFECTIVE_BASE_URL = getEffectiveBaseUrl();
-console.log("FINAL API_BASE_URL =>", API_BASE_URL);
-console.log("EFFECTIVE_BASE_URL =>", EFFECTIVE_BASE_URL);
 
 const apiClient = axios.create({
   baseURL: EFFECTIVE_BASE_URL,
