@@ -100,6 +100,20 @@ function RootLayoutNav() {
           presentation: "card",
         }}
       />
+      <Stack.Screen
+        name="daily-meal-form"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
+      <Stack.Screen
+        name="daily-workout-form"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
     </Stack>
   );
 }
