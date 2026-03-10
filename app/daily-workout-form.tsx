@@ -19,6 +19,8 @@ import { useCreateDailyWorkout, useProfile } from "@/lib/api-hooks";
 import { Pill, PillGrid } from "@/components/Pill";
 import CalendarPickerField from "@/components/CalendarPickerField";
 
+const WEB_TOP_INSET = 67;
+
 const FOCUS_OPTIONS = [
   "Full Body", "Upper Body", "Lower Body", "Core", "Back", "Chest",
   "Arms", "Shoulders", "Glutes", "Legs",
@@ -48,6 +50,7 @@ export default function DailyWorkoutFormScreen() {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
+  const topInset = Platform.OS === "web" ? WEB_TOP_INSET : insets.top;
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
   const createDailyWorkout = useCreateDailyWorkout();
   const { data: profile } = useProfile();
@@ -93,12 +96,19 @@ export default function DailyWorkoutFormScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: topInset }]}>
+      <View style={styles.header}>
+        <Pressable style={styles.backButton} onPress={() => router.back()}>
+          <Icon name="back" size={24} />
+        </Pressable>
+        <Text style={styles.headerTitle}>Daily Workout</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInset + 100 }]}
         showsVerticalScrollIndicator={false}
-        contentInsetAdjustmentBehavior="automatic"
       >
         <Text style={styles.sectionTitle}>Date</Text>
         <CalendarPickerField
@@ -186,6 +196,18 @@ export default function DailyWorkoutFormScreen() {
 
 const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  backButton: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: Colors.surface, alignItems: "center", justifyContent: "center",
+  },
+  headerTitle: { fontSize: 17, fontFamily: "Inter_700Bold", color: Colors.text },
   scrollView: { flex: 1 },
   scrollContent: { paddingHorizontal: 20 },
   sectionTitle: {
