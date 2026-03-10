@@ -124,7 +124,6 @@ function WeekScoreCard({ weekStart, days, Colors }: { weekStart: string; days: D
         </View>
         <View style={[styles.splitStatCard, { borderColor: Colors.warning + "30" }]}>
           <View style={styles.splitStatHeader}>
-            <Text style={styles.splitStatIcon}>💪</Text>
             <Text style={styles.splitStatTitle}>Workouts</Text>
             <Text style={[styles.splitStatPct, { color: getScoreColor(workoutPct, Colors) }]}>{workoutPct}%</Text>
           </View>
