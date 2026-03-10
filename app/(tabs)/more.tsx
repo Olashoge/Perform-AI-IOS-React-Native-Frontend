@@ -151,11 +151,13 @@ export default function MoreScreen() {
       contentContainerStyle={[
         styles.scrollContent,
         {
-          paddingTop: insets.top + 12 + webTopInset,
+          paddingTop: insets.top + 8 + webTopInset,
           paddingBottom: 120,
         },
       ]}
       showsVerticalScrollIndicator={false}
+      contentInsetAdjustmentBehavior="never"
+      automaticallyAdjustContentInsets={false}
     >
       <Text style={styles.headerTitle}>More</Text>
 

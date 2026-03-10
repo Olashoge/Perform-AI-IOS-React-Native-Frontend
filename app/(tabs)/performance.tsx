@@ -310,11 +310,13 @@ export default function PerformanceScreen() {
       contentContainerStyle={[
         styles.scrollContent,
         {
-          paddingTop: insets.top + 16 + webTopInset,
+          paddingTop: insets.top + 8 + webTopInset,
           paddingBottom: 100,
         },
       ]}
       showsVerticalScrollIndicator={false}
+      contentInsetAdjustmentBehavior="never"
+      automaticallyAdjustContentInsets={false}
     >
       <IdentityBlock
         score={data.currentScore}

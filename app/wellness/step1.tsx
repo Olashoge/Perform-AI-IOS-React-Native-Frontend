@@ -321,19 +321,25 @@ export default function Step1Screen() {
           })}
         </View>
 
-        <Text style={styles.sectionLabel}>Start Date</Text>
-        <CalendarPickerField
-          value={state.startDate}
-          onChange={(d) => setState((prev) => ({ ...prev, startDate: d }))}
-          Colors={Colors}
-          conflictDates={availability?.allDates || []}
-          planDuration={7}
-        />
-        {isDateInvalid && (
-          <Text style={styles.warningText}>
-            Start date cannot be in the past.
-          </Text>
-        )}
+        <View style={styles.startDateSection}>
+          <View style={styles.startDateHeader}>
+            <Ionicons name="calendar" size={18} color={Colors.primary} />
+            <Text style={styles.startDateLabel}>Start Date</Text>
+          </View>
+          <Text style={styles.startDateHelper}>Required to schedule your plan</Text>
+          <CalendarPickerField
+            value={state.startDate}
+            onChange={(d) => setState((prev) => ({ ...prev, startDate: d }))}
+            Colors={Colors}
+            conflictDates={availability?.allDates || []}
+            planDuration={7}
+          />
+          {isDateInvalid && (
+            <Text style={styles.warningText}>
+              Start date cannot be in the past.
+            </Text>
+          )}
+        </View>
 
         <Text style={styles.sectionLabel}>Pace</Text>
         <View style={styles.paceRow}>
@@ -508,6 +514,31 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     color: Colors.text,
     borderWidth: 1,
     borderColor: Colors.border,
+  },
+  startDateSection: {
+    marginTop: 24,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: Colors.primary + "40",
+  },
+  startDateHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 4,
+  },
+  startDateLabel: {
+    fontSize: 14,
+    fontFamily: "Inter_700Bold",
+    color: Colors.text,
+  },
+  startDateHelper: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: Colors.primary,
+    marginBottom: 12,
   },
   warningText: {
     fontSize: 10,

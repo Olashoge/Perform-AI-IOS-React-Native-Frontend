@@ -7,7 +7,7 @@ export function kgToLbs(kg: number): number {
 
 export function lbsToKg(lbs: number): number {
   const kg = lbs / KG_TO_LBS;
-  return Math.round(kg * 10) / 10;
+  return Math.round(kg * 100) / 100;
 }
 
 export function parseWeightInput(str: string): number | null {
@@ -21,5 +21,8 @@ export function parseWeightInput(str: string): number | null {
 export function formatWeightDisplay(value: number | null | undefined, unitSystem: "imperial" | "metric"): string {
   if (value == null) return "";
   const display = unitSystem === "imperial" ? kgToLbs(value) : value;
+  if (unitSystem === "imperial") {
+    return String(Math.round(display));
+  }
   return Number.isInteger(display) ? String(display) : display.toFixed(1);
 }

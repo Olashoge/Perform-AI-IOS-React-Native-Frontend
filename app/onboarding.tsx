@@ -2,15 +2,14 @@ import React, { useState, useMemo, useRef } from "react";
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   Pressable,
   TextInput,
   Platform,
   ActivityIndicator,
-  KeyboardAvoidingView,
   Alert,
 } from "react-native";
+import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -101,7 +100,7 @@ export default function OnboardingScreen() {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<any>(null);
 
   const [unitSystem, setUnitSystem] = useState("imperial");
   const [sex, setSex] = useState("");
@@ -608,11 +607,7 @@ export default function OnboardingScreen() {
   const showSkip = step === 4 || step === 5;
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={0}
-    >
+    <View style={styles.container}>
       <View style={[styles.topBar, { paddingTop: insets.top + webTopInset + 12 }]}>
         <Text style={styles.progressLabel}>Step {step} of {TOTAL_STEPS}</Text>
         <View style={styles.progressBarBg}>
@@ -620,14 +615,13 @@ export default function OnboardingScreen() {
         </View>
       </View>
 
-      <ScrollView
-        ref={scrollViewRef}
+      <KeyboardAwareScrollViewCompat
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom + webBottomInset }]}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+        bottomOffset={60}
       >
         {renderContent()}
-      </ScrollView>
+      </KeyboardAwareScrollViewCompat>
 
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + webBottomInset + 12 }]}>
         <View style={styles.bottomBarInner}>
@@ -672,7 +666,7 @@ export default function OnboardingScreen() {
           </View>
         </View>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

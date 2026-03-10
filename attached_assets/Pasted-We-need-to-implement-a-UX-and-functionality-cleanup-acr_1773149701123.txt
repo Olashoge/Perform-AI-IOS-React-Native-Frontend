@@ -1,0 +1,168 @@
+We need to implement a UX and functionality cleanup across the entire mobile app.
+
+This work affects:
+Dashboard
+Forms
+Profile
+Plan creation
+Keyboard handling
+Plan scheduling
+
+Follow the instructions below carefully and update the relevant components.
+
+-----------------------------------
+1. FIX SCROLL EMPTY SPACE ISSUE
+-----------------------------------
+
+Problem:
+When scrolling down and back up in multiple tabs there is empty padding appearing at the top.
+
+Fix:
+Ensure ScrollView / FlatList containers use:
+contentContainerStyle={{ paddingTop: 0 }}
+remove any extra SafeAreaView padding
+verify header components are not duplicated
+
+The layout should anchor content directly under the navigation header.
+
+-----------------------------------
+2. DAILY PLAN CREATION FORM
+-----------------------------------
+
+Currently:
+Clicking "Create Daily Meal" or "Create Daily Workout" instantly generates a plan.
+
+New behavior:
+When the user selects:
+
+Create → Daily Meal
+Create → Daily Workout
+
+They must first complete a form.
+The form should reuse the same fields as the 7-day plan creation form but with a SINGLE DAY scope.
+The system then generates a plan only for that single selected day.
+
+-----------------------------------
+3. FORGOT PASSWORD
+-----------------------------------
+
+Add "Forgot Password?" to the login screen.
+
+Flow:
+
+Login Screen
+→ Forgot Password
+→ Enter Email
+→ Send reset link
+→ Reset password screen
+
+Use the backend password reset endpoint.
+
+-----------------------------------
+4. START DATE VISIBILITY
+-----------------------------------
+
+Problem:
+Users miss the Start Date field.
+
+Fix:
+Move START DATE to the top of the form directly under plan type.
+Add visual emphasis:
+
+START DATE
+Required to schedule your plan
+Add a calendar icon and highlight styling.
+
+-----------------------------------
+5. KEYBOARD COVERING INPUTS
+-----------------------------------
+
+When the keyboard opens, parts of the form are hidden.
+Implement proper keyboard handling:
+
+Use:
+KeyboardAvoidingView
+behavior="padding"
+and ensure ScrollView scrolls automatically to focused input.
+Remove the empty spacer currently appearing above the keyboard.
+
+-----------------------------------
+6. TARGET WEIGHT ROUNDING BUG
+-----------------------------------
+On all forms where Target weight is an option like the onboarding wizard and the profile update page and forms.
+
+Bug:
+User enters 165 but profile shows 164.9.
+
+Fix:
+Figure out why it isn't storing 165 as 165 but rather as 164.9
+Ensure weight is stored exactly as entered.
+Remove floating precision rounding.
+
+Store as:
+Number rounded to 1 decimal OR integer if user enters integer.
+Display value exactly as entered.
+
+-----------------------------------
+7. DASHBOARD GREETING
+-----------------------------------
+
+At the top of Dashboard display:
+
+Good morning, {firstName}
+Good afternoon, {firstName}
+Good evening, {firstName}
+
+Logic based on device time:
+5–11  → morning
+12–17 → afternoon
+18–4  → evening
+
+
+-----------------------------------
+9. DASHBOARD EMPTY STATE
+-----------------------------------
+
+When the user has no plans created, the dashboard should guide them.
+
+Add a card:
+Start Your First Plan
+
+Button:
+Create Plan
+
+Pressing this navigates to the Create Plan screen.
+
+-----------------------------------
+10. PLAN SCHEDULING FEATURES
+-----------------------------------
+
+After a plan is created, add plan management options identical to the web app:
+
+Menu options:
+Schedule (If the plan has no scheduled date then add Schedule) 
+Reschedule
+Unschedule
+Delete
+
+Reschedule → open date picker
+Unschedule → To remove Plans date
+Delete → confirmation dialog
+
+-----------------------------------
+GENERAL REQUIREMENTS
+-----------------------------------
+
+Maintain existing design system.
+Maintain outline icon style.
+Keep dark mode compatibility.
+
+Do not break existing API endpoints.
+Test across:
+
+Dashboard
+Calendar
+Create
+Profile
+
+Return summary of all updated components and files.

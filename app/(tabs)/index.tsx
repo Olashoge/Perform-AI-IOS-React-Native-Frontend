@@ -357,7 +357,30 @@ function ActivePlansSection({ Colors }: { Colors: ThemeColors }) {
 
   const allPlans = [...activeMealPlans.map((p: any) => ({ ...p, planType: "meal" })), ...activeWorkoutPlans.map((p: any) => ({ ...p, planType: "workout" }))];
 
-  if (allPlans.length === 0) return null;
+  if (allPlans.length === 0) {
+    return (
+      <View style={styles.activePlansSection}>
+        <Text style={styles.sectionLabel}>YOUR PLANS</Text>
+        <View style={styles.emptyPlansCard}>
+          <View style={styles.emptyPlansIconBg}>
+            <Icon name="add" size={28} color={Colors.primary} />
+          </View>
+          <Text style={styles.emptyPlansTitle}>Start Your First Plan</Text>
+          <Text style={styles.emptyPlansSub}>Create a meal or workout plan to get personalized recommendations and track your progress.</Text>
+          <Pressable
+            style={({ pressed }) => [styles.createPlanBtn, pressed && { opacity: 0.85 }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push("/(tabs)/create");
+            }}
+          >
+            <Icon name="add" size={18} color="#fff" />
+            <Text style={styles.createPlanBtnText}>Create Plan</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
 
   function formatPlanDates(plan: any) {
     const start = plan.startDate || plan.weekStart;
@@ -508,15 +531,32 @@ export default function DashboardScreen() {
   const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   const headerSubtitle = `${dayNames[todayDate.getDay()]}, ${MONTHS_FULL[todayDate.getMonth()]} ${todayDate.getDate()}`;
 
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour <= 11) return "Good morning";
+    if (hour >= 12 && hour <= 17) return "Good afternoon";
+    return "Good evening";
+  }, []);
+
+  const firstName = useMemo(() => {
+    if (!user) return "";
+    const name = user.name || user.firstName || user.displayName || "";
+    if (name) return name.split(" ")[0];
+    if (user.email) return user.email.split("@")[0];
+    return "";
+  }, [user]);
+
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 12 + webTopInset, paddingBottom: 120 }]}
+      contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 8 + webTopInset, paddingBottom: 120 }]}
       showsVerticalScrollIndicator={false}
+      contentInsetAdjustmentBehavior="never"
+      automaticallyAdjustContentInsets={false}
     >
 
       <View style={styles.dashboardHeader}>
-        <Text style={styles.headerTitle}>Dashboard</Text>
+        <Text style={styles.headerTitle}>{greeting}{firstName ? `, ${firstName}` : ""}</Text>
         <Text style={styles.headerSubtitle}>{headerSubtitle}</Text>
       </View>
 
@@ -698,6 +738,54 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   activeBadgeText: { fontSize: 9, fontFamily: "Inter_600SemiBold", color: Colors.scoreGreen },
   planDateRow: { flexDirection: "row", alignItems: "center", gap: 4 },
   planDateText: { fontSize: 10, fontFamily: "Inter_400Regular", color: Colors.textSecondary },
+
+  emptyPlansCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 20,
+    padding: 28,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: Colors.primary + "20",
+    borderStyle: "dashed" as const,
+  },
+  emptyPlansIconBg: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.primary + "15",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  emptyPlansTitle: {
+    fontSize: 16,
+    fontFamily: "Inter_700Bold",
+    color: Colors.text,
+    marginBottom: 8,
+  },
+  emptyPlansSub: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textSecondary,
+    textAlign: "center" as const,
+    lineHeight: 18,
+    marginBottom: 20,
+    paddingHorizontal: 8,
+  },
+  createPlanBtn: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    backgroundColor: Colors.primary,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    gap: 6,
+  },
+  createPlanBtnText: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: "#fff",
+  },
 
   quickActionsGrid: {
     flexDirection: "row",

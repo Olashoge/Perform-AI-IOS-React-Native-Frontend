@@ -18,7 +18,8 @@ import { Icon } from "@/components/Icon";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
-import { useMealPlan, useMealFeedback, useResolveIngredientProposal, computeMealFingerprint, useMealPreferences, useGroceryList, useToggleGroceryOwned, useRegenerateGroceryList, useMealSwap, useDayRegen, useAllowance, AllowanceData, GrocerySection } from "@/lib/api-hooks";
+import { useMealPlan, useMealFeedback, useResolveIngredientProposal, computeMealFingerprint, useMealPreferences, useGroceryList, useToggleGroceryOwned, useRegenerateGroceryList, useMealSwap, useDayRegen, useAllowance, AllowanceData, GrocerySection, useUpdateMealPlanSchedule, useDeleteMealPlan } from "@/lib/api-hooks";
+import CalendarPickerField from "@/components/CalendarPickerField";
 
 function IngredientProposalModal({
   visible,
@@ -542,8 +543,12 @@ export default function MealPlanDetailScreen() {
   const swapMutation = useMealSwap(id ?? null);
   const dayRegenMutation = useDayRegen(id ?? null);
   const { data: allowance, refetch: refetchAllowance } = useAllowance();
+  const scheduleMutation = useUpdateMealPlanSchedule();
+  const deleteMutation = useDeleteMealPlan();
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"meals" | "grocery">("meals");
+  const [showSchedulePicker, setShowSchedulePicker] = useState(false);
+  const [pendingScheduleDate, setPendingScheduleDate] = useState("");
 
   const swapsRemaining = allowance ? Math.max(0, allowance.mealSwaps.limit - allowance.mealSwaps.used) : null;
   const regensRemaining = allowance ? Math.max(0, allowance.dayRegens.limit - allowance.dayRegens.used) : null;
@@ -666,6 +671,81 @@ export default function MealPlanDetailScreen() {
   const nutritionNotes = planJson.nutritionNotes;
   const days: DayPlanData[] = planJson.days ?? [];
   const startDate = plan.startDate || plan.planStartDate || planJson.startDate || planJson.planStartDate;
+  const planId = plan._id || plan.id || id;
+
+  const handleShowMenu = () => {
+    const options: { text: string; style?: "destructive" | "cancel"; onPress?: () => void }[] = [];
+    if (startDate) {
+      options.push({
+        text: "Reschedule",
+        onPress: () => {
+          setPendingScheduleDate(startDate);
+          setShowSchedulePicker(true);
+        },
+      });
+      options.push({
+        text: "Unschedule",
+        style: "destructive",
+        onPress: () => {
+          Alert.alert("Unschedule Plan", "Remove the start date from this plan?", [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Unschedule",
+              style: "destructive",
+              onPress: () => {
+                scheduleMutation.mutate({ id: planId, startDate: null });
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+              },
+            },
+          ]);
+        },
+      });
+    } else {
+      options.push({
+        text: "Schedule",
+        onPress: () => {
+          setPendingScheduleDate("");
+          setShowSchedulePicker(true);
+        },
+      });
+    }
+    options.push({
+      text: "Delete Plan",
+      style: "destructive",
+      onPress: () => {
+        Alert.alert("Delete Plan", "Are you sure you want to delete this plan? This cannot be undone.", [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: () => {
+              deleteMutation.mutate(planId, {
+                onSuccess: () => {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                  router.back();
+                },
+              });
+            },
+          },
+        ]);
+      },
+    });
+    options.push({ text: "Cancel", style: "cancel" });
+
+    Alert.alert(
+      "Plan Options",
+      undefined,
+      options.map((o) => ({ text: o.text, style: o.style, onPress: o.onPress }))
+    );
+  };
+
+  const handleScheduleDateSelect = (date: string) => {
+    if (date) {
+      scheduleMutation.mutate({ id: planId, startDate: date });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+    setShowSchedulePicker(false);
+  };
 
   const macroTargets = nutritionNotes?.dailyMacroTargetsRange;
   const dailyTargetStr = macroTargets ? [
@@ -682,8 +762,59 @@ export default function MealPlanDetailScreen() {
           <Icon name="back" size={28} color={Colors.text} />
         </Pressable>
         <Text style={styles.headerTitle} numberOfLines={1}>Meal Plan</Text>
-        <View style={{ width: 28 }} />
+        <Pressable onPress={handleShowMenu} hitSlop={12}>
+          <Ionicons name="ellipsis-horizontal" size={24} color={Colors.text} />
+        </Pressable>
       </View>
+
+      {showSchedulePicker && (
+        <Modal visible={showSchedulePicker} transparent animationType="fade" onRequestClose={() => setShowSchedulePicker(false)}>
+          <Pressable
+            style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" }}
+            onPress={() => setShowSchedulePicker(false)}
+          >
+            <Pressable onPress={(e) => e.stopPropagation()} style={{ width: "90%", maxWidth: 340 }}>
+              <View style={{ backgroundColor: Colors.surface, borderRadius: 20, padding: 20 }}>
+                <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: Colors.text, marginBottom: 16, textAlign: "center" }}>
+                  {startDate ? "Reschedule Plan" : "Schedule Plan"}
+                </Text>
+                <CalendarPickerField
+                  value={pendingScheduleDate}
+                  onChange={(date) => {
+                    setPendingScheduleDate(date);
+                  }}
+                  Colors={Colors}
+                  planDuration={days.length || 7}
+                />
+                <View style={{ flexDirection: "row", gap: 12, marginTop: 16 }}>
+                  <Pressable
+                    onPress={() => setShowSchedulePicker(false)}
+                    style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: Colors.background, alignItems: "center" }}
+                  >
+                    <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: Colors.textSecondary }}>Cancel</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => handleScheduleDateSelect(pendingScheduleDate)}
+                    disabled={!pendingScheduleDate || scheduleMutation.isPending}
+                    style={{
+                      flex: 1,
+                      paddingVertical: 12,
+                      borderRadius: 10,
+                      backgroundColor: pendingScheduleDate ? Colors.primary : Colors.surfaceElevated,
+                      alignItems: "center",
+                      opacity: scheduleMutation.isPending ? 0.6 : 1,
+                    }}
+                  >
+                    <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: pendingScheduleDate ? "#fff" : Colors.textTertiary }}>
+                      {scheduleMutation.isPending ? "Saving..." : "Confirm"}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            </Pressable>
+          </Pressable>
+        </Modal>
+      )}
 
       <ScrollView
         style={styles.scrollView}

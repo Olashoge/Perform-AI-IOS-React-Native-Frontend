@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon, IconName } from "@/components/Icon";
@@ -22,7 +23,12 @@ import {
   useDeleteGoalPlan,
   useDeleteMealPlan,
   useDeleteWorkoutPlan,
+  useUpdateMealPlanSchedule,
+  useUpdateWorkoutPlanSchedule,
+  useUpdateGoalPlan,
 } from "@/lib/api-hooks";
+import { Ionicons } from "@expo/vector-icons";
+import CalendarPickerField from "@/components/CalendarPickerField";
 
 const WEB_TOP_INSET = 67;
 
@@ -148,7 +154,7 @@ function sortPlansByDate(plans: any[]): any[] {
   });
 }
 
-function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: { plan: any; onDelete: () => void; Colors: ThemeColors; mealPlans: any[]; workoutPlans: any[] }) {
+function WellnessPlanCard({ plan, onDelete, onSchedule, Colors, mealPlans, workoutPlans }: { plan: any; onDelete: () => void; onSchedule: (id: string, action: "schedule" | "reschedule" | "unschedule", currentDate?: string) => void; Colors: ThemeColors; mealPlans: any[]; workoutPlans: any[] }) {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const name = plan.name || plan.title || "Wellness Plan";
   const status = plan.status || plan.generationStatus || "active";
@@ -185,12 +191,22 @@ function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: {
         <Pressable
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            onDelete();
+            const id = plan._id || plan.id;
+            const options: { text: string; style?: "destructive" | "cancel"; onPress?: () => void }[] = [];
+            if (startDate) {
+              options.push({ text: "Reschedule", onPress: () => onSchedule(id, "reschedule", startDate) });
+              options.push({ text: "Unschedule", style: "destructive" as const, onPress: () => onSchedule(id, "unschedule") });
+            } else {
+              options.push({ text: "Schedule", onPress: () => onSchedule(id, "schedule") });
+            }
+            options.push({ text: "Delete", style: "destructive", onPress: onDelete });
+            options.push({ text: "Cancel", style: "cancel" });
+            Alert.alert("Plan Options", undefined, options);
           }}
           hitSlop={10}
           style={{ padding: 6 }}
         >
-          <Icon name="trash" size={20} color={Colors.textTertiary} />
+          <Ionicons name="ellipsis-horizontal" size={20} color={Colors.textTertiary} />
         </Pressable>
       </View>
 
@@ -252,13 +268,32 @@ function WellnessPlanCard({ plan, onDelete, Colors, mealPlans, workoutPlans }: {
   );
 }
 
-function MealPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () => void; Colors: ThemeColors }) {
+function MealPlanCard({ plan, onDelete, onSchedule, Colors }: { plan: any; onDelete: () => void; onSchedule: (id: string, action: "schedule" | "reschedule" | "unschedule", currentDate?: string) => void; Colors: ThemeColors }) {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const name = plan.name || plan.title || "Meal Plan";
   const status = plan.status || plan.generationStatus || "active";
   const startDate = plan.startDate || plan.start_date || plan.planStartDate;
   const endDate = plan.endDate || plan.end_date;
   const id = plan._id || plan.id;
+
+  const handleShowMenu = (e: any) => {
+    e.stopPropagation?.();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const options: { text: string; style?: "destructive" | "cancel"; onPress?: () => void }[] = [];
+    if (startDate) {
+      options.push({ text: "Reschedule", onPress: () => onSchedule(id, "reschedule", startDate) });
+      options.push({
+        text: "Unschedule",
+        style: "destructive",
+        onPress: () => onSchedule(id, "unschedule"),
+      });
+    } else {
+      options.push({ text: "Schedule", onPress: () => onSchedule(id, "schedule") });
+    }
+    options.push({ text: "Delete", style: "destructive", onPress: onDelete });
+    options.push({ text: "Cancel", style: "cancel" });
+    Alert.alert("Plan Options", undefined, options);
+  };
 
   return (
     <Pressable
@@ -280,23 +315,15 @@ function MealPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () => v
           <Text style={styles.simplePlanDate}>{formatDateRange(startDate, endDate)}</Text>
         )}
       </View>
-      <Pressable
-        onPress={(e) => {
-          e.stopPropagation?.();
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          onDelete();
-        }}
-        hitSlop={10}
-        style={{ padding: 6 }}
-      >
-        <Icon name="trash" size={20} color={Colors.textTertiary} />
+      <Pressable onPress={handleShowMenu} hitSlop={10} style={{ padding: 6 }}>
+        <Ionicons name="ellipsis-horizontal" size={20} color={Colors.textTertiary} />
       </Pressable>
       <Icon name="forward" size={20} color={Colors.textTertiary} />
     </Pressable>
   );
 }
 
-function WorkoutPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () => void; Colors: ThemeColors }) {
+function WorkoutPlanCard({ plan, onDelete, onSchedule, Colors }: { plan: any; onDelete: () => void; onSchedule: (id: string, action: "schedule" | "reschedule" | "unschedule", currentDate?: string) => void; Colors: ThemeColors }) {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const name = plan.name || plan.title || "Workout Plan";
   const status = plan.status || plan.generationStatus || "active";
@@ -304,6 +331,25 @@ function WorkoutPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () =
   const endDate = plan.endDate || plan.end_date;
   const planType = plan.planType || plan.type || "";
   const id = plan._id || plan.id;
+
+  const handleShowMenu = (e: any) => {
+    e.stopPropagation?.();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const options: { text: string; style?: "destructive" | "cancel"; onPress?: () => void }[] = [];
+    if (startDate) {
+      options.push({ text: "Reschedule", onPress: () => onSchedule(id, "reschedule", startDate) });
+      options.push({
+        text: "Unschedule",
+        style: "destructive",
+        onPress: () => onSchedule(id, "unschedule"),
+      });
+    } else {
+      options.push({ text: "Schedule", onPress: () => onSchedule(id, "schedule") });
+    }
+    options.push({ text: "Delete", style: "destructive", onPress: onDelete });
+    options.push({ text: "Cancel", style: "cancel" });
+    Alert.alert("Plan Options", undefined, options);
+  };
 
   return (
     <Pressable
@@ -328,16 +374,8 @@ function WorkoutPlanCard({ plan, onDelete, Colors }: { plan: any; onDelete: () =
           </Text>
         )}
       </View>
-      <Pressable
-        onPress={(e) => {
-          e.stopPropagation?.();
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          onDelete();
-        }}
-        hitSlop={10}
-        style={{ padding: 6 }}
-      >
-        <Icon name="trash" size={20} color={Colors.textTertiary} />
+      <Pressable onPress={handleShowMenu} hitSlop={10} style={{ padding: 6 }}>
+        <Ionicons name="ellipsis-horizontal" size={20} color={Colors.textTertiary} />
       </Pressable>
       <Icon name="forward" size={20} color={Colors.textTertiary} />
     </Pressable>
@@ -360,8 +398,15 @@ function WellnessPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
   const mealQuery = useMealPlans();
   const workoutQuery = useWorkoutPlans();
   const deleteGoalPlan = useDeleteGoalPlan();
+  const updateGoalPlan = useUpdateGoalPlan();
   const plans = sortPlansByDate(wellnessQuery.data || []);
   const isLoading = wellnessQuery.isLoading;
+  const [schedulePicker, setSchedulePicker] = useState<{ visible: boolean; planId: string; initialDate: string; title: string }>({
+    visible: false,
+    planId: "",
+    initialDate: "",
+    title: "Schedule Plan",
+  });
 
   const onRefresh = useCallback(() => {
     wellnessQuery.refetch();
@@ -383,66 +428,184 @@ function WellnessPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
     ]);
   };
 
+  const handleSchedule = (id: string, action: "schedule" | "reschedule" | "unschedule", currentDate?: string) => {
+    if (action === "unschedule") {
+      Alert.alert("Unschedule Plan", "Remove the start date from this plan?", [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Unschedule",
+          style: "destructive",
+          onPress: () => {
+            updateGoalPlan.mutate({ id, data: { startDate: null } });
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          },
+        },
+      ]);
+      return;
+    }
+    setSchedulePicker({
+      visible: true,
+      planId: id,
+      initialDate: currentDate || "",
+      title: action === "reschedule" ? "Reschedule Plan" : "Schedule Plan",
+    });
+  };
+
+  const handleConfirmSchedule = (date: string) => {
+    if (date && schedulePicker.planId) {
+      updateGoalPlan.mutate({ id: schedulePicker.planId, data: { startDate: date } });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+    setSchedulePicker((p) => ({ ...p, visible: false }));
+  };
+
   return (
-    <ScrollView
-      style={{ flex: 1 }}
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={wellnessQuery.isFetching && !wellnessQuery.isLoading}
-          onRefresh={onRefresh}
-          tintColor={Colors.primary}
-        />
-      }
-    >
-      <Text style={styles.pageSubtitle}>Holistic plans for your health journey</Text>
+    <>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={wellnessQuery.isFetching && !wellnessQuery.isLoading}
+            onRefresh={onRefresh}
+            tintColor={Colors.primary}
+          />
+        }
+      >
+        <Text style={styles.pageSubtitle}>Holistic plans for your health journey</Text>
 
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
-        <Pressable style={{ padding: 8 }} onPress={() => {}}>
-          <Icon name="swapVertical" size={20} color={Colors.textSecondary} />
-        </Pressable>
-        <Pressable
-          style={styles.newPlanButton}
-          onPress={() => {
-            Haptics.impactAsync();
-            router.push("/(tabs)/create" as any);
-          }}
-        >
-          <Icon name="sparkles" size={16} color={Colors.background} />
-          <Text style={styles.newPlanButtonText}>New Wellness Plan</Text>
-        </Pressable>
-      </View>
-
-      {isLoading ? (
-        <View style={styles.emptyState}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
+          <Pressable style={{ padding: 8 }} onPress={() => {}}>
+            <Icon name="swapVertical" size={20} color={Colors.textSecondary} />
+          </Pressable>
+          <Pressable
+            style={styles.newPlanButton}
+            onPress={() => {
+              Haptics.impactAsync();
+              router.push("/(tabs)/create" as any);
+            }}
+          >
+            <Icon name="sparkles" size={16} color={Colors.background} />
+            <Text style={styles.newPlanButtonText}>New Wellness Plan</Text>
+          </Pressable>
         </View>
-      ) : plans.length === 0 ? (
-        <EmptyState type="Wellness" Colors={Colors} />
-      ) : (
-        <View style={{ gap: 14 }}>
-          {plans.map((plan: any, i: number) => (
-            <WellnessPlanCard
-              key={plan._id || plan.id || i}
-              plan={plan}
-              onDelete={() => confirmDelete(plan._id || plan.id)}
+
+        {isLoading ? (
+          <View style={styles.emptyState}>
+            <ActivityIndicator size="large" color={Colors.primary} />
+          </View>
+        ) : plans.length === 0 ? (
+          <EmptyState type="Wellness" Colors={Colors} />
+        ) : (
+          <View style={{ gap: 14 }}>
+            {plans.map((plan: any, i: number) => (
+              <WellnessPlanCard
+                key={plan._id || plan.id || i}
+                plan={plan}
+                onDelete={() => confirmDelete(plan._id || plan.id)}
+                onSchedule={handleSchedule}
+                Colors={Colors}
+                mealPlans={mealQuery.data || []}
+                workoutPlans={workoutQuery.data || []}
+              />
+            ))}
+          </View>
+        )}
+      </ScrollView>
+      <SchedulePickerModal
+        visible={schedulePicker.visible}
+        onClose={() => setSchedulePicker((p) => ({ ...p, visible: false }))}
+        onConfirm={handleConfirmSchedule}
+        title={schedulePicker.title}
+        initialDate={schedulePicker.initialDate}
+        isPending={updateGoalPlan.isPending}
+        Colors={Colors}
+      />
+    </>
+  );
+}
+
+function SchedulePickerModal({
+  visible,
+  onClose,
+  onConfirm,
+  title,
+  initialDate,
+  isPending,
+  Colors,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onConfirm: (date: string) => void;
+  title: string;
+  initialDate: string;
+  isPending: boolean;
+  Colors: ThemeColors;
+}) {
+  const [date, setDate] = useState(initialDate);
+  React.useEffect(() => { setDate(initialDate); }, [initialDate, visible]);
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable
+        style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" }}
+        onPress={onClose}
+      >
+        <Pressable onPress={(e) => e.stopPropagation()} style={{ width: "90%", maxWidth: 340 }}>
+          <View style={{ backgroundColor: Colors.surface, borderRadius: 20, padding: 20 }}>
+            <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: Colors.text, marginBottom: 16, textAlign: "center" }}>
+              {title}
+            </Text>
+            <CalendarPickerField
+              value={date}
+              onChange={setDate}
               Colors={Colors}
-              mealPlans={mealQuery.data || []}
-              workoutPlans={workoutQuery.data || []}
+              planDuration={7}
             />
-          ))}
-        </View>
-      )}
-    </ScrollView>
+            <View style={{ flexDirection: "row", gap: 12, marginTop: 16 }}>
+              <Pressable
+                onPress={onClose}
+                style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: Colors.background, alignItems: "center" }}
+              >
+                <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: Colors.textSecondary }}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => onConfirm(date)}
+                disabled={!date || isPending}
+                style={{
+                  flex: 1,
+                  paddingVertical: 12,
+                  borderRadius: 10,
+                  backgroundColor: date ? Colors.primary : Colors.surfaceElevated,
+                  alignItems: "center",
+                  opacity: isPending ? 0.6 : 1,
+                }}
+              >
+                <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: date ? "#fff" : Colors.textTertiary }}>
+                  {isPending ? "Saving..." : "Confirm"}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }
 
 function NutritionPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) {
   const mealQuery = useMealPlans();
   const deleteMealPlan = useDeleteMealPlan();
+  const scheduleMutation = useUpdateMealPlanSchedule();
   const plans = sortPlansByDate(mealQuery.data || []);
   const isLoading = mealQuery.isLoading;
+  const [schedulePicker, setSchedulePicker] = useState<{ visible: boolean; planId: string; initialDate: string; title: string }>({
+    visible: false,
+    planId: "",
+    initialDate: "",
+    title: "Schedule Plan",
+  });
 
   const confirmDelete = (id: string) => {
     Alert.alert("Delete Plan", "Are you sure you want to delete this plan?", [
@@ -458,67 +621,117 @@ function NutritionPage({ Colors, styles }: { Colors: ThemeColors; styles: any })
     ]);
   };
 
+  const handleSchedule = (id: string, action: "schedule" | "reschedule" | "unschedule", currentDate?: string) => {
+    if (action === "unschedule") {
+      Alert.alert("Unschedule Plan", "Remove the start date from this plan?", [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Unschedule",
+          style: "destructive",
+          onPress: () => {
+            scheduleMutation.mutate({ id, startDate: null });
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          },
+        },
+      ]);
+      return;
+    }
+    setSchedulePicker({
+      visible: true,
+      planId: id,
+      initialDate: currentDate || "",
+      title: action === "reschedule" ? "Reschedule Plan" : "Schedule Plan",
+    });
+  };
+
+  const handleConfirmSchedule = (date: string) => {
+    if (date && schedulePicker.planId) {
+      scheduleMutation.mutate({ id: schedulePicker.planId, startDate: date });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+    setSchedulePicker((p) => ({ ...p, visible: false }));
+  };
+
   return (
-    <ScrollView
-      style={{ flex: 1 }}
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={mealQuery.isFetching && !mealQuery.isLoading}
-          onRefresh={() => mealQuery.refetch()}
-          tintColor={Colors.primary}
-        />
-      }
-    >
-      <Text style={styles.pageSubtitle}>Meal plans aligned with your goal</Text>
+    <>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={mealQuery.isFetching && !mealQuery.isLoading}
+            onRefresh={() => mealQuery.refetch()}
+            tintColor={Colors.primary}
+          />
+        }
+      >
+        <Text style={styles.pageSubtitle}>Meal plans aligned with your goal</Text>
 
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
-        <Pressable style={{ padding: 8 }} onPress={() => {}}>
-          <Icon name="swapVertical" size={20} color={Colors.textSecondary} />
-        </Pressable>
-        <Pressable
-          style={styles.newPlanButton}
-          onPress={() => {
-            Haptics.impactAsync();
-            router.push("/(tabs)/create" as any);
-          }}
-        >
-          <Icon name="sparkles" size={16} color={Colors.background} />
-          <Text style={styles.newPlanButtonText}>New Meal Plan</Text>
-        </Pressable>
-      </View>
-
-      {isLoading ? (
-        <View style={styles.emptyState}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
+          <Pressable style={{ padding: 8 }} onPress={() => {}}>
+            <Icon name="swapVertical" size={20} color={Colors.textSecondary} />
+          </Pressable>
+          <Pressable
+            style={styles.newPlanButton}
+            onPress={() => {
+              Haptics.impactAsync();
+              router.push("/(tabs)/create" as any);
+            }}
+          >
+            <Icon name="sparkles" size={16} color={Colors.background} />
+            <Text style={styles.newPlanButtonText}>New Meal Plan</Text>
+          </Pressable>
         </View>
-      ) : plans.length === 0 ? (
-        <EmptyState type="Meal" Colors={Colors} />
-      ) : (
-        <>
-          <Text style={styles.activePlansLabel}>ACTIVE PLANS</Text>
-          <View style={{ gap: 10 }}>
-            {plans.map((plan: any, i: number) => (
-              <MealPlanCard
-                key={plan._id || plan.id || i}
-                plan={plan}
-                onDelete={() => confirmDelete(plan._id || plan.id)}
-                Colors={Colors}
-              />
-            ))}
+
+        {isLoading ? (
+          <View style={styles.emptyState}>
+            <ActivityIndicator size="large" color={Colors.primary} />
           </View>
-        </>
-      )}
-    </ScrollView>
+        ) : plans.length === 0 ? (
+          <EmptyState type="Meal" Colors={Colors} />
+        ) : (
+          <>
+            <Text style={styles.activePlansLabel}>ACTIVE PLANS</Text>
+            <View style={{ gap: 10 }}>
+              {plans.map((plan: any, i: number) => (
+                <MealPlanCard
+                  key={plan._id || plan.id || i}
+                  plan={plan}
+                  onDelete={() => confirmDelete(plan._id || plan.id)}
+                  onSchedule={handleSchedule}
+                  Colors={Colors}
+                />
+              ))}
+            </View>
+          </>
+        )}
+      </ScrollView>
+      <SchedulePickerModal
+        visible={schedulePicker.visible}
+        onClose={() => setSchedulePicker((p) => ({ ...p, visible: false }))}
+        onConfirm={handleConfirmSchedule}
+        title={schedulePicker.title}
+        initialDate={schedulePicker.initialDate}
+        isPending={scheduleMutation.isPending}
+        Colors={Colors}
+      />
+    </>
   );
 }
 
 function TrainingPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) {
   const workoutQuery = useWorkoutPlans();
   const deleteWorkoutPlan = useDeleteWorkoutPlan();
+  const scheduleMutation = useUpdateWorkoutPlanSchedule();
   const plans = sortPlansByDate(workoutQuery.data || []);
   const isLoading = workoutQuery.isLoading;
+  const [schedulePicker, setSchedulePicker] = useState<{ visible: boolean; planId: string; initialDate: string; title: string }>({
+    visible: false,
+    planId: "",
+    initialDate: "",
+    title: "Schedule Plan",
+  });
 
   const confirmDelete = (id: string) => {
     Alert.alert("Delete Plan", "Are you sure you want to delete this plan?", [
@@ -534,59 +747,102 @@ function TrainingPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
     ]);
   };
 
+  const handleSchedule = (id: string, action: "schedule" | "reschedule" | "unschedule", currentDate?: string) => {
+    if (action === "unschedule") {
+      Alert.alert("Unschedule Plan", "Remove the start date from this plan?", [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Unschedule",
+          style: "destructive",
+          onPress: () => {
+            scheduleMutation.mutate({ id, startDate: null });
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          },
+        },
+      ]);
+      return;
+    }
+    setSchedulePicker({
+      visible: true,
+      planId: id,
+      initialDate: currentDate || "",
+      title: action === "reschedule" ? "Reschedule Plan" : "Schedule Plan",
+    });
+  };
+
+  const handleConfirmSchedule = (date: string) => {
+    if (date && schedulePicker.planId) {
+      scheduleMutation.mutate({ id: schedulePicker.planId, startDate: date });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+    setSchedulePicker((p) => ({ ...p, visible: false }));
+  };
+
   return (
-    <ScrollView
-      style={{ flex: 1 }}
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={workoutQuery.isFetching && !workoutQuery.isLoading}
-          onRefresh={() => workoutQuery.refetch()}
-          tintColor={Colors.primary}
-        />
-      }
-    >
-      <Text style={styles.pageSubtitle}>Workout plans for progressive results</Text>
+    <>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={workoutQuery.isFetching && !workoutQuery.isLoading}
+            onRefresh={() => workoutQuery.refetch()}
+            tintColor={Colors.primary}
+          />
+        }
+      >
+        <Text style={styles.pageSubtitle}>Workout plans for progressive results</Text>
 
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
-        <Pressable style={{ padding: 8 }} onPress={() => {}}>
-          <Icon name="swapVertical" size={20} color={Colors.textSecondary} />
-        </Pressable>
-        <Pressable
-          style={styles.newPlanButton}
-          onPress={() => {
-            Haptics.impactAsync();
-            router.push("/(tabs)/create" as any);
-          }}
-        >
-          <Icon name="sparkles" size={16} color={Colors.background} />
-          <Text style={styles.newPlanButtonText}>New Workout Plan</Text>
-        </Pressable>
-      </View>
-
-      {isLoading ? (
-        <View style={styles.emptyState}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
+          <Pressable style={{ padding: 8 }} onPress={() => {}}>
+            <Icon name="swapVertical" size={20} color={Colors.textSecondary} />
+          </Pressable>
+          <Pressable
+            style={styles.newPlanButton}
+            onPress={() => {
+              Haptics.impactAsync();
+              router.push("/(tabs)/create" as any);
+            }}
+          >
+            <Icon name="sparkles" size={16} color={Colors.background} />
+            <Text style={styles.newPlanButtonText}>New Workout Plan</Text>
+          </Pressable>
         </View>
-      ) : plans.length === 0 ? (
-        <EmptyState type="Workout" Colors={Colors} />
-      ) : (
-        <>
-          <Text style={styles.activePlansLabel}>ACTIVE PLANS</Text>
-          <View style={{ gap: 10 }}>
-            {plans.map((plan: any, i: number) => (
-              <WorkoutPlanCard
-                key={plan._id || plan.id || i}
-                plan={plan}
-                onDelete={() => confirmDelete(plan._id || plan.id)}
-                Colors={Colors}
-              />
-            ))}
+
+        {isLoading ? (
+          <View style={styles.emptyState}>
+            <ActivityIndicator size="large" color={Colors.primary} />
           </View>
-        </>
-      )}
-    </ScrollView>
+        ) : plans.length === 0 ? (
+          <EmptyState type="Workout" Colors={Colors} />
+        ) : (
+          <>
+            <Text style={styles.activePlansLabel}>ACTIVE PLANS</Text>
+            <View style={{ gap: 10 }}>
+              {plans.map((plan: any, i: number) => (
+                <WorkoutPlanCard
+                  key={plan._id || plan.id || i}
+                  plan={plan}
+                  onDelete={() => confirmDelete(plan._id || plan.id)}
+                  onSchedule={handleSchedule}
+                  Colors={Colors}
+                />
+              ))}
+            </View>
+          </>
+        )}
+      </ScrollView>
+      <SchedulePickerModal
+        visible={schedulePicker.visible}
+        onClose={() => setSchedulePicker((p) => ({ ...p, visible: false }))}
+        onConfirm={handleConfirmSchedule}
+        title={schedulePicker.title}
+        initialDate={schedulePicker.initialDate}
+        isPending={scheduleMutation.isPending}
+        Colors={Colors}
+      />
+    </>
   );
 }
 

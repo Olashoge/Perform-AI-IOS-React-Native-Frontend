@@ -2,15 +2,14 @@ import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   Pressable,
   Alert,
   Platform,
   TextInput,
-  KeyboardAvoidingView,
   ActivityIndicator,
 } from "react-native";
+import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon, IconName } from "@/components/Icon";
 import { Pill, PillGrid } from "@/components/Pill";
@@ -509,11 +508,7 @@ export default function ProfileScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-    >
+    <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + webTopInset + 8 }]}>
         <Pressable onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
           <Icon name="back" size={28} />
@@ -521,7 +516,7 @@ export default function ProfileScreen() {
         <Text style={styles.headerTitle}>Profile</Text>
         <View style={{ width: 40 }} />
       </View>
-      <ScrollView
+      <KeyboardAwareScrollViewCompat
         contentContainerStyle={[
           styles.scrollContent,
           {
@@ -529,7 +524,7 @@ export default function ProfileScreen() {
           },
         ]}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+        bottomOffset={60}
       >
 
         <View style={styles.avatarSection}>
@@ -884,8 +879,8 @@ export default function ProfileScreen() {
             <Text style={styles.diagnosticsText}>Diagnostics</Text>
           </Pressable>
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAwareScrollViewCompat>
+    </View>
   );
 }
 

@@ -188,6 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/signup", proxyToExternal);
   app.post("/api/auth/refresh", proxyToExternal);
   app.post("/api/auth/change-password", proxyToExternal);
+  app.post("/api/auth/forgot-password", proxyToExternal);
 
   app.delete("/api/me", async (req: any, res: any) => {
     const authHeader = req.headers.authorization || "";
@@ -414,11 +415,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/plan", proxyToExternal);
   app.get("/api/plan/:id", proxyToExternal);
   app.get("/api/plan/:id/status", proxyToExternal);
+  app.patch("/api/plans/:id", proxyToExternal);
   app.delete("/api/plans/:id", proxyToExternal);
   app.get("/api/workouts", proxyToExternal);
   app.post("/api/workout", proxyToExternal);
   app.get("/api/workout/:id", proxyToExternal);
   app.get("/api/workout/:id/status", proxyToExternal);
+  app.patch("/api/workouts/:id/schedule", proxyToExternal);
   app.delete("/api/workouts/:id", proxyToExternal);
   app.post("/api/workout/:id/swap", proxyToExternal);
   app.post("/api/workout/:id/regenerate-session", proxyToExternal);

@@ -2,15 +2,14 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   Pressable,
   Platform,
   TextInput,
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
 } from "react-native";
+import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Icon } from "@/components/Icon";
@@ -321,11 +320,7 @@ export default function NewMealPlanScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { paddingTop: topInset }]}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-    >
+    <View style={[styles.container, { paddingTop: topInset }]}>
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
           <Icon name="back" size={24} />
@@ -334,14 +329,28 @@ export default function NewMealPlanScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView
+      <KeyboardAwareScrollViewCompat
         style={styles.scrollView}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInset + 100 }]}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="interactive"
+        bottomOffset={60}
       >
         <ProfileSummaryCard profile={profile} />
+
+        <View style={styles.startDateSection}>
+          <View style={styles.startDateHeader}>
+            <Ionicons name="calendar" size={18} color={Colors.primary} />
+            <Text style={styles.startDateLabel}>Start Date</Text>
+          </View>
+          <Text style={styles.startDateHelper}>Required to schedule your plan</Text>
+          <CalendarPickerField
+            value={startDate}
+            onChange={setStartDate}
+            Colors={Colors}
+            conflictDates={mealConflictDates}
+            planDuration={7}
+          />
+        </View>
 
         <Text style={styles.sectionTitle}>Your Goal</Text>
         <PillGrid>
@@ -511,16 +520,7 @@ export default function NewMealPlanScreen() {
           </View>
         )}
 
-        <Text style={styles.sectionTitle}>Start Date</Text>
-        <Text style={styles.sectionHint}>Optional — plan runs for 7 days from start</Text>
-        <CalendarPickerField
-          value={startDate}
-          onChange={setStartDate}
-          Colors={Colors}
-          conflictDates={mealConflictDates}
-          planDuration={7}
-        />
-      </ScrollView>
+      </KeyboardAwareScrollViewCompat>
 
       <View style={[styles.bottomBar, { paddingBottom: bottomInset + 12 }]}>
         <Pressable
@@ -538,7 +538,7 @@ export default function NewMealPlanScreen() {
           )}
         </Pressable>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -571,6 +571,26 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   profileCardItem: { minWidth: "40%" },
   profileCardLabel: { fontSize: 10, fontFamily: "Inter_400Regular", color: Colors.textSecondary },
   profileCardValue: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.text, marginTop: 2 },
+  startDateSection: {
+    marginTop: 16,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: Colors.primary + "40",
+  },
+  startDateHeader: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 8,
+    marginBottom: 4,
+  },
+  startDateLabel: {
+    fontSize: 14, fontFamily: "Inter_700Bold", color: Colors.text,
+  },
+  startDateHelper: {
+    fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.primary, marginBottom: 12,
+  },
   sectionTitle: {
     fontSize: 14, fontFamily: "Inter_600SemiBold", color: Colors.text, marginBottom: 10, marginTop: 20,
   },

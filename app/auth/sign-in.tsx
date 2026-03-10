@@ -6,10 +6,9 @@ import {
   Pressable,
   StyleSheet,
   ActivityIndicator,
-  KeyboardAvoidingView,
   Platform,
-  Alert,
 } from "react-native";
+import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -61,18 +60,18 @@ export default function SignInScreen() {
   }
 
   function handleForgotPassword() {
-    Alert.alert("Reset Password", "Contact support to reset your password.");
+    router.push("/auth/forgot-password");
   }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + webTopInset, paddingBottom: insets.bottom + webBottomInset }]}>
       <StatusBar style={isDark ? "light" : "dark"} />
-      <KeyboardAvoidingView
+      <KeyboardAwareScrollViewCompat
         style={styles.keyboardView}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={0}
+        contentContainerStyle={styles.content}
+        bottomOffset={20}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.content}>
           <View style={styles.header}>
             <View style={styles.iconContainer}>
               <Icon name="flash" size={28} />
@@ -158,8 +157,7 @@ export default function SignInScreen() {
               <Text style={styles.footerLink}>Create Account</Text>
             </Pressable>
           </View>
-        </View>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollViewCompat>
     </View>
   );
 }
@@ -173,7 +171,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     flex: 1,
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: "center",
     paddingHorizontal: 24,
   },

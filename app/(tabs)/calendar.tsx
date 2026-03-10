@@ -186,11 +186,13 @@ export default function CalendarScreen() {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: insets.top + 16 + webTopInset,
+            paddingTop: insets.top + 8 + webTopInset,
             paddingBottom: 100,
           },
         ]}
         showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="never"
+        automaticallyAdjustContentInsets={false}
       >
         <Text style={styles.headerTitle}>Calendar</Text>
 

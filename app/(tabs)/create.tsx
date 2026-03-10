@@ -104,11 +104,9 @@ export default function CreateTabScreen() {
                 } else if (plan.id === "workout_7day") {
                   router.push("/workout/new");
                 } else if (plan.id === "daily_meal") {
-                  const today = new Date().toISOString().split("T")[0];
-                  router.push({ pathname: "/daily/[date]", params: { date: today, generate: "meal" } });
+                  router.push("/daily-meal-form");
                 } else if (plan.id === "daily_workout") {
-                  const today = new Date().toISOString().split("T")[0];
-                  router.push({ pathname: "/daily/[date]", params: { date: today, generate: "workout" } });
+                  router.push("/daily-workout-form");
                 }
               }}
               disabled={!plan.enabled}

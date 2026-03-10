@@ -1483,6 +1483,44 @@ export function useWorkoutSwap(workoutId: string | null) {
   });
 }
 
+export function useUpdateMealPlanSchedule() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, startDate }: { id: string; startDate: string | null }) => {
+      const response = await apiClient.patch(`/api/plans/${id}`, { startDate });
+      logApiCall("PATCH", `/api/plans/${id}`, response.status);
+      return response.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["meal-plan", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["plans:meal"] });
+      queryClient.invalidateQueries({ queryKey: ["occupied-dates"] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
+      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
+    },
+  });
+}
+
+export function useUpdateWorkoutPlanSchedule() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, startDate }: { id: string; startDate: string | null }) => {
+      const response = await apiClient.patch(`/api/workouts/${id}/schedule`, { startDate });
+      logApiCall("PATCH", `/api/workouts/${id}/schedule`, response.status);
+      return response.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["workout-plan", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["plans:workout"] });
+      queryClient.invalidateQueries({ queryKey: ["occupied-dates"] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
+      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
+    },
+  });
+}
+
 export function useWorkoutDayRegen(workoutId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({

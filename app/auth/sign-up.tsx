@@ -6,9 +6,9 @@ import {
   Pressable,
   StyleSheet,
   ActivityIndicator,
-  KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -81,12 +81,12 @@ export default function SignUpScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top + webTopInset, paddingBottom: insets.bottom + webBottomInset }]}>
       <StatusBar style={isDark ? "light" : "dark"} />
-      <KeyboardAvoidingView
+      <KeyboardAwareScrollViewCompat
         style={styles.keyboardView}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={0}
+        contentContainerStyle={styles.content}
+        bottomOffset={20}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.content}>
           <View style={styles.header}>
             <View style={styles.iconContainer}>
               <Icon name="flash" size={28} />
@@ -185,8 +185,7 @@ export default function SignUpScreen() {
               <Text style={styles.footerLink}>Sign In</Text>
             </Pressable>
           </View>
-        </View>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollViewCompat>
     </View>
   );
 }
@@ -200,7 +199,7 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     flex: 1,
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: "center",
     paddingHorizontal: 24,
   },

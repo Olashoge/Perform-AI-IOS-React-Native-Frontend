@@ -2,13 +2,12 @@ import React, { useMemo } from "react";
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   Pressable,
   Platform,
   TextInput,
-  KeyboardAvoidingView,
 } from "react-native";
+import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon } from "@/components/Icon";
 import { router } from "expo-router";
@@ -159,12 +158,8 @@ export default function Step3Screen() {
   const availableFocusAreas = FOCUS_AREAS_BY_MODE[workoutForm.trainingMode] ?? FOCUS_AREAS_BY_MODE.both;
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-    >
-      <ScrollView
+    <View style={styles.container}>
+      <KeyboardAwareScrollViewCompat
         contentContainerStyle={[
           styles.scrollContent,
           {
@@ -173,7 +168,7 @@ export default function Step3Screen() {
           },
         ]}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+        bottomOffset={60}
         keyboardDismissMode="interactive"
       >
         <View style={styles.headerRow}>
@@ -330,7 +325,7 @@ export default function Step3Screen() {
           placeholderTextColor={Colors.textTertiary}
           multiline={false}
         />
-      </ScrollView>
+      </KeyboardAwareScrollViewCompat>
 
       <View
         style={[
@@ -346,7 +341,7 @@ export default function Step3Screen() {
           <Icon name="arrowForward" size={20} color="#fff" />
         </Pressable>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
