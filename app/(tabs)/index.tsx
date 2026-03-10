@@ -248,7 +248,7 @@ function DayDetailSection({ day, Colors }: { day: DayData | undefined; Colors: T
         <View style={styles.nutritionCard}>
           <View style={styles.nutritionHeader}>
             <View style={[styles.nutritionIconBg, { backgroundColor: Colors.warning + "20" }]}>
-              <Text style={{ fontSize: 17 }}>🍽</Text>
+              <Icon name="restaurant" size={20} color={Colors.warning} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.nutritionTitle}>Nutrition</Text>
@@ -288,7 +288,7 @@ function DayDetailSection({ day, Colors }: { day: DayData | undefined; Colors: T
           onPress={() => router.push({ pathname: "/daily/[date]", params: { date: day.date } })}
         >
           <View style={[styles.nutritionIconBg, { backgroundColor: Colors.scoreGreen + "20" }]}>
-            <Text style={{ fontSize: 17 }}>💪</Text>
+            <Icon name="barbell" size={20} color={Colors.scoreGreen} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.nutritionTitle}>Workout</Text>
@@ -410,7 +410,7 @@ function ActivePlansSection({ Colors }: { Colors: ThemeColors }) {
           }}
         >
           <View style={[styles.planIconBg, { backgroundColor: plan.planType === "meal" ? Colors.warning + "20" : Colors.scoreGreen + "20" }]}>
-            <Text style={{ fontSize: 18 }}>{plan.planType === "meal" ? "🍽" : "💪"}</Text>
+            <Icon name={plan.planType === "meal" ? "restaurant" : "barbell"} size={20} color={plan.planType === "meal" ? Colors.warning : Colors.scoreGreen} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.planCardTitle} numberOfLines={1}>{plan.name || plan.title || "Plan"}</Text>
