@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Alert, Platform } from "react-native";
 import apiClient, { getAccessToken, API_BASE_URL } from "./api-client";
@@ -821,7 +822,7 @@ export function useGoalPlan(id: string | null) {
 }
 
 export function useMealPlan(id: string | null) {
-  return useQuery({
+  const planQuery = useQuery({
     queryKey: ["meal-plan", id],
     queryFn: async () => {
       const response = await apiClient.get(`/api/plan/${id}`);
@@ -830,10 +831,21 @@ export function useMealPlan(id: string | null) {
     },
     enabled: !!id,
   });
+  const schedulesQuery = useLocalSchedules();
+  const data = useMemo(() => {
+    if (!planQuery.data || !schedulesQuery.data) return planQuery.data;
+    const planId = id || planQuery.data?._id || planQuery.data?.id;
+    if (planId && planId in schedulesQuery.data) {
+      const localStart = schedulesQuery.data[planId];
+      return { ...planQuery.data, startDate: localStart, planStartDate: localStart };
+    }
+    return planQuery.data;
+  }, [planQuery.data, schedulesQuery.data, id]);
+  return { ...planQuery, data };
 }
 
 export function useWorkoutPlan(id: string | null) {
-  return useQuery({
+  const planQuery = useQuery({
     queryKey: ["workout-plan", id],
     queryFn: async () => {
       const response = await apiClient.get(`/api/workout/${id}`);
@@ -842,6 +854,17 @@ export function useWorkoutPlan(id: string | null) {
     },
     enabled: !!id,
   });
+  const schedulesQuery = useLocalSchedules();
+  const data = useMemo(() => {
+    if (!planQuery.data || !schedulesQuery.data) return planQuery.data;
+    const planId = id || planQuery.data?._id || planQuery.data?.id;
+    if (planId && planId in schedulesQuery.data) {
+      const localStart = schedulesQuery.data[planId];
+      return { ...planQuery.data, startDate: localStart, planStartDate: localStart };
+    }
+    return planQuery.data;
+  }, [planQuery.data, schedulesQuery.data, id]);
+  return { ...planQuery, data };
 }
 
 export function useOccupiedDates(excludePlanId?: string) {
@@ -858,6 +881,37 @@ export function useOccupiedDates(excludePlanId?: string) {
     },
     staleTime: 30000,
   });
+}
+
+function computeDateRange(startDate: string, numDays: number): string[] {
+  const dates: string[] = [];
+  const sd = new Date(startDate + "T12:00:00Z");
+  for (let i = 0; i < numDays; i++) {
+    const d = new Date(sd);
+    d.setUTCDate(d.getUTCDate() + i);
+    dates.push(d.toISOString().slice(0, 10));
+  }
+  return dates;
+}
+
+export function useConflictDates(planType: "meal" | "workout", excludePlanId?: string) {
+  const mealPlans = useMealPlans();
+  const workoutPlans = useWorkoutPlans();
+
+  return useMemo(() => {
+    const plans = planType === "meal" ? (mealPlans.data || []) : (workoutPlans.data || []);
+    const dates: string[] = [];
+    for (const plan of plans) {
+      const id = plan._id || plan.id;
+      if (excludePlanId && id === excludePlanId) continue;
+      const startDate = plan.startDate || plan.start_date || plan.planStartDate;
+      if (!startDate) continue;
+      const pj = plan.planJson ? (typeof plan.planJson === "string" ? JSON.parse(plan.planJson) : plan.planJson) : null;
+      const numDays = pj?.days ? (Array.isArray(pj.days) ? pj.days.length : 7) : 7;
+      dates.push(...computeDateRange(startDate, numDays));
+    }
+    return dates;
+  }, [mealPlans.data, workoutPlans.data, planType, excludePlanId]);
 }
 
 export function useCreateMealPlan() {

@@ -158,6 +158,82 @@ async function getCompletionsForUser(userId: string, idPrefix?: string): Promise
   return map;
 }
 
+async function getLocalSchedulesForUser(userId: string): Promise<Map<string, { startDate: string | null; planType: string }>> {
+  const map = new Map();
+  try {
+    const rows = await db.select().from(planSchedules).where(eq(planSchedules.userId, userId));
+    for (const row of rows) {
+      map.set(row.planId, { startDate: row.startDate, planType: row.planType });
+    }
+  } catch (err) {
+    console.error("Error fetching local schedules:", err);
+  }
+  return map;
+}
+
+function fetchExternalPlan(planType: "meal" | "workout", planId: string, authHeader: string): Promise<any> {
+  const path = planType === "meal" ? `/api/plan/${planId}` : `/api/workout/${planId}`;
+  return new Promise((resolve, reject) => {
+    const targetUrl = new URL(path, EXTERNAL_BACKEND);
+    const options: https.RequestOptions = {
+      hostname: targetUrl.hostname,
+      port: 443,
+      path: targetUrl.pathname,
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: authHeader,
+      },
+    };
+    const req = https.request(options, (proxyRes) => {
+      let body = "";
+      proxyRes.on("data", (chunk: Buffer) => { body += chunk.toString(); });
+      proxyRes.on("end", () => {
+        try { resolve(JSON.parse(body)); } catch { resolve(null); }
+      });
+    });
+    req.on("error", () => resolve(null));
+    req.end();
+  });
+}
+
+function getDateStr(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+function computeDatesForPlan(startDate: string, numDays: number): string[] {
+  const dates: string[] = [];
+  const sd = new Date(startDate + "T12:00:00Z");
+  for (let i = 0; i < numDays; i++) {
+    const d = new Date(sd);
+    d.setUTCDate(d.getUTCDate() + i);
+    dates.push(getDateStr(d));
+  }
+  return dates;
+}
+
+function getDayIndex(startDate: string, targetDate: string): number {
+  const sd = new Date(startDate + "T12:00:00Z");
+  const td = new Date(targetDate + "T12:00:00Z");
+  return Math.round((td.getTime() - sd.getTime()) / (24 * 60 * 60 * 1000));
+}
+
+async function getPlanDuration(planType: "meal" | "workout", planId: string, authHeader: string, cache: Map<string, any>): Promise<number> {
+  try {
+    if (!cache.has(planId)) {
+      const planData = await fetchExternalPlan(planType, planId, authHeader);
+      if (planData) cache.set(planId, planData);
+    }
+    const planData = cache.get(planId);
+    if (!planData) return 7;
+    const pj = planData.planJson ? (typeof planData.planJson === "string" ? JSON.parse(planData.planJson) : planData.planJson) : null;
+    const days = pj?.days || planData?.days || [];
+    return Array.isArray(days) && days.length > 0 ? days.length : 7;
+  } catch {
+    return 7;
+  }
+}
+
 function applyCompletionsToDay(day: any, completionMap: Map<string, boolean>, date: string): any {
   if (!day) return day;
   if (completionMap.size === 0) return { ...day, date: day.date || date };
@@ -276,15 +352,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/week-data", (req, res) => {
     proxyAndTransform(req, res, async (data, userId) => {
       const completionMap = await getCompletionsForUser(userId);
-      if (completionMap.size === 0) return data;
+      const localSchedules = await getLocalSchedulesForUser(userId);
 
       const rawArr = data?.weekData ?? data?.days ?? data;
       if (!Array.isArray(rawArr)) return data;
 
-      const transformed = rawArr.map((day: any) => {
+      const weekStart = req.query.weekStart as string || rawArr[0]?.date;
+      const weekDates = new Set<string>();
+      if (weekStart) {
+        const ws = new Date(weekStart + "T12:00:00Z");
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(ws);
+          d.setUTCDate(d.getUTCDate() + i);
+          weekDates.add(getDateStr(d));
+        }
+      }
+
+      let transformed = rawArr.map((day: any) => {
         const date = day?.date ?? "unknown";
         return applyCompletionsToDay(day, completionMap, date);
       });
+
+      if (localSchedules.size > 0) {
+        const dayMap = new Map<string, any>();
+        for (const day of transformed) {
+          dayMap.set(day.date, { ...day });
+        }
+
+        const affectedPlanIds = new Set<string>();
+        for (const day of transformed) {
+          const pIds = day.planIds || [];
+          const wPlanId = day.workoutPlanId;
+          for (const pid of pIds) {
+            if (localSchedules.has(pid)) affectedPlanIds.add(pid);
+          }
+          if (wPlanId && localSchedules.has(wPlanId)) affectedPlanIds.add(wPlanId);
+        }
+
+        for (const [planId, schedule] of localSchedules) {
+          if (schedule.startDate) {
+            const planDates = computeDatesForPlan(schedule.startDate, 14);
+            for (const pd of planDates) {
+              if (weekDates.has(pd)) affectedPlanIds.add(planId);
+            }
+          }
+        }
+
+        if (affectedPlanIds.size > 0) {
+          const planCache = new Map<string, any>();
+
+          for (const day of dayMap.values()) {
+            const pIds = [...(day.planIds || [])];
+            let removedMealPlan = false;
+            for (const pid of pIds) {
+              if (!localSchedules.has(pid)) continue;
+              const sched = localSchedules.get(pid)!;
+              const planDuration = await getPlanDuration(sched.planType as "meal" | "workout", pid, req.headers.authorization || "", planCache);
+              const localDates = sched.startDate ? computeDatesForPlan(sched.startDate, planDuration) : [];
+              if (!localDates.includes(day.date)) {
+                if (sched.planType === "meal") {
+                  day.planIds = (day.planIds || []).filter((id: string) => id !== pid);
+                  removedMealPlan = true;
+                }
+              }
+            }
+            if (removedMealPlan && (day.planIds || []).length === 0) {
+              day.meals = day.meals && typeof day.meals === "object" && !Array.isArray(day.meals) ? {} : [];
+              day.mealSlots = [];
+            }
+
+            const wPlanId = day.workoutPlanId;
+            if (wPlanId && localSchedules.has(wPlanId)) {
+              const sched = localSchedules.get(wPlanId)!;
+              const planDuration = await getPlanDuration("workout", wPlanId, req.headers.authorization || "", planCache);
+              const localDates = sched.startDate ? computeDatesForPlan(sched.startDate, planDuration) : [];
+              if (!localDates.includes(day.date)) {
+                day.workout = null;
+                day.workoutPlanId = null;
+                day.isWorkoutDay = false;
+              }
+            }
+          }
+
+          for (const planId of affectedPlanIds) {
+            const sched = localSchedules.get(planId);
+            if (!sched || !sched.startDate) continue;
+
+            if (!planCache.has(planId)) {
+              const planData = await fetchExternalPlan(
+                sched.planType as "meal" | "workout",
+                planId,
+                req.headers.authorization || ""
+              );
+              if (planData) planCache.set(planId, planData);
+            }
+            const planData = planCache.get(planId);
+            if (!planData) continue;
+
+            let pj: any = null;
+            try {
+              pj = planData.planJson ? (typeof planData.planJson === "string" ? JSON.parse(planData.planJson) : planData.planJson) : null;
+            } catch { pj = null; }
+            const days = pj?.days || planData?.days || [];
+            const planDuration = Array.isArray(days) && days.length > 0 ? days.length : 7;
+            const localDates = computeDatesForPlan(sched.startDate, planDuration);
+            const datesInWeek = localDates.filter((d) => weekDates.has(d));
+            if (datesInWeek.length === 0) continue;
+
+            for (const targetDate of datesInWeek) {
+              const dayIdx = getDayIndex(sched.startDate, targetDate);
+              if (dayIdx < 0 || dayIdx >= days.length) continue;
+              const planDay = days[dayIdx];
+              if (!planDay) continue;
+
+              let dayEntry = dayMap.get(targetDate);
+              if (!dayEntry) {
+                dayEntry = { date: targetDate, meals: {}, planIds: [], workout: null, workoutPlanId: null, isWorkoutDay: false, dailyMeal: null, dailyWorkout: null, hasDailyMeal: false, hasDailyWorkout: false, completions: [] };
+                dayMap.set(targetDate, dayEntry);
+              }
+
+              if (sched.planType === "meal") {
+                if (!dayEntry.planIds.includes(planId)) dayEntry.planIds.push(planId);
+                const mealSlots = planDay.mealSlots || Object.keys(planDay.meals || {});
+                if (planDay.meals) {
+                  dayEntry.meals = typeof dayEntry.meals === "object" && !Array.isArray(dayEntry.meals)
+                    ? { ...dayEntry.meals, ...planDay.meals }
+                    : planDay.meals;
+                }
+                if (mealSlots.length > 0) {
+                  dayEntry.mealSlots = [...new Set([...(dayEntry.mealSlots || []), ...mealSlots])];
+                }
+              } else if (sched.planType === "workout") {
+                dayEntry.workoutPlanId = planId;
+                if (planDay.isWorkoutDay !== false) {
+                  dayEntry.isWorkoutDay = true;
+                  dayEntry.workout = planDay.workout || planDay.session || planDay;
+                } else {
+                  dayEntry.isWorkoutDay = false;
+                  dayEntry.workout = null;
+                }
+              }
+            }
+          }
+        }
+
+        transformed = Array.from(dayMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+      }
 
       if (data?.weekData) return { ...data, weekData: transformed };
       if (data?.days) return { ...data, days: transformed };
@@ -298,7 +511,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const completionMap = await getCompletionsForUser(userId, `meal-${date}`);
       const workoutMap = await getCompletionsForUser(userId, `workout-${date}`);
       for (const [k, v] of workoutMap) completionMap.set(k, v);
-      return applyCompletionsToDay(data, completionMap, date);
+      let dayData = applyCompletionsToDay(data, completionMap, date);
+
+      const localSchedules = await getLocalSchedulesForUser(userId);
+      if (localSchedules.size > 0) {
+        const dayPlanCache = new Map<string, any>();
+        const pIds = [...(dayData.planIds || [])];
+        let removedMealPlanFromDay = false;
+        for (const pid of pIds) {
+          if (!localSchedules.has(pid)) continue;
+          const sched = localSchedules.get(pid)!;
+          const planDuration = await getPlanDuration(sched.planType as "meal" | "workout", pid, req.headers.authorization || "", dayPlanCache);
+          const localDates = sched.startDate ? computeDatesForPlan(sched.startDate, planDuration) : [];
+          if (!localDates.includes(date)) {
+            if (sched.planType === "meal") {
+              dayData = { ...dayData, planIds: (dayData.planIds || []).filter((id: string) => id !== pid) };
+              removedMealPlanFromDay = true;
+            }
+          }
+        }
+        if (removedMealPlanFromDay && (dayData.planIds || []).length === 0) {
+          dayData = { ...dayData, meals: typeof dayData.meals === "object" && !Array.isArray(dayData.meals) ? {} : [], mealSlots: [] };
+        }
+        const wPlanId = dayData.workoutPlanId;
+        if (wPlanId && localSchedules.has(wPlanId)) {
+          const sched = localSchedules.get(wPlanId)!;
+          const planDuration = await getPlanDuration("workout", wPlanId, req.headers.authorization || "", dayPlanCache);
+          const localDates = sched.startDate ? computeDatesForPlan(sched.startDate, planDuration) : [];
+          if (!localDates.includes(date)) {
+            dayData = { ...dayData, workout: null, workoutPlanId: null, isWorkoutDay: false };
+          }
+        }
+
+        for (const [planId, sched] of localSchedules) {
+          if (!sched.startDate) continue;
+          if (!dayPlanCache.has(planId)) {
+            const pd = await fetchExternalPlan(sched.planType as "meal" | "workout", planId, req.headers.authorization || "");
+            if (pd) dayPlanCache.set(planId, pd);
+          }
+          const planData = dayPlanCache.get(planId);
+          if (!planData) continue;
+          let pj: any = null;
+          try {
+            pj = planData.planJson ? (typeof planData.planJson === "string" ? JSON.parse(planData.planJson) : planData.planJson) : null;
+          } catch { pj = null; }
+          const days = pj?.days || planData?.days || [];
+          const planDuration = Array.isArray(days) && days.length > 0 ? days.length : 7;
+          const localDates = computeDatesForPlan(sched.startDate, planDuration);
+          if (!localDates.includes(date)) continue;
+          const dayIdx = getDayIndex(sched.startDate, date);
+          const planDay = days[dayIdx];
+          if (!planDay) continue;
+
+          if (sched.planType === "meal") {
+            if (!(dayData.planIds || []).includes(planId)) {
+              dayData = { ...dayData, planIds: [...(dayData.planIds || []), planId] };
+            }
+            if (planDay.meals) {
+              dayData.meals = typeof dayData.meals === "object" && !Array.isArray(dayData.meals)
+                ? { ...dayData.meals, ...planDay.meals } : planDay.meals;
+            }
+            const mealSlots = planDay.mealSlots || Object.keys(planDay.meals || {});
+            if (mealSlots.length > 0) {
+              dayData.mealSlots = [...new Set([...(dayData.mealSlots || []), ...mealSlots])];
+            }
+          } else if (sched.planType === "workout") {
+            dayData.workoutPlanId = planId;
+            if (planDay.isWorkoutDay !== false) {
+              dayData.isWorkoutDay = true;
+              dayData.workout = planDay.workout || planDay.session || planDay;
+            }
+          }
+        }
+      }
+
+      return dayData;
     });
   });
 

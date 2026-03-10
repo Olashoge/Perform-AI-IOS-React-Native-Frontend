@@ -18,7 +18,7 @@ import { Icon } from "@/components/Icon";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
-import { useWorkoutPlan, useExerciseFeedback, useDeleteExercisePreferenceByKey, useExercisePreferences, useWorkoutSwap, useWorkoutDayRegen, useUpdateWorkoutPlanSchedule, useDeleteWorkoutPlan } from "@/lib/api-hooks";
+import { useWorkoutPlan, useExerciseFeedback, useDeleteExercisePreferenceByKey, useExercisePreferences, useWorkoutSwap, useWorkoutDayRegen, useUpdateWorkoutPlanSchedule, useDeleteWorkoutPlan, useConflictDates } from "@/lib/api-hooks";
 import CalendarPickerField from "@/components/CalendarPickerField";
 
 const WEB_TOP_INSET = 67;
@@ -39,6 +39,7 @@ export default function WorkoutPlanDetailScreen() {
   const dayRegenMutation = useWorkoutDayRegen(id ?? null);
   const scheduleMutation = useUpdateWorkoutPlanSchedule();
   const deletePlanMutation = useDeleteWorkoutPlan();
+  const workoutConflictDates = useConflictDates("workout", id ?? undefined);
   const [expandedSessions, setExpandedSessions] = useState<Record<number, boolean>>({});
   const [refreshing, setRefreshing] = useState(false);
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
@@ -248,6 +249,7 @@ export default function WorkoutPlanDetailScreen() {
                     setPendingScheduleDate(date);
                   }}
                   Colors={Colors}
+                  conflictDates={workoutConflictDates}
                   planDuration={days.length || 7}
                 />
                 <View style={{ flexDirection: "row", gap: 12, marginTop: 16 }}>

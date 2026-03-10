@@ -18,7 +18,7 @@ import { Icon } from "@/components/Icon";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
-import { useMealPlan, useMealFeedback, useResolveIngredientProposal, computeMealFingerprint, useMealPreferences, useGroceryList, useToggleGroceryOwned, useRegenerateGroceryList, useMealSwap, useDayRegen, useAllowance, AllowanceData, GrocerySection, useUpdateMealPlanSchedule, useDeleteMealPlan } from "@/lib/api-hooks";
+import { useMealPlan, useMealFeedback, useResolveIngredientProposal, computeMealFingerprint, useMealPreferences, useGroceryList, useToggleGroceryOwned, useRegenerateGroceryList, useMealSwap, useDayRegen, useAllowance, AllowanceData, GrocerySection, useUpdateMealPlanSchedule, useDeleteMealPlan, useConflictDates } from "@/lib/api-hooks";
 import CalendarPickerField from "@/components/CalendarPickerField";
 
 function IngredientProposalModal({
@@ -545,6 +545,7 @@ export default function MealPlanDetailScreen() {
   const { data: allowance, refetch: refetchAllowance } = useAllowance();
   const scheduleMutation = useUpdateMealPlanSchedule();
   const deleteMutation = useDeleteMealPlan();
+  const mealConflictDates = useConflictDates("meal", id ?? undefined);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"meals" | "grocery">("meals");
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
@@ -784,6 +785,7 @@ export default function MealPlanDetailScreen() {
                     setPendingScheduleDate(date);
                   }}
                   Colors={Colors}
+                  conflictDates={mealConflictDates}
                   planDuration={days.length || 7}
                 />
                 <View style={{ flexDirection: "row", gap: 12, marginTop: 16 }}>

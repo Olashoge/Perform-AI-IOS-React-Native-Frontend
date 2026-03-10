@@ -26,6 +26,7 @@ import {
   useUpdateMealPlanSchedule,
   useUpdateWorkoutPlanSchedule,
   useUpdateGoalPlan,
+  useConflictDates,
 } from "@/lib/api-hooks";
 import { Ionicons } from "@expo/vector-icons";
 import CalendarPickerField from "@/components/CalendarPickerField";
@@ -409,6 +410,9 @@ function WellnessPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
     initialDate: "",
     title: "Schedule Plan",
   });
+  const mealConflicts = useConflictDates("meal");
+  const workoutConflicts = useConflictDates("workout");
+  const wellnessConflictDates = useMemo(() => [...new Set([...mealConflicts, ...workoutConflicts])], [mealConflicts, workoutConflicts]);
 
   const onRefresh = useCallback(() => {
     wellnessQuery.refetch();
@@ -523,6 +527,7 @@ function WellnessPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
         initialDate={schedulePicker.initialDate}
         isPending={updateGoalPlan.isPending}
         Colors={Colors}
+        conflictDates={wellnessConflictDates}
       />
     </>
   );
@@ -536,6 +541,8 @@ function SchedulePickerModal({
   initialDate,
   isPending,
   Colors,
+  conflictDates,
+  planDuration = 7,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -544,6 +551,8 @@ function SchedulePickerModal({
   initialDate: string;
   isPending: boolean;
   Colors: ThemeColors;
+  conflictDates?: string[];
+  planDuration?: number;
 }) {
   const [date, setDate] = useState(initialDate);
   React.useEffect(() => { setDate(initialDate); }, [initialDate, visible]);
@@ -563,7 +572,8 @@ function SchedulePickerModal({
               value={date}
               onChange={setDate}
               Colors={Colors}
-              planDuration={7}
+              conflictDates={conflictDates}
+              planDuration={planDuration}
             />
             <View style={{ flexDirection: "row", gap: 12, marginTop: 16 }}>
               <Pressable
@@ -608,6 +618,7 @@ function NutritionPage({ Colors, styles }: { Colors: ThemeColors; styles: any })
     initialDate: "",
     title: "Schedule Plan",
   });
+  const mealConflictDates = useConflictDates("meal", schedulePicker.planId || undefined);
 
   const confirmDelete = (id: string) => {
     Alert.alert("Delete Plan", "Are you sure you want to delete this plan?", [
@@ -717,6 +728,7 @@ function NutritionPage({ Colors, styles }: { Colors: ThemeColors; styles: any })
         initialDate={schedulePicker.initialDate}
         isPending={scheduleMutation.isPending}
         Colors={Colors}
+        conflictDates={mealConflictDates}
       />
     </>
   );
@@ -734,6 +746,7 @@ function TrainingPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
     initialDate: "",
     title: "Schedule Plan",
   });
+  const workoutConflictDates = useConflictDates("workout", schedulePicker.planId || undefined);
 
   const confirmDelete = (id: string) => {
     Alert.alert("Delete Plan", "Are you sure you want to delete this plan?", [
@@ -843,6 +856,7 @@ function TrainingPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
         initialDate={schedulePicker.initialDate}
         isPending={scheduleMutation.isPending}
         Colors={Colors}
+        conflictDates={workoutConflictDates}
       />
     </>
   );
