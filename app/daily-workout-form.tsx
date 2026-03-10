@@ -17,7 +17,7 @@ import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useCreateDailyWorkout, useProfile } from "@/lib/api-hooks";
 import { Pill, PillGrid } from "@/components/Pill";
-
+import CalendarPickerField from "@/components/CalendarPickerField";
 
 const WEB_TOP_INSET = 67;
 
@@ -110,6 +110,14 @@ export default function DailyWorkoutFormScreen() {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInset + 100 }]}
         showsVerticalScrollIndicator={false}
       >
+        <Text style={styles.sectionTitle}>Date</Text>
+        <CalendarPickerField
+          value={date}
+          onChange={(d) => setDate(d || today)}
+          Colors={Colors}
+          planDuration={1}
+        />
+
         <Text style={styles.sectionTitle}>Workout Focus</Text>
         <PillGrid>
           {FOCUS_OPTIONS.map((f) => (
