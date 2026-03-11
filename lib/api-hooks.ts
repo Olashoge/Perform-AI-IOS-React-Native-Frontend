@@ -5,6 +5,15 @@ import apiClient, { getAccessToken, API_BASE_URL } from "./api-client";
 import { logApiCall } from "./api-log";
 import { getWeekStartUTC, getWeekEndUTC, computeWeekStartForDate } from "./week-utils";
 
+function stripPlanDateSuffix(name: string): string {
+  return name.replace(/\s*[·•–\-]\s*(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}(?:,?\s*\d{4})?$/i, "").trim();
+}
+
+function cleanPlanName(raw: any): string {
+  const name = (typeof raw === "string" && raw) ? raw : "";
+  return name ? stripPlanDateSuffix(name) : name;
+}
+
 function getLocalServerUrl(): string {
   const domain = process.env.EXPO_PUBLIC_DOMAIN;
   if (domain) return `https://${domain}`;
@@ -812,7 +821,15 @@ export function useGoalPlan(id: string | null) {
     queryFn: async () => {
       const response = await apiClient.get(`/api/goal-plans/${id}`);
       logApiCall("GET", `/api/goal-plans/${id}`, response.status);
-      return response.data;
+      const data = response.data;
+      if (data && typeof data === "object") {
+        const rawName = data.name || data.title;
+        if (rawName) {
+          const cleaned = cleanPlanName(rawName);
+          return { ...data, name: cleaned, title: cleaned };
+        }
+      }
+      return data;
     },
     enabled: !!id,
   });
@@ -1023,7 +1040,7 @@ export function useWorkoutPlanStatus(planId: string | null, enabled: boolean) {
 
 function normalizePlanRecord(p: any): any {
   const pj = p.planJson ? (typeof p.planJson === "string" ? JSON.parse(p.planJson) : p.planJson) : null;
-  const name = p.name || p.title || pj?.title || pj?.planName || "Plan";
+  const name = cleanPlanName(p.name || p.title || pj?.title || pj?.planName) || "Plan";
   const startDate = p.startDate || p.planStartDate || pj?.startDate || null;
   const numDays = pj?.days ? (Array.isArray(pj.days) ? pj.days.length : 7) : 7;
   let endDate = p.endDate || null;
@@ -1044,7 +1061,7 @@ export function useWellnessPlans() {
       const plans = Array.isArray(response.data) ? response.data : response.data?.goalPlans || response.data?.plans || [];
       return plans.filter((p: any) => !p.deleted && !p.isDeleted && !p.deletedAt).map((p: any) => ({
         ...p,
-        name: p.title || p.name || "Wellness Plan",
+        name: cleanPlanName(p.name || p.title) || "Wellness Plan",
       }));
     },
     staleTime: 30000,
