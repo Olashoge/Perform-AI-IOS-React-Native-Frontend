@@ -31,6 +31,7 @@ export interface WorkoutForm {
 
 export interface WellnessWizardState {
   goalType: string;
+  secondaryFocus: string;
   planType: string;
   startDate: string;
   pace: string;
@@ -69,6 +70,7 @@ const defaultWorkoutForm: WorkoutForm = {
 
 const defaultState: WellnessWizardState = {
   goalType: "weight_loss",
+  secondaryFocus: "",
   planType: "both",
   startDate: "",
   pace: "",

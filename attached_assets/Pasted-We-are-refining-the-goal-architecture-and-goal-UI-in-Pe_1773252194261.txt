@@ -1,0 +1,240 @@
+We are refining the goal architecture and goal UI in Perform AI to make the system clearer for users and easier for the backend plan generator to control.
+
+IMPORTANT
+This frontend/mobile task only covers:
+- goal UI updates
+- goal state updates
+- live preview sentence
+- wizard summary strip
+- wiring to backend primaryGoal / secondaryFocus fields
+
+Do NOT modify these already-completed systems:
+- Pill toggle behavior across the app
+- Workout location preset logic and revert behavior
+
+Do not change segmented control behavior, tab behavior, or previously completed workout-location/equipment logic.
+
+--------------------------------------------------
+OBJECTIVE
+
+Update the app from a single-goal model to:
+
+primaryGoal (required)
+secondaryFocus (optional)
+
+Use this cleaner structure:
+
+PRIMARY GOAL = body outcome / main objective
+SECONDARY FOCUS = training emphasis / modifier
+
+Allowed PRIMARY GOALS:
+- Weight Loss
+- Muscle Gain
+- Body Recomposition
+- General Fitness
+- Athletic Performance
+
+Allowed SECONDARY FOCUS:
+- Strength
+- Endurance
+- Mobility
+- Energy & Focus
+- Recovery
+
+This must be implemented consistently across:
+- Profile Wizard / onboarding
+- Profile Page
+- Wellness Plan Creator
+- any goal summary UI that currently shows only one goal
+
+Also add:
+1. a live plan preview sentence below goal selection
+2. a small dynamic wizard summary strip near the bottom of each wizard step
+
+--------------------------------------------------
+SECTION 1 — FRONTEND DATA CONTRACT
+
+Audit current frontend code and identify all places still using:
+- goal
+
+Update them to use:
+- primaryGoal
+- secondaryFocus
+
+Requirements:
+1. Read both fields from backend responses
+2. Send both fields in profile save / onboarding save / plan creation where relevant
+3. Remove or safely map old goal field usage
+4. Keep naming consistent everywhere in frontend state and types
+
+--------------------------------------------------
+SECTION 2 — GOAL UI UPDATES
+
+Update the following screens/components:
+
+- Profile Wizard (onboarding)
+- Profile Page
+- Wellness Plan Creator
+- any relevant summary cards or displays that show user goals
+
+UI structure:
+
+PRIMARY GOAL
+Select your main objective
+
+[ Weight Loss ]
+[ Muscle Gain ]
+[ Body Recomposition ]
+[ General Fitness ]
+[ Athletic Performance ]
+
+SECONDARY FOCUS (optional)
+Choose an additional training emphasis
+
+[ Strength ]
+[ Endurance ]
+[ Mobility ]
+[ Energy & Focus ]
+[ Recovery ]
+
+Behavior rules:
+1. Primary Goal is required
+2. Primary Goal is single-select and cannot be deselected
+3. Secondary Focus is optional
+4. Secondary Focus is single-select optional
+5. Clicking the selected secondary focus a second time should deselect it
+6. Keep the interaction premium and visually clean
+
+Display example:
+- Primary Goal: Muscle Gain
+- Secondary Focus: Mobility
+
+If space/layout needs refinement, keep the grouping visually clear and premium.
+
+--------------------------------------------------
+SECTION 3 — LIVE PLAN PREVIEW SENTENCE
+
+Add a dynamic preview sentence directly below the goal selection area in:
+- Wellness Plan Creator
+- onboarding/profile wizard too, if appropriate and clean
+
+The sentence must update live as selections change.
+
+Examples:
+
+Primary: Muscle Gain
+Secondary: Mobility
+-> "Your plan will focus on building muscle while improving mobility and joint health."
+
+Primary: Weight Loss
+Secondary: Strength
+-> "Your plan will prioritize fat loss while preserving and developing strength."
+
+Primary: Body Recomposition
+Secondary: Endurance
+-> "Your plan will focus on improving body composition while building endurance capacity."
+
+Primary: Athletic Performance
+Secondary: Recovery
+-> "Your plan will focus on improving athletic performance while supporting recovery and durability."
+
+Primary: General Fitness
+Secondary: none
+-> "Your plan will focus on improving overall fitness in a balanced, sustainable way."
+
+Requirements:
+1. Update instantly as selections change
+2. Use centralized helper/mapping logic, not ad hoc strings in multiple screens
+3. Work with or without secondaryFocus
+4. Keep language short, polished, and natural
+5. Reuse the same helper anywhere else goal interpretation is shown
+
+--------------------------------------------------
+SECTION 4 — WIZARD SUMMARY STRIP
+
+Add a small contextual summary strip near the bottom of each Wellness Wizard step.
+
+Purpose:
+Help users understand how their plan is being shaped in real time.
+
+Examples:
+- "Shaping your plan around: Muscle Gain • Mobility • Meal + Workout"
+- "Shaping your plan around: Home workouts • Dumbbells • 3 days/week"
+- "Shaping your plan around: High-protein meals • Pescatarian • 2 meals/day"
+
+Requirements:
+1. Update dynamically as selections change
+2. Keep styling minimal, premium, and restrained
+3. Do not visually dominate the screen
+4. Persist across wizard steps where appropriate
+5. Use existing wizard state rather than duplicating logic
+
+--------------------------------------------------
+SECTION 5 — PROFILE PAGE / SUMMARY SURFACES
+
+Update profile display and any relevant summaries so users can clearly see both values when present.
+
+Examples:
+- Primary Goal: Muscle Gain
+- Secondary Focus: Mobility
+
+If secondaryFocus is null, display only primaryGoal cleanly without awkward empty space.
+
+Also update any copy that still uses generic “goal” language where a clearer “Primary Goal” / “Secondary Focus” distinction is needed.
+
+--------------------------------------------------
+SECTION 6 — BACKEND INTEGRATION
+
+Wire frontend to backend fields:
+- primaryGoal
+- secondaryFocus
+
+Requirements:
+1. Profile fetch populates both fields
+2. Profile save sends both fields
+3. Onboarding/profile wizard saves both fields
+4. Wellness plan creator uses both fields where relevant
+5. Handle legacy profiles gracefully if backend returns mapped primaryGoal and null secondaryFocus
+
+Do not recreate backend logic in frontend.
+Frontend should consume the backend contract cleanly.
+
+--------------------------------------------------
+SECTION 7 — GUARDRAILS
+
+Do NOT:
+- globally rework pill behavior
+- modify already-completed workout location preset logic
+- change required segmented controls so they can be deselected
+- create duplicate goal mapping logic in multiple files
+- hardcode preview sentences separately per screen
+
+Use centralized helpers/types where possible.
+
+--------------------------------------------------
+SECTION 8 — TESTING
+
+Please test and confirm:
+
+1. Primary Goal selection works and cannot be deselected
+2. Secondary Focus can be selected
+3. Secondary Focus deselects on second click
+4. Preview sentence updates live
+5. Preview sentence works with no secondaryFocus
+6. Wizard summary strip updates dynamically
+7. Profile page displays both fields correctly
+8. Frontend sends and receives primaryGoal + secondaryFocus correctly
+9. Legacy profiles behave gracefully
+
+--------------------------------------------------
+SECTION 9 — OUTPUT
+
+When finished, provide:
+
+1. Frontend/mobile files changed
+2. Screens/components modified
+3. Types/state updates made
+4. Backend fields/endpoints consumed
+5. Preview sentence helper/mapping logic
+6. Wizard summary strip implementation details
+7. Concise tested-results checklist

@@ -16,19 +16,15 @@ import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useProfile, useAvailability, ProfileData } from "@/lib/api-hooks";
 import { useWellness, LOCATION_PRESETS } from "@/lib/wellness-context";
 import CalendarPickerField from "@/components/CalendarPickerField";
-
-const GOAL_OPTIONS: { value: string; label: string }[] = [
-  { value: "weight_loss", label: "Weight Loss" },
-  { value: "muscle_gain", label: "Muscle Gain" },
-  { value: "performance", label: "Performance" },
-  { value: "general_fitness", label: "General Fitness" },
-  { value: "mobility", label: "Mobility" },
-  { value: "endurance", label: "Endurance" },
-  { value: "strength", label: "Strength" },
-  { value: "energy", label: "Energy & Focus" },
-];
-
-const VALID_GOALS = GOAL_OPTIONS.map((g) => g.value);
+import { WizardContextBar } from "@/components/WizardContextBar";
+import {
+  PRIMARY_GOAL_OPTIONS,
+  SECONDARY_FOCUS_OPTIONS,
+  VALID_PRIMARY_GOALS,
+  normalizePrimaryGoal,
+  buildGoalPreviewSentence,
+  formatGoalLabel,
+} from "@/lib/goal-helpers";
 
 const PLAN_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: "both", label: "Meal + Workout" },
@@ -59,17 +55,9 @@ function snapToNearest(val: number): number {
 
 import { kgToLbs, formatWeightDisplay } from "@/lib/weight-utils";
 
-function formatLabel(value: string): string {
-  return value
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
-}
-
 function getStepCount(planType: string): number {
   return planType === "both" ? 4 : 3;
 }
-
 
 function ProfileSummaryCard({ profile }: { profile: ProfileData }) {
   const Colors = useColors();
@@ -84,20 +72,15 @@ function ProfileSummaryCard({ profile }: { profile: ProfileData }) {
   const items: { label: string; value: string }[] = [];
   if (profile.age != null) items.push({ label: "Age", value: String(profile.age) });
   if (weightDisplay) items.push({ label: "Weight", value: weightDisplay });
-  if (profile.primaryGoal) items.push({ label: "Goal", value: formatLabel(profile.primaryGoal) });
-  if (profile.trainingExperience) items.push({ label: "Experience", value: formatLabel(profile.trainingExperience) });
+  if (profile.primaryGoal) items.push({ label: "Goal", value: formatGoalLabel(normalizePrimaryGoal(profile.primaryGoal)) });
+  if (profile.secondaryFocus) items.push({ label: "Focus", value: formatGoalLabel(profile.secondaryFocus) });
+  if (profile.trainingExperience) items.push({ label: "Experience", value: profile.trainingExperience.charAt(0).toUpperCase() + profile.trainingExperience.slice(1) });
   if (profile.trainingDaysOfWeek?.length)
     items.push({ label: "Training days", value: profile.trainingDaysOfWeek.map((d) => d.charAt(0).toUpperCase() + d.slice(1)).join(", ") });
   if (profile.allergiesIntolerances?.length)
     items.push({ label: "Allergies", value: profile.allergiesIntolerances.join(", ") });
   if (profile.foodsToAvoid?.length)
     items.push({ label: "Foods to avoid", value: profile.foodsToAvoid.join(", ") });
-  if (profile.healthConstraints?.length)
-    items.push({ label: "Health constraints", value: profile.healthConstraints.join(", ") });
-  if (profile.favoriteMealsText)
-    items.push({ label: "Favorite meals", value: profile.favoriteMealsText });
-  if (profile.bodyContext)
-    items.push({ label: "Body notes", value: profile.bodyContext });
 
   if (items.length === 0) return null;
 
@@ -136,8 +119,12 @@ export default function Step1Screen() {
     if (profile && !prefilled) {
       const updates: any = {};
 
-      if (profile.primaryGoal && VALID_GOALS.includes(profile.primaryGoal)) {
-        updates.goalType = profile.primaryGoal;
+      const normalized = normalizePrimaryGoal(profile.primaryGoal || "");
+      if (normalized && VALID_PRIMARY_GOALS.includes(normalized)) {
+        updates.goalType = normalized;
+      }
+      if (profile.secondaryFocus) {
+        updates.secondaryFocus = profile.secondaryFocus;
       }
 
       const mealUpdates: any = {};
@@ -231,6 +218,8 @@ export default function Step1Screen() {
     }
   };
 
+  const previewSentence = buildGoalPreviewSentence(state.goalType, state.secondaryFocus);
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -238,7 +227,7 @@ export default function Step1Screen() {
           styles.scrollContent,
           {
             paddingTop: insets.top + 16 + webTopInset,
-            paddingBottom: insets.bottom + 100,
+            paddingBottom: insets.bottom + 120,
           },
         ]}
         showsVerticalScrollIndicator={false}
@@ -269,15 +258,17 @@ export default function Step1Screen() {
 
         {profile && <ProfileSummaryCard profile={profile} />}
 
-        <Text style={styles.sectionLabel}>Goal</Text>
+        <Text style={styles.sectionLabel}>Primary Goal</Text>
+        <Text style={styles.sectionHelper}>Select your main objective</Text>
         <View style={styles.goalGrid}>
-          {GOAL_OPTIONS.map((g) => {
+          {PRIMARY_GOAL_OPTIONS.map((g) => {
             const selected = state.goalType === g.value;
             return (
               <Pressable
                 key={g.value}
                 style={[styles.goalBtn, selected && styles.goalBtnActive]}
                 onPress={() => {
+                  if (selected) return;
                   Haptics.selectionAsync();
                   setState((prev) => ({ ...prev, goalType: g.value }));
                 }}
@@ -295,6 +286,42 @@ export default function Step1Screen() {
           })}
         </View>
 
+        <Text style={styles.sectionLabel}>Secondary Focus</Text>
+        <Text style={styles.sectionHelper}>Optional training emphasis</Text>
+        <View style={styles.goalGrid}>
+          {SECONDARY_FOCUS_OPTIONS.map((g) => {
+            const selected = state.secondaryFocus === g.value;
+            return (
+              <Pressable
+                key={g.value}
+                style={[styles.goalBtn, selected && styles.goalBtnActive]}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setState((prev) => ({
+                    ...prev,
+                    secondaryFocus: prev.secondaryFocus === g.value ? "" : g.value,
+                  }));
+                }}
+              >
+                <Text
+                  style={[
+                    styles.goalBtnText,
+                    selected && styles.goalBtnTextActive,
+                  ]}
+                >
+                  {g.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {previewSentence ? (
+          <View style={styles.previewCard}>
+            <Text style={styles.previewText}>{previewSentence}</Text>
+          </View>
+        ) : null}
+
         <Text style={styles.sectionLabel}>Plan Type</Text>
         <View style={styles.planTypeRow}>
           {PLAN_TYPE_OPTIONS.map((p) => {
@@ -304,6 +331,7 @@ export default function Step1Screen() {
                 key={p.value}
                 style={[styles.planTypeBtn, selected && styles.planTypeBtnActive]}
                 onPress={() => {
+                  if (selected) return;
                   Haptics.selectionAsync();
                   setState((prev) => ({ ...prev, planType: p.value }));
                 }}
@@ -378,6 +406,7 @@ export default function Step1Screen() {
           { paddingBottom: Math.max(insets.bottom, 16) + (Platform.OS === "web" ? 34 : 0) },
         ]}
       >
+        <WizardContextBar step="step1" />
         <Pressable
           style={({ pressed }) => [styles.nextBtn, pressed && { opacity: 0.85 }]}
           onPress={handleNext}
@@ -447,6 +476,12 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.5,
     marginTop: 24,
+    marginBottom: 4,
+  },
+  sectionHelper: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textTertiary,
     marginBottom: 10,
   },
   goalGrid: {
@@ -478,6 +513,21 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     color: Colors.primary,
     fontFamily: "Inter_600SemiBold",
   },
+  previewCard: {
+    marginTop: 14,
+    backgroundColor: Colors.primary + "12",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.primary + "60",
+  },
+  previewText: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.text,
+    lineHeight: 18,
+  },
   planTypeRow: {
     flexDirection: "row",
     gap: 10,
@@ -503,17 +553,6 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   planTypeBtnTextActive: {
     color: Colors.primary,
     fontFamily: "Inter_600SemiBold",
-  },
-  textInput: {
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    color: Colors.text,
-    borderWidth: 1,
-    borderColor: Colors.border,
   },
   startDateSection: {
     marginTop: 24,
@@ -544,12 +583,6 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     fontSize: 10,
     fontFamily: "Inter_400Regular",
     color: Colors.error,
-    marginTop: 6,
-  },
-  warningTextYellow: {
-    fontSize: 10,
-    fontFamily: "Inter_400Regular",
-    color: Colors.warning,
     marginTop: 6,
   },
   paceRow: {

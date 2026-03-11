@@ -19,6 +19,7 @@ import { useWellness } from "@/lib/wellness-context";
 import { Pill, PillGrid } from "@/components/Pill";
 import { ExpandableChipSection } from "@/components/ExpandableChipSection";
 import { PlanWizardSummaryBar } from "@/components/PlanWizardSummaryBar";
+import { WizardContextBar } from "@/components/WizardContextBar";
 
 const DIET_STYLE_OPTIONS = [
   "No Preference",
@@ -444,6 +445,7 @@ export default function Step2Screen() {
           { paddingBottom: Math.max(insets.bottom, 16) + (Platform.OS === "web" ? 34 : 0) },
         ]}
       >
+        <WizardContextBar step="step2" />
         <Pressable
           style={({ pressed }) => [styles.nextBtn, pressed && { opacity: 0.85 }]}
           onPress={handleNext}

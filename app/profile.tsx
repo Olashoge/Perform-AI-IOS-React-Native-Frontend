@@ -19,6 +19,7 @@ import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useAuth } from "@/lib/auth-context";
 import { EQUIPMENT_CATEGORIES, getEquipmentForLocation } from "@/lib/equipment-presets";
 import { useProfile, useUpdateProfile, ProfileData } from "@/lib/api-hooks";
+import { PRIMARY_GOAL_OPTIONS, SECONDARY_FOCUS_OPTIONS } from "@/lib/goal-helpers";
 
 function formatLabel(value: string): string {
   return value
@@ -292,6 +293,7 @@ const defaultFormData: ProfileData = {
   weightKg: null,
   targetWeightKg: null,
   primaryGoal: "",
+  secondaryFocus: null,
   trainingExperience: "",
   injuries: [],
   mobilityLimitations: [],
@@ -646,24 +648,19 @@ export default function ProfileScreen() {
 
           <FormField label="Primary Goal">
             <PillSelector
-              options={[
-                "weight_loss",
-                "muscle_gain",
-                "performance",
-                "maintenance",
-                "energy",
-                "general_fitness",
-              ]}
-              labels={[
-                "Weight Loss",
-                "Muscle Gain",
-                "Performance",
-                "Maintenance",
-                "Energy & Focus",
-                "General Fitness",
-              ]}
+              options={PRIMARY_GOAL_OPTIONS.map((g) => g.value)}
+              labels={PRIMARY_GOAL_OPTIONS.map((g) => g.label)}
               selected={formData.primaryGoal}
-              onSelect={(v) => updateField("primaryGoal", v as string)}
+              onSelect={(v) => { if (v) updateField("primaryGoal", v as string); }}
+            />
+          </FormField>
+
+          <FormField label="Secondary Focus — optional">
+            <PillSelector
+              options={SECONDARY_FOCUS_OPTIONS.map((g) => g.value)}
+              labels={SECONDARY_FOCUS_OPTIONS.map((g) => g.label)}
+              selected={formData.secondaryFocus || ""}
+              onSelect={(v) => updateField("secondaryFocus", formData.secondaryFocus === v ? null : (v as string))}
             />
           </FormField>
 

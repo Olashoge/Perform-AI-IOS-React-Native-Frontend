@@ -489,6 +489,7 @@ export interface ProfileData {
   weightKg: number | null;
   targetWeightKg: number | null;
   primaryGoal: string;
+  secondaryFocus: string | null;
   trainingExperience: string;
   injuries: string[];
   mobilityLimitations: string[];

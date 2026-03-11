@@ -18,6 +18,7 @@ import { useWellness, LOCATION_PRESETS } from "@/lib/wellness-context";
 import { Pill, PillGrid } from "@/components/Pill";
 import { ExpandableEquipmentGroup } from "@/components/ExpandableChipSection";
 import { PlanWizardSummaryBar } from "@/components/PlanWizardSummaryBar";
+import { WizardContextBar } from "@/components/WizardContextBar";
 
 const LOCATION_OPTIONS: { value: string; label: string }[] = [
   { value: "gym", label: "Gym" },
@@ -351,6 +352,7 @@ export default function Step3Screen() {
           { paddingBottom: Math.max(insets.bottom, 16) + (Platform.OS === "web" ? 34 : 0) },
         ]}
       >
+        <WizardContextBar step="step3" />
         <Pressable
           style={({ pressed }) => [styles.nextBtn, pressed && { opacity: 0.85 }]}
           onPress={handleNext}

@@ -20,13 +20,20 @@ import { useUpdateProfile, ProfileData } from "@/lib/api-hooks";
 import { useAuth } from "@/lib/auth-context";
 import { EQUIPMENT_CATEGORIES, getEquipmentForLocation, mergeEquipmentDefaults } from "@/lib/equipment-presets";
 import { lbsToKg } from "@/lib/weight-utils";
+import {
+  PRIMARY_GOAL_OPTIONS,
+  SECONDARY_FOCUS_OPTIONS,
+  buildGoalPreviewSentence,
+} from "@/lib/goal-helpers";
 
 const TOTAL_STEPS = 5;
 
 const ALLERGY_OPTIONS = ["Dairy", "Gluten", "Nuts", "Eggs", "Soy", "Shellfish", "Fish"];
 const FOODS_TO_AVOID_OPTIONS = ["Pork", "Red Meat", "Chicken", "Mushrooms", "Garlic/Onion", "Beans/Legumes", "Spicy Foods"];
-const GOAL_OPTIONS = ["weight_loss", "muscle_gain", "performance", "maintenance", "energy", "general_fitness"];
-const GOAL_LABELS = ["Weight Loss", "Muscle Gain", "Performance", "Maintenance", "Energy", "General Fitness"];
+const GOAL_OPTIONS = PRIMARY_GOAL_OPTIONS.map((g) => g.value);
+const GOAL_LABELS = PRIMARY_GOAL_OPTIONS.map((g) => g.label);
+const FOCUS_OPTIONS = SECONDARY_FOCUS_OPTIONS.map((g) => g.value);
+const FOCUS_LABELS = SECONDARY_FOCUS_OPTIONS.map((g) => g.label);
 const DAY_OPTIONS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DAY_VALUES = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 
@@ -111,6 +118,7 @@ export default function OnboardingScreen() {
   const [weightText, setWeightText] = useState("");
 
   const [primaryGoal, setPrimaryGoal] = useState("");
+  const [secondaryFocus, setSecondaryFocus] = useState("");
   const [targetWeightText, setTargetWeightText] = useState("");
 
   const [experience, setExperience] = useState("");
@@ -282,6 +290,7 @@ export default function OnboardingScreen() {
         weightKg,
         targetWeightKg,
         primaryGoal,
+        secondaryFocus: secondaryFocus || undefined,
         trainingExperience: experience,
         activityLevel,
         trainingDaysOfWeek: trainingDays.length > 0 ? trainingDays : undefined,
@@ -425,8 +434,24 @@ export default function OnboardingScreen() {
         options={GOAL_OPTIONS}
         labels={GOAL_LABELS}
         selected={primaryGoal}
-        onSelect={(v) => setPrimaryGoal(v as string)}
+        onSelect={(v) => { if (v) setPrimaryGoal(v as string); }}
       />
+
+      <Text style={styles.fieldLabel}>Secondary Focus — optional</Text>
+      <PillGroup
+        options={FOCUS_OPTIONS}
+        labels={FOCUS_LABELS}
+        selected={secondaryFocus}
+        onSelect={(v) => setSecondaryFocus(v as string)}
+      />
+
+      {primaryGoal ? (
+        <View style={[styles.previewCard, { backgroundColor: Colors.cardBackground, borderColor: Colors.border }]}>
+          <Text style={[styles.previewText, { color: Colors.textSecondary }]}>
+            {buildGoalPreviewSentence(primaryGoal, secondaryFocus || undefined)}
+          </Text>
+        </View>
+      ) : null}
 
       <Text style={styles.fieldLabel}>
         Target Weight ({unitSystem === "imperial" ? "lbs" : "kg"}) — optional
@@ -755,6 +780,19 @@ function createStyles(Colors: ThemeColors) {
       color: Colors.error,
       marginTop: 4,
       fontFamily: "Inter_500Medium",
+    },
+    previewCard: {
+      borderRadius: 10,
+      borderWidth: 1,
+      padding: 12,
+      marginTop: 8,
+      marginBottom: 4,
+    },
+    previewText: {
+      fontSize: 14,
+      fontFamily: "Inter_400Regular",
+      lineHeight: 20,
+      fontStyle: "italic",
     },
     bottomBar: {
       position: "absolute" as const,

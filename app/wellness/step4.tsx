@@ -17,17 +17,7 @@ import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useWellness, mapGoalForMeal, mapGoalForWorkout } from "@/lib/wellness-context";
 import { useGenerateGoalPlan, useProfile } from "@/lib/api-hooks";
-
-const GOAL_LABELS: Record<string, string> = {
-  weight_loss: "Weight Loss",
-  muscle_gain: "Muscle Gain",
-  performance: "Performance",
-  general_fitness: "General Fitness",
-  mobility: "Mobility",
-  endurance: "Endurance",
-  strength: "Strength",
-  energy: "Energy & Focus",
-};
+import { formatGoalLabel } from "@/lib/goal-helpers";
 
 const PLAN_TYPE_LABELS: Record<string, string> = {
   both: "Both",
@@ -84,6 +74,7 @@ export default function Step4Screen() {
 
     const payload: any = {
       goalType: state.goalType,
+      secondaryFocus: state.secondaryFocus || undefined,
       startDate: state.startDate || undefined,
       pace: state.pace || undefined,
     };
@@ -203,7 +194,10 @@ export default function Step4Screen() {
               <Text style={styles.editLink}>Edit</Text>
             </Pressable>
           </View>
-          <ReviewRow label="Goal" value={GOAL_LABELS[state.goalType] || formatLabel(state.goalType)} />
+          <ReviewRow label="Primary Goal" value={formatGoalLabel(state.goalType)} />
+          {state.secondaryFocus ? (
+            <ReviewRow label="Secondary Focus" value={formatGoalLabel(state.secondaryFocus)} />
+          ) : null}
           <ReviewRow label="Plan Type" value={PLAN_TYPE_LABELS[state.planType] || formatLabel(state.planType)} />
           <ReviewRow label="Start Date" value={state.startDate || "Next available"} />
           <ReviewRow label="Pace" value={state.pace ? formatLabel(state.pace) : "Default"} />
