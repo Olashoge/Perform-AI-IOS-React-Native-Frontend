@@ -98,6 +98,54 @@ function proxyToExternal(req: any, res: any) {
   proxyReq.end();
 }
 
+function proxyToExternalPath(targetPath: string) {
+  return function(req: any, res: any) {
+    const targetUrl = new URL(targetPath, EXTERNAL_BACKEND);
+    const options: https.RequestOptions = {
+      hostname: targetUrl.hostname,
+      port: 443,
+      path: targetUrl.pathname + targetUrl.search,
+      method: req.method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(req.headers.authorization ? { Authorization: req.headers.authorization } : {}),
+      },
+    };
+    const proxyReq = https.request(options, (proxyRes) => {
+      if (proxyRes.statusCode && proxyRes.statusCode >= 400) {
+        let body = "";
+        proxyRes.on("data", (chunk: Buffer) => { body += chunk.toString(); });
+        proxyRes.on("end", () => {
+          console.error(`Proxy ${req.method} ${targetPath} => ${proxyRes.statusCode}: ${body}`);
+          res.status(proxyRes.statusCode || 500);
+          Object.entries(proxyRes.headers).forEach(([key, value]) => {
+            if (key.toLowerCase() !== "transfer-encoding" && key.toLowerCase() !== "access-control-allow-origin") {
+              res.setHeader(key, value as string);
+            }
+          });
+          res.end(body);
+        });
+        return;
+      }
+      res.status(proxyRes.statusCode || 500);
+      Object.entries(proxyRes.headers).forEach(([key, value]) => {
+        if (key.toLowerCase() !== "transfer-encoding" && key.toLowerCase() !== "access-control-allow-origin") {
+          res.setHeader(key, value as string);
+        }
+      });
+      proxyRes.pipe(res);
+    });
+    proxyReq.on("error", (err) => {
+      console.error("Proxy error:", err.message);
+      res.status(502).json({ error: "Backend proxy error", message: err.message });
+    });
+    if (req.body && Object.keys(req.body).length > 0) {
+      proxyReq.write(JSON.stringify(req.body));
+    }
+    proxyReq.end();
+  };
+}
+
 function proxyAndTransform(req: any, res: any, transform: (data: any, userId: string) => Promise<any>) {
   const userId = extractUserId(req);
   const targetUrl = new URL(req.originalUrl, EXTERNAL_BACKEND);
@@ -265,7 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/refresh", proxyToExternal);
   app.post("/api/auth/change-password", proxyToExternal);
   app.post("/api/auth/forgot-password", proxyToExternal);
-  app.get("/api/me", proxyToExternal);
+  app.get("/api/me", proxyToExternalPath("/api/auth/me"));
   app.patch("/api/account", proxyToExternal);
   app.post("/api/account/change-password", proxyToExternal);
 
