@@ -102,11 +102,26 @@ export default function Step3Screen() {
 
   const handleLocationChange = (value: string) => {
     Haptics.selectionAsync();
-    const updates: any = { location: value };
-    if (workoutForm.equipmentAvailable.length === 0) {
-      updates.equipmentAvailable = LOCATION_PRESETS[value] ?? [];
+    if (workoutForm.location === value) {
+      // Second click on active location: revert to profile's saved default
+      const savedLocation = profile?.workoutLocationDefault ?? "";
+      const savedEquipment: string[] = (profile?.equipmentAvailable as string[]) ?? [];
+      const fallbackEquipment = savedLocation ? (LOCATION_PRESETS[savedLocation] ?? []) : [];
+      updateWorkoutForm({
+        location: savedLocation,
+        equipmentAvailable: savedEquipment.length > 0 ? savedEquipment : fallbackEquipment,
+      });
+    } else {
+      // Different location: resolve equipment preset
+      // Use profile's saved equipment if their saved default matches this location
+      const profileLocation = profile?.workoutLocationDefault ?? "";
+      const profileEquipment: string[] = (profile?.equipmentAvailable as string[]) ?? [];
+      const equipment =
+        profileLocation === value && profileEquipment.length > 0
+          ? profileEquipment
+          : (LOCATION_PRESETS[value] ?? []);
+      updateWorkoutForm({ location: value, equipmentAvailable: equipment });
     }
-    updateWorkoutForm(updates);
   };
 
   const handleEquipmentToggle = (item: string) => {
@@ -120,6 +135,7 @@ export default function Step3Screen() {
   };
 
   const handleTrainingModeChange = (mode: string) => {
+    if (workoutForm.trainingMode === mode) return; // required segmented control — always has a selection
     Haptics.selectionAsync();
     const validAreas = FOCUS_AREAS_BY_MODE[mode] ?? FOCUS_AREAS_BY_MODE.both;
     const filtered = workoutForm.focusAreas.filter((a) => validAreas.includes(a));
@@ -253,6 +269,7 @@ export default function Step3Screen() {
                 key={opt.value}
                 style={[styles.toggleBtn, selected && styles.toggleBtnActive]}
                 onPress={() => {
+                  if (workoutForm.experienceLevel === opt.value) return;
                   Haptics.selectionAsync();
                   updateWorkoutForm({ experienceLevel: opt.value });
                 }}
@@ -304,6 +321,7 @@ export default function Step3Screen() {
                 key={opt.value}
                 style={[styles.toggleBtn, selected && styles.toggleBtnActive]}
                 onPress={() => {
+                  if (workoutForm.sessionLength === opt.value) return;
                   Haptics.selectionAsync();
                   updateWorkoutForm({ sessionLength: opt.value });
                 }}

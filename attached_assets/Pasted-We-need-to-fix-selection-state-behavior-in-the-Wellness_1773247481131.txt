@@ -1,0 +1,103 @@
+We need to fix selection-state behavior in the Wellness Plan Creator wizard, especially the Training page, and standardize pill toggle behavior across the app.
+
+OBJECTIVE
+1. Clicking a workout location should automatically apply and visibly highlight the equipment preset for that location
+2. Clicking the same selected workout location a second time should deselect that temporary override and revert to the user’s saved default workout location + saved equipment preset
+3. Equipment pills should toggle on first click and off on second click
+4. Standardize toggle behavior for interactive pill buttons across the Wellness Wizard and daily workout / daily meal interaction surfaces
+
+CONTEXT
+Currently on the Training page in the Wellness Plan Creator, clicking workout location (Gym / Home / Outdoors) does not automatically apply the default equipment selection the way Signup Wizard and Profile already do. This needs to behave consistently with those other parts of the app.
+
+REQUIRED BEHAVIOR
+
+1) WORKOUT LOCATION → EQUIPMENT PRESET LINK
+When user clicks a workout location:
+- Gym
+- Home
+- Outdoors
+
+the UI should immediately load and highlight the corresponding equipment selection.
+
+Preset source priority:
+A. If user has a saved custom equipment preset for that location in profile, use that
+B. Otherwise use the system default preset for that location
+
+Examples:
+- click Gym → apply gym preset equipment and show selected pills
+- click Home → apply home preset equipment and show selected pills
+- click Outdoors → apply outdoors preset equipment and show selected pills
+
+2) SECOND CLICK ON SAME LOCATION
+If the currently selected location is clicked again:
+- treat that as removing the temporary override
+- revert to the user’s saved default workout location and saved equipment preset
+
+Example:
+- user profile default is Home with custom saved home equipment
+- user clicks Gym → gym preset loads
+- user clicks Gym again → revert to saved Home + saved Home equipment preset
+
+If there is no saved default, fall back gracefully to the system default state.
+
+3) MANUAL EQUIPMENT OVERRIDE
+After a location preset is applied, if user manually toggles equipment pills:
+- update selectedEquipment accordingly
+- track that this is now a manual override for the current wizard state
+
+Important:
+- switching to a different location should replace equipment with that location’s preset
+- manual toggles should not block location-based preset application when location changes
+
+4) EQUIPMENT PILLS
+Equipment pills must be true toggles:
+- first click = select
+- second click = deselect
+
+This should work consistently for all equipment groups.
+
+5) GLOBAL PILL TOGGLE STANDARDIZATION
+Audit interactive pill/button selection logic across:
+- Wellness Plan Creator wizard
+- daily workout interaction surfaces
+- daily meal interaction surfaces
+
+Implement consistent rules:
+- multi-select pills: click to add, click again to remove
+- single-select pills: click to select; if that control supports empty/revert behavior, second click may deselect or revert appropriately
+
+6) REUSE SHARED LOGIC
+If possible, centralize this into shared utility/hooks/components instead of duplicating selection logic in multiple screens.
+Examples:
+- reusable toggle helper for multi-select pills
+- reusable location preset apply function
+- reusable pill component behavior if interactive pills are inconsistent today
+
+7) ALIGN WITH EXISTING PROFILE/SIGNUP LOGIC
+Inspect how Signup Wizard and Profile page currently apply equipment defaults by workout location, and reuse that same source-of-truth logic where possible.
+Do not create a separate inconsistent preset mapping for Wellness Wizard.
+
+8) TEST CASES
+Please test and confirm:
+- click Gym → gym equipment preset highlights automatically
+- click Home → home preset highlights automatically
+- click Outdoors → outdoors preset highlights automatically
+- click Gym twice → reverts to saved user default location/equipment
+- custom saved Home equipment in profile is respected when reverting
+- equipment pills toggle on/off correctly
+- switching location replaces prior preset correctly
+- daily workout pills support click/select and second-click deselect where intended
+- daily meal pills support click/select and second-click deselect where intended
+
+9) OUTPUT
+When done, provide:
+1. files changed
+2. components/hooks/helpers changed
+3. how location preset resolution works
+4. how second-click revert works
+5. concise tested-results checklist
+
+IMPORTANT
+This must be implemented as real state logic, not just visual highlighting.
+Do not introduce brittle one-off conditionals.
+Keep the mental model consistent across wizard, profile, signup, daily workout, and daily meal interactions.
