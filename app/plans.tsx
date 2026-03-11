@@ -155,21 +155,23 @@ function sortPlansByDate(plans: any[]): any[] {
   });
 }
 
-function WellnessPlanCard({ plan, onDelete, onSchedule, Colors, mealPlans, workoutPlans }: { plan: any; onDelete: () => void; onSchedule: (id: string, action: "schedule" | "reschedule" | "unschedule", currentDate?: string) => void; Colors: ThemeColors; mealPlans: any[]; workoutPlans: any[] }) {
+function WellnessPlanCard({ plan, onDelete, onSchedule, Colors }: { plan: any; onDelete: () => void; onSchedule: (id: string, action: "schedule" | "reschedule" | "unschedule", currentDate?: string) => void; Colors: ThemeColors }) {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const name = plan.name || plan.title || "Wellness Plan";
   const status = plan.status || plan.generationStatus || "active";
   const startDate = plan.startDate || plan.start_date || plan.planStartDate;
   const endDate = plan.endDate || plan.end_date;
   const goal = plan.goalType || plan.primaryGoal || "";
-  const linkedMeal = mealPlans.find((mp: any) => mp.id === plan.mealPlanId);
-  const linkedWorkout = workoutPlans.find((wp: any) => wp.id === plan.workoutPlanId);
-  const mealPlanName = linkedMeal?.name || plan.mealPlan?.name || plan.mealPlanName || "";
-  const workoutPlanName = linkedWorkout?.name || plan.workoutPlan?.name || plan.workoutPlanName || "";
   const id = plan._id || plan.id;
 
   return (
-    <View style={styles.wellnessCard}>
+    <Pressable
+      style={styles.wellnessCard}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        router.push(`/plan/wellness/${id}` as any);
+      }}
+    >
       <View style={styles.wellnessCardHeader}>
         <View style={styles.wellnessIconCircle}>
           <Icon name="heart" size={20} color={Colors.error} />
@@ -190,9 +192,9 @@ function WellnessPlanCard({ plan, onDelete, onSchedule, Colors, mealPlans, worko
           )}
         </View>
         <Pressable
-          onPress={() => {
+          onPress={(e) => {
+            e.stopPropagation();
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            const id = plan._id || plan.id;
             const options: { text: string; style?: "destructive" | "cancel"; onPress?: () => void }[] = [];
             if (startDate) {
               options.push({ text: "Reschedule", onPress: () => onSchedule(id, "reschedule", startDate) });
@@ -210,62 +212,8 @@ function WellnessPlanCard({ plan, onDelete, onSchedule, Colors, mealPlans, worko
           <Ionicons name="ellipsis-horizontal" size={20} color={Colors.textTertiary} />
         </Pressable>
       </View>
-
-      <View style={styles.linkedPlansSection}>
-        <Pressable
-          style={styles.linkedPlanBox}
-          onPress={() => {
-            if (plan.mealPlan?.id || plan.mealPlanId) {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push(`/plan/meal/${plan.mealPlan?.id || plan.mealPlanId}` as any);
-            }
-          }}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
-            <Icon name="restaurant" size={16} color={Colors.textSecondary} />
-            <Text style={styles.linkedPlanLabel}>Meal Plan</Text>
-            {(plan.mealPlan?.id || plan.mealPlanId) && (
-              <Icon name="openExternal" size={16} color={Colors.textTertiary} />
-            )}
-          </View>
-          {mealPlanName ? (
-            <Text style={styles.linkedPlanName} numberOfLines={2}>{mealPlanName}</Text>
-          ) : (
-            <Pressable style={styles.linkButton}>
-              <Icon name="link" size={16} color={Colors.textTertiary} />
-              <Text style={styles.linkButtonText}>Link Meal Plan</Text>
-            </Pressable>
-          )}
-        </Pressable>
-
-        <Pressable
-          style={styles.linkedPlanBox}
-          onPress={() => {
-            if (plan.workoutPlan?.id || plan.workoutPlanId) {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push(`/plan/workout/${plan.workoutPlan?.id || plan.workoutPlanId}` as any);
-            }
-          }}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
-            <Icon name="barbell" size={16} color={Colors.textSecondary} />
-            <Text style={styles.linkedPlanLabel}>Workout Plan</Text>
-            {(plan.workoutPlan?.id || plan.workoutPlanId) && (
-              <Icon name="openExternal" size={16} color={Colors.textTertiary} />
-            )}
-          </View>
-          {workoutPlanName ? (
-            <Text style={styles.linkedPlanName} numberOfLines={2}>{workoutPlanName}</Text>
-          ) : (
-            <Pressable style={styles.linkButton}>
-              <Icon name="link" size={16} color={Colors.textTertiary} />
-              <Text style={styles.linkButtonText}>Link Workout Plan</Text>
-            </Pressable>
-          )}
-        </Pressable>
-      </View>
-
-    </View>
+      <Icon name="forward" size={20} color={Colors.textTertiary} />
+    </Pressable>
   );
 }
 
@@ -398,8 +346,6 @@ function EmptyState({ type, Colors }: { type: string; Colors: ThemeColors }) {
 
 function WellnessPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) {
   const wellnessQuery = useWellnessPlans();
-  const mealQuery = useMealPlans();
-  const workoutQuery = useWorkoutPlans();
   const deleteGoalPlan = useDeleteGoalPlan();
   const updateGoalPlan = useUpdateGoalPlan();
   const plans = sortPlansByDate(wellnessQuery.data || []);
@@ -416,8 +362,6 @@ function WellnessPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
 
   const onRefresh = useCallback(() => {
     wellnessQuery.refetch();
-    mealQuery.refetch();
-    workoutQuery.refetch();
   }, []);
 
   const confirmDelete = (id: string) => {
@@ -512,8 +456,6 @@ function WellnessPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
                 onDelete={() => confirmDelete(plan._id || plan.id)}
                 onSchedule={handleSchedule}
                 Colors={Colors}
-                mealPlans={mealQuery.data || []}
-                workoutPlans={workoutQuery.data || []}
               />
             ))}
           </View>
@@ -608,9 +550,18 @@ function SchedulePickerModal({
 
 function NutritionPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) {
   const mealQuery = useMealPlans();
+  const wellnessQuery = useWellnessPlans();
   const deleteMealPlan = useDeleteMealPlan();
   const scheduleMutation = useUpdateMealPlanSchedule();
-  const plans = sortPlansByDate(mealQuery.data || []);
+  const wellnessOwnedMealIds = useMemo(() => {
+    const ids = new Set<string>();
+    (wellnessQuery.data || []).forEach((wp: any) => {
+      const mid = wp.mealPlanId || wp.meal_plan_id;
+      if (mid) ids.add(mid);
+    });
+    return ids;
+  }, [wellnessQuery.data]);
+  const plans = sortPlansByDate((mealQuery.data || []).filter((p: any) => !wellnessOwnedMealIds.has(p._id || p.id)));
   const isLoading = mealQuery.isLoading;
   const [schedulePicker, setSchedulePicker] = useState<{ visible: boolean; planId: string; initialDate: string; title: string }>({
     visible: false,
@@ -736,9 +687,18 @@ function NutritionPage({ Colors, styles }: { Colors: ThemeColors; styles: any })
 
 function TrainingPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) {
   const workoutQuery = useWorkoutPlans();
+  const wellnessQuery = useWellnessPlans();
   const deleteWorkoutPlan = useDeleteWorkoutPlan();
   const scheduleMutation = useUpdateWorkoutPlanSchedule();
-  const plans = sortPlansByDate(workoutQuery.data || []);
+  const wellnessOwnedWorkoutIds = useMemo(() => {
+    const ids = new Set<string>();
+    (wellnessQuery.data || []).forEach((wp: any) => {
+      const wid = wp.workoutPlanId || wp.workout_plan_id;
+      if (wid) ids.add(wid);
+    });
+    return ids;
+  }, [wellnessQuery.data]);
+  const plans = sortPlansByDate((workoutQuery.data || []).filter((p: any) => !wellnessOwnedWorkoutIds.has(p._id || p.id)));
   const isLoading = workoutQuery.isLoading;
   const [schedulePicker, setSchedulePicker] = useState<{ visible: boolean; planId: string; initialDate: string; title: string }>({
     visible: false,

@@ -1,0 +1,92 @@
+Refactor the iOS React Native app so Wellness Plans are displayed as standalone integrated plans with one dedicated detail page that shows BOTH meal and workout content together.
+
+IMPORTANT
+This frontend work should align to the backend refactor where Wellness Plans are first-class parent plans.
+
+CURRENT PROBLEM
+Right now Wellness Plans behave like wrappers that link out to separate Meal Plan and Workout Plan pages.
+This makes Wellness feel fragmented.
+
+TARGET BEHAVIOR
+A Wellness Plan should open a single dedicated Wellness Plan detail page that contains:
+- plan header
+- overview
+- meals section/tab
+- workouts section/tab
+- unified management actions
+
+FRONTEND REQUIREMENTS
+
+1. WELLNESS PLAN DETAIL PAGE
+Create or refactor a dedicated Wellness Plan detail screen.
+
+This page must display:
+- title
+- goal chip
+- status chip
+- start date / schedule info
+- overflow menu with:
+  - Reschedule
+  - Unschedule
+  - Delete
+
+2. SINGLE PAGE OWNERSHIP
+When a user taps a wellness plan card from the Wellness Plans list:
+- open the standalone Wellness Plan detail page
+- do NOT link outward to separate Nutrition or Training detail pages for the same plan
+
+3. PAGE STRUCTURE
+Inside the Wellness Plan detail page, create segmented tabs or sections:
+
+- Overview
+- Meals
+- Workouts
+
+Overview should show:
+- plan summary / purpose
+- schedule state
+- high-level nutrition target summary if available
+- high-level workout structure summary if available
+- any adherence/progress summary if already supported
+
+Meals section should render the meal plan content directly within the wellness page context.
+
+Workouts section should render the workout plan content directly within the wellness page context.
+
+4. WELLNESS LIST PAGE
+Update Wellness Plans list so it shows only wellness plans and opens the new integrated page.
+
+5. NUTRITION AND TRAINING LISTS
+Update Nutrition and Training screens so they do NOT display wellness-owned child plans as standalone plan cards.
+
+- Nutrition should show only meal-only plans
+- Training should show only workout-only plans
+
+6. POST-CREATION FLOW
+After creating a Wellness Plan:
+- navigate directly to the new standalone Wellness Plan detail page
+- not to separate meal/workout pages
+
+7. ACTION MENU
+Use the backend parent wellness plan actions for:
+- reschedule
+- unschedule
+- delete
+
+These actions should be triggered from the wellness plan page/menu.
+
+8. UI CONSISTENCY
+Keep the existing premium design system.
+Maintain dark mode compatibility.
+Keep iconography and spacing consistent with the current app style.
+
+9. CLEANUP
+Remove any link-out dependency or duplicated navigation pattern where a wellness plan card opens separate meal/workout ownership pages.
+
+10. RETURN SUMMARY
+At the end, provide:
+- screens changed
+- components changed
+- hooks/API calls updated
+- navigation changes
+- any backend dependency assumptions

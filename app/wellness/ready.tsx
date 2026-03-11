@@ -99,7 +99,11 @@ export default function ReadyScreen() {
             style={styles.primaryButton}
             onPress={() => {
               Haptics.impactAsync();
-              router.replace("/plans");
+              if (goalPlanId) {
+                router.replace(`/plan/wellness/${goalPlanId}`);
+              } else {
+                router.replace("/plans");
+              }
             }}
           >
             <Text style={styles.primaryButtonText}>View My Plans</Text>
