@@ -13,7 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Icon } from "@/components/Icon";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
-import { useWorkoutPlan, useExerciseFeedback, useDeleteExercisePreferenceByKey, useExercisePreferences, useWorkoutSwap, useWorkoutDayRegen, useGoalPlanWorkoutSwap, useGoalPlanWorkoutRegen } from "@/lib/api-hooks";
+import { useWorkoutPlan, useExerciseFeedback, useDeleteExercisePreferenceByKey, useExercisePreferences } from "@/lib/api-hooks";
 
 function toExerciseKey(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
@@ -22,10 +22,9 @@ function toExerciseKey(name: string): string {
 interface WorkoutPlanContentProps {
   planId: string;
   planData?: any;
-  goalPlanId?: string;
 }
 
-export function WorkoutPlanContent({ planId, planData, goalPlanId }: WorkoutPlanContentProps) {
+export function WorkoutPlanContent({ planId, planData }: WorkoutPlanContentProps) {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const fetchEnabled = !planData && !!planId;
@@ -33,52 +32,11 @@ export function WorkoutPlanContent({ planId, planData, goalPlanId }: WorkoutPlan
   const data = planData || fetchedData;
   const isLoading = fetchEnabled ? fetchLoading : false;
   const error = fetchEnabled ? fetchError : null;
-  const swapMutationLegacy = useWorkoutSwap(goalPlanId ? null : planId);
-  const dayRegenMutationLegacy = useWorkoutDayRegen(goalPlanId ? null : planId);
-  const swapMutationGoal = useGoalPlanWorkoutSwap(goalPlanId ?? null);
-  const dayRegenMutationGoal = useGoalPlanWorkoutRegen(goalPlanId ?? null);
-  const swapMutation = goalPlanId ? swapMutationGoal : swapMutationLegacy;
-  const dayRegenMutation = goalPlanId ? dayRegenMutationGoal : dayRegenMutationLegacy;
   const [expandedSessions, setExpandedSessions] = useState<Record<number, boolean>>({});
 
   const toggleSession = useCallback((dayIndex: number) => {
     setExpandedSessions((prev) => ({ ...prev, [dayIndex]: !prev[dayIndex] }));
   }, []);
-
-  const handleExerciseSwap = useCallback((dayIndex: number, exerciseIndex: number, exerciseName: string) => {
-    Alert.alert(
-      "Swap Exercise",
-      `Replace "${exerciseName}" with a new exercise?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Swap",
-          onPress: () => {
-            swapMutation.mutate({ dayIndex, exerciseIndex });
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          },
-        },
-      ]
-    );
-  }, [swapMutation]);
-
-  const handleDayRegen = useCallback((dayIndex: number) => {
-    Alert.alert(
-      "Regenerate Session",
-      "This will replace all exercises for this day with new ones.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Regenerate",
-          style: "destructive",
-          onPress: () => {
-            dayRegenMutation.mutate({ dayIndex });
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          },
-        },
-      ]
-    );
-  }, [dayRegenMutation]);
 
   const plan = data?.planJson ?? data;
   const status = data?.status;
@@ -159,12 +117,6 @@ export function WorkoutPlanContent({ planId, planData, goalPlanId }: WorkoutPlan
           startDate={workoutStartDate}
           expanded={!!expandedSessions[idx]}
           onToggle={() => toggleSession(idx)}
-          onDayRegen={() => handleDayRegen(idx)}
-          dayRegenPending={dayRegenMutation.isPending && dayRegenMutation.variables?.dayIndex === idx}
-          dayRegenDisabled={dayRegenMutation.isPending}
-          onExerciseSwap={(exerciseIndex: number, exerciseName: string) => handleExerciseSwap(idx, exerciseIndex, exerciseName)}
-          swapDisabled={swapMutation.isPending}
-          swapPendingIndex={swapMutation.isPending && swapMutation.variables?.dayIndex === idx ? swapMutation.variables?.exerciseIndex : undefined}
         />
       ))}
 
@@ -472,24 +424,12 @@ function DayCard({
   startDate,
   expanded,
   onToggle,
-  onDayRegen,
-  dayRegenPending,
-  dayRegenDisabled,
-  onExerciseSwap,
-  swapDisabled,
-  swapPendingIndex,
 }: {
   day: any;
   dayIndex: number;
   startDate?: string;
   expanded: boolean;
   onToggle: () => void;
-  onDayRegen?: () => void;
-  dayRegenPending?: boolean;
-  dayRegenDisabled?: boolean;
-  onExerciseSwap?: (exerciseIndex: number, exerciseName: string) => void;
-  swapDisabled?: boolean;
-  swapPendingIndex?: number;
 }) {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
@@ -555,22 +495,6 @@ function DayCard({
           </View>
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          {onDayRegen && expanded && (
-            <Pressable
-              onPress={(e) => { e.stopPropagation(); onDayRegen(); }}
-              disabled={dayRegenDisabled}
-              style={({ pressed }) => [
-                styles.regenBtn,
-                { opacity: pressed ? 0.7 : dayRegenDisabled ? 0.4 : 1 },
-              ]}
-            >
-              {dayRegenPending ? (
-                <ActivityIndicator size={12} color={Colors.textSecondary} />
-              ) : (
-                <Icon name="refresh" size={16} color={Colors.textSecondary} />
-              )}
-            </Pressable>
-          )}
           <Ionicons
             name={expanded ? "chevron-up" : "chevron-down"}
             size={20}
@@ -629,9 +553,6 @@ function DayCard({
                   key={idx}
                   exercise={ex}
                   index={idx}
-                  onSwap={onExerciseSwap ? (name: string) => onExerciseSwap(idx, name) : undefined}
-                  swapDisabled={swapDisabled}
-                  isSwapping={swapPendingIndex === idx}
                 />
               ))}
             </View>
@@ -669,7 +590,7 @@ function DayCard({
   );
 }
 
-function ExerciseCard({ exercise, index, onSwap, swapDisabled, isSwapping }: { exercise: any; index: number; onSwap?: (name: string) => void; swapDisabled?: boolean; isSwapping?: boolean }) {
+function ExerciseCard({ exercise, index }: { exercise: any; index: number }) {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const name = exercise.name ?? exercise.exercise ?? `Exercise ${index + 1}`;
@@ -690,24 +611,6 @@ function ExerciseCard({ exercise, index, onSwap, swapDisabled, isSwapping }: { e
           <Text style={styles.exerciseName} numberOfLines={2} ellipsizeMode="tail">{name}</Text>
         </View>
         <LikeDislikeButtons exerciseName={name} />
-        {onSwap && (
-          <TouchableOpacity
-            onPress={() => onSwap(name)}
-            disabled={swapDisabled || isSwapping}
-            activeOpacity={0.5}
-            style={{
-              opacity: swapDisabled ? 0.3 : 1,
-              paddingHorizontal: 8,
-              paddingVertical: 10,
-            }}
-          >
-            {isSwapping ? (
-              <ActivityIndicator size={16} color={Colors.error} />
-            ) : (
-              <Icon name="swap" size={20} color={Colors.error} />
-            )}
-          </TouchableOpacity>
-        )}
       </View>
       <View style={styles.exerciseDetails}>
         {type ? (

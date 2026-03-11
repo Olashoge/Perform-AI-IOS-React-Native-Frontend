@@ -23,12 +23,6 @@ import {
   useGroceryList,
   useToggleGroceryOwned,
   useRegenerateGroceryList,
-  useMealSwap,
-  useDayRegen,
-  useGoalPlanMealSwap,
-  useGoalPlanMealRegen,
-  useAllowance,
-  AllowanceData,
   GrocerySection,
 } from "@/lib/api-hooks";
 
@@ -281,7 +275,7 @@ function MealActionButtons({ mealName, cuisineTag, ingredients }: { mealName: st
   );
 }
 
-function MealCard({ mealType, meal, completed, onSwap, swapDisabled, isSwapping }: { mealType: string; meal: MealData; completed?: boolean; onSwap?: () => void; swapDisabled?: boolean; isSwapping?: boolean }) {
+function MealCard({ mealType, meal, completed }: { mealType: string; meal: MealData; completed?: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
@@ -338,24 +332,6 @@ function MealCard({ mealType, meal, completed, onSwap, swapDisabled, isSwapping 
         </View>
         <View style={styles.mealTopRight}>
           <MealActionButtons mealName={meal.name} cuisineTag={meal.cuisineTag} ingredients={meal.ingredients} />
-          {onSwap && (
-            <TouchableOpacity
-              onPress={onSwap}
-              disabled={swapDisabled || isSwapping}
-              activeOpacity={0.5}
-              style={{
-                opacity: swapDisabled ? 0.3 : 1,
-                paddingHorizontal: 8,
-                paddingVertical: 10,
-              }}
-            >
-              {isSwapping ? (
-                <ActivityIndicator size={16} color={Colors.primary} />
-              ) : (
-                <Icon name="swap" size={20} color={Colors.primary} />
-              )}
-            </TouchableOpacity>
-          )}
           <TouchableOpacity
             onPress={() => setExpanded(!expanded)}
             activeOpacity={0.5}
@@ -457,61 +433,6 @@ function MealCard({ mealType, meal, completed, onSwap, swapDisabled, isSwapping 
   );
 }
 
-function BudgetCard({ allowance, Colors }: { allowance: AllowanceData; Colors: ThemeColors }) {
-  const swapsRemaining = Math.max(0, (allowance.mealSwaps?.limit ?? 0) - (allowance.mealSwaps?.used ?? 0));
-  const regensRemaining = Math.max(0, (allowance.dayRegens?.limit ?? 0) - (allowance.dayRegens?.used ?? 0));
-  const planRegensRemaining = Math.max(0, (allowance.planRegens?.limit ?? 0) - (allowance.planRegens?.used ?? 0));
-
-  const items = [
-    { label: "Meal Swaps", remaining: swapsRemaining, limit: allowance.mealSwaps?.limit ?? 0, icon: "swap-horizontal-outline" as const },
-    { label: "Day Regens", remaining: regensRemaining, limit: allowance.dayRegens?.limit ?? 0, icon: "refresh-outline" as const },
-    { label: "Plan Regens", remaining: planRegensRemaining, limit: allowance.planRegens?.limit ?? 0, icon: "reload-outline" as const },
-  ];
-
-  return (
-    <View style={{
-      backgroundColor: Colors.surface,
-      borderRadius: 12,
-      padding: 14,
-      marginBottom: 16,
-      borderWidth: 1,
-      borderColor: Colors.border,
-    }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 }}>
-        <Icon name="wallet" size={16} color={Colors.primary} />
-        <Text style={{ fontSize: 13, fontWeight: "600", color: Colors.text }}>Today's Budget</Text>
-      </View>
-      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        {items.map((item) => (
-          <View key={item.label} style={{ alignItems: "center", flex: 1 }}>
-            <Ionicons name={item.icon} size={16} color={item.remaining > 0 ? Colors.primary : Colors.textTertiary} style={{ marginBottom: 4 } as any} />
-            <Text style={{
-              fontSize: 16,
-              fontWeight: "700",
-              color: item.remaining > 0 ? Colors.text : Colors.textTertiary,
-            }}>
-              {item.remaining}
-            </Text>
-            <Text style={{
-              fontSize: 10,
-              color: Colors.textSecondary,
-              marginTop: 2,
-            }}>
-              of {item.limit}
-            </Text>
-            <Text style={{
-              fontSize: 10,
-              color: Colors.textSecondary,
-              marginTop: 1,
-            }}>
-              {item.label}
-            </Text>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-}
 
 export function formatDayDate(startDate: string | undefined, dayIndex: number): string {
   if (!startDate) return "";
@@ -541,13 +462,11 @@ export function getDayOfWeek(startDate: string | undefined, dayIndex: number): s
 interface MealPlanContentProps {
   planId: string;
   planData?: any;
-  goalPlanId?: string;
   hideTitle?: boolean;
-  hideBudget?: boolean;
   hideGroceryTab?: boolean;
 }
 
-export default function MealPlanContent({ planId, planData, goalPlanId, hideTitle, hideBudget, hideGroceryTab }: MealPlanContentProps) {
+export default function MealPlanContent({ planId, planData, hideTitle, hideGroceryTab }: MealPlanContentProps) {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const fetchEnabled = !planData && !!planId;
@@ -558,61 +477,8 @@ export default function MealPlanContent({ planId, planData, goalPlanId, hideTitl
   const { data: groceryData, isLoading: groceryLoading } = useGroceryList(planId ?? null);
   const toggleOwnedMutation = useToggleGroceryOwned(planId ?? null);
   const regenerateMutation = useRegenerateGroceryList(planId ?? null);
-  const swapMutationLegacy = useMealSwap(goalPlanId ? null : (planId ?? null));
-  const dayRegenMutationLegacy = useDayRegen(goalPlanId ? null : (planId ?? null));
-  const swapMutationGoal = useGoalPlanMealSwap(goalPlanId ?? null);
-  const dayRegenMutationGoal = useGoalPlanMealRegen(goalPlanId ?? null);
-  const swapMutation = goalPlanId ? swapMutationGoal : swapMutationLegacy;
-  const dayRegenMutation = goalPlanId ? dayRegenMutationGoal : dayRegenMutationLegacy;
-  const { data: allowance } = useAllowance();
   const [activeTab, setActiveTab] = useState<"meals" | "grocery">("meals");
   const [expandedDays, setExpandedDays] = useState<Record<number, boolean>>({ 0: true });
-
-  const swapsRemaining = allowance?.mealSwaps ? Math.max(0, (allowance.mealSwaps.limit ?? 0) - (allowance.mealSwaps.used ?? 0)) : null;
-  const regensRemaining = allowance?.dayRegens ? Math.max(0, (allowance.dayRegens.limit ?? 0) - (allowance.dayRegens.used ?? 0)) : null;
-
-  const handleMealSwap = useCallback((dayIndex: number, mealType: string, mealName: string) => {
-    if (swapsRemaining !== null && swapsRemaining <= 0) {
-      Alert.alert("No Swaps Remaining", "You've used all your meal swaps for today. Try again tomorrow.");
-      return;
-    }
-    Alert.alert(
-      "Swap Meal",
-      `Replace "${mealName}" with a new meal?${swapsRemaining !== null ? `\n${swapsRemaining} swap${swapsRemaining === 1 ? "" : "s"} remaining today.` : ""}`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Swap",
-          onPress: () => {
-            swapMutation.mutate({ dayIndex, mealType });
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          },
-        },
-      ]
-    );
-  }, [swapMutation, swapsRemaining]);
-
-  const handleDayRegen = useCallback((dayIndex: number) => {
-    if (regensRemaining !== null && regensRemaining <= 0) {
-      Alert.alert("No Regens Remaining", "You've used all your day regenerations for today. Try again tomorrow.");
-      return;
-    }
-    Alert.alert(
-      "Regenerate Day",
-      `This will replace all meals for this day with new ones.${regensRemaining !== null ? `\n${regensRemaining} regen${regensRemaining === 1 ? "" : "s"} remaining today.` : ""}`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Regenerate",
-          style: "destructive",
-          onPress: () => {
-            dayRegenMutation.mutate({ dayIndex });
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          },
-        },
-      ]
-    );
-  }, [dayRegenMutation, regensRemaining]);
 
   const generateItemKey = useCallback((itemName: string) => {
     return itemName.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -710,8 +576,6 @@ export default function MealPlanContent({ planId, planData, goalPlanId, hideTitl
         </View>
       ) : null}
 
-      {!hideBudget && allowance ? <BudgetCard allowance={allowance} Colors={Colors} /> : null}
-
       {!hideGroceryTab ? (
         <View style={styles.tabBar}>
           <Pressable
@@ -806,23 +670,6 @@ export default function MealPlanContent({ planId, planData, goalPlanId, hideTitl
                     </View>
                   </View>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                    {isDayExpanded && (
-                      <Pressable
-                        style={({ pressed }) => [
-                          styles.regenDayBtn,
-                          pressed && { opacity: 0.7 },
-                          (dayRegenMutation.isPending || (regensRemaining !== null && regensRemaining <= 0)) && { opacity: 0.4 },
-                        ]}
-                        onPress={(e) => { e.stopPropagation(); handleDayRegen(dayNum); }}
-                        disabled={dayRegenMutation.isPending || (regensRemaining !== null && regensRemaining <= 0)}
-                      >
-                        {dayRegenMutation.isPending && dayRegenMutation.variables?.dayIndex === dayNum ? (
-                          <ActivityIndicator size={12} color={Colors.textSecondary} />
-                        ) : (
-                          <Icon name="refresh" size={16} color={Colors.textSecondary} />
-                        )}
-                      </Pressable>
-                    )}
                     <Ionicons
                       name={isDayExpanded ? "chevron-up" : "chevron-down"}
                       size={20}
@@ -835,9 +682,6 @@ export default function MealPlanContent({ planId, planData, goalPlanId, hideTitl
                     key={mealType}
                     mealType={mealType}
                     meal={meal as MealData}
-                    onSwap={() => handleMealSwap(dayNum, mealType, (meal as MealData).name)}
-                    swapDisabled={swapMutation.isPending || (swapsRemaining !== null && swapsRemaining <= 0)}
-                    isSwapping={swapMutation.isPending && swapMutation.variables?.mealType === mealType && swapMutation.variables?.dayIndex === dayNum}
                   />
                 ))}
               </View>
