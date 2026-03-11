@@ -25,6 +25,8 @@ import {
   useRegenerateGroceryList,
   useMealSwap,
   useDayRegen,
+  useGoalPlanMealSwap,
+  useGoalPlanMealRegen,
   useAllowance,
   AllowanceData,
   GrocerySection,
@@ -539,12 +541,13 @@ export function getDayOfWeek(startDate: string | undefined, dayIndex: number): s
 interface MealPlanContentProps {
   planId: string;
   planData?: any;
+  goalPlanId?: string;
   hideTitle?: boolean;
   hideBudget?: boolean;
   hideGroceryTab?: boolean;
 }
 
-export default function MealPlanContent({ planId, planData, hideTitle, hideBudget, hideGroceryTab }: MealPlanContentProps) {
+export default function MealPlanContent({ planId, planData, goalPlanId, hideTitle, hideBudget, hideGroceryTab }: MealPlanContentProps) {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const fetchEnabled = !planData && !!planId;
@@ -555,8 +558,12 @@ export default function MealPlanContent({ planId, planData, hideTitle, hideBudge
   const { data: groceryData, isLoading: groceryLoading } = useGroceryList(planId ?? null);
   const toggleOwnedMutation = useToggleGroceryOwned(planId ?? null);
   const regenerateMutation = useRegenerateGroceryList(planId ?? null);
-  const swapMutation = useMealSwap(planId ?? null);
-  const dayRegenMutation = useDayRegen(planId ?? null);
+  const swapMutationLegacy = useMealSwap(goalPlanId ? null : (planId ?? null));
+  const dayRegenMutationLegacy = useDayRegen(goalPlanId ? null : (planId ?? null));
+  const swapMutationGoal = useGoalPlanMealSwap(goalPlanId ?? null);
+  const dayRegenMutationGoal = useGoalPlanMealRegen(goalPlanId ?? null);
+  const swapMutation = goalPlanId ? swapMutationGoal : swapMutationLegacy;
+  const dayRegenMutation = goalPlanId ? dayRegenMutationGoal : dayRegenMutationLegacy;
   const { data: allowance } = useAllowance();
   const [activeTab, setActiveTab] = useState<"meals" | "grocery">("meals");
   const [expandedDays, setExpandedDays] = useState<Record<number, boolean>>({ 0: true });

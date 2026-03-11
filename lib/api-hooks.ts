@@ -761,7 +761,100 @@ export function useAvailability() {
       logApiCall("GET", "/api/availability", response.status);
       return response.data;
     },
-    staleTime: 60000,
+    staleTime: 0,
+  });
+}
+
+export function useGoalPlanMealSwap(goalPlanId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ dayIndex, mealType }: { dayIndex: number; mealType: string }) => {
+      const response = await apiClient.post(`/api/goal-plans/${goalPlanId}/swap-meal`, { dayIndex, mealType });
+      logApiCall("POST", `/api/goal-plans/${goalPlanId}/swap-meal`, response.status);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (goalPlanId) {
+        if (data && typeof data === "object") {
+          queryClient.setQueryData(["goal-plan", goalPlanId], data);
+        }
+        queryClient.invalidateQueries({ queryKey: ["goal-plan", goalPlanId] });
+      }
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "goal-plan" });
+      queryClient.invalidateQueries({ queryKey: ["allowance"] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
+    },
+  });
+}
+
+export function useGoalPlanMealRegen(goalPlanId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ dayIndex }: { dayIndex: number }) => {
+      const response = await apiClient.post(`/api/goal-plans/${goalPlanId}/regenerate-meal-day`, { dayIndex });
+      logApiCall("POST", `/api/goal-plans/${goalPlanId}/regenerate-meal-day`, response.status);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (goalPlanId) {
+        if (data && typeof data === "object") {
+          queryClient.setQueryData(["goal-plan", goalPlanId], data);
+        }
+        queryClient.invalidateQueries({ queryKey: ["goal-plan", goalPlanId] });
+        queryClient.invalidateQueries({ queryKey: ["grocery", goalPlanId] });
+      }
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "goal-plan" });
+      queryClient.invalidateQueries({ queryKey: ["allowance"] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
+    },
+  });
+}
+
+export function useGoalPlanWorkoutSwap(goalPlanId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ dayIndex }: { dayIndex: number }) => {
+      const response = await apiClient.post(`/api/goal-plans/${goalPlanId}/swap-workout`, { dayIndex });
+      logApiCall("POST", `/api/goal-plans/${goalPlanId}/swap-workout`, response.status);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (goalPlanId) {
+        if (data && typeof data === "object") {
+          queryClient.setQueryData(["goal-plan", goalPlanId], data);
+        }
+        queryClient.invalidateQueries({ queryKey: ["goal-plan", goalPlanId] });
+      }
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "goal-plan" });
+      queryClient.invalidateQueries({ queryKey: ["allowance"] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
+    },
+  });
+}
+
+export function useGoalPlanWorkoutRegen(goalPlanId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ dayIndex }: { dayIndex: number }) => {
+      const response = await apiClient.post(`/api/goal-plans/${goalPlanId}/regenerate-workout-session`, { dayIndex });
+      logApiCall("POST", `/api/goal-plans/${goalPlanId}/regenerate-workout-session`, response.status);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (goalPlanId) {
+        if (data && typeof data === "object") {
+          queryClient.setQueryData(["goal-plan", goalPlanId], data);
+        }
+        queryClient.invalidateQueries({ queryKey: ["goal-plan", goalPlanId] });
+      }
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "goal-plan" });
+      queryClient.invalidateQueries({ queryKey: ["allowance"] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
+    },
   });
 }
 
@@ -894,6 +987,7 @@ function computeDateRange(startDate: string, numDays: number): string[] {
 export function useConflictDates(planType: "meal" | "workout", excludePlanId?: string) {
   const mealPlans = useMealPlans();
   const workoutPlans = useWorkoutPlans();
+  const wellnessPlans = useWellnessPlans();
 
   return useMemo(() => {
     const plans = planType === "meal" ? (mealPlans.data || []) : (workoutPlans.data || []);
@@ -907,8 +1001,15 @@ export function useConflictDates(planType: "meal" | "workout", excludePlanId?: s
       const numDays = pj?.days ? (Array.isArray(pj.days) ? pj.days.length : 7) : 7;
       dates.push(...computeDateRange(startDate, numDays));
     }
+    for (const wp of (wellnessPlans.data || [])) {
+      const id = wp._id || wp.id;
+      if (excludePlanId && id === excludePlanId) continue;
+      const startDate = wp.startDate || wp.start_date || wp.planStartDate;
+      if (!startDate) continue;
+      dates.push(...computeDateRange(startDate, 7));
+    }
     return dates;
-  }, [mealPlans.data, workoutPlans.data, planType, excludePlanId]);
+  }, [mealPlans.data, workoutPlans.data, wellnessPlans.data, planType, excludePlanId]);
 }
 
 export function useCreateMealPlan() {
@@ -1124,6 +1225,7 @@ export function useUpdateGoalPlan() {
       queryClient.invalidateQueries({ queryKey: ["plans:workout"] });
       queryClient.invalidateQueries({ queryKey: ["local-schedules"] });
       queryClient.invalidateQueries({ queryKey: ["occupied-dates"] });
+      queryClient.invalidateQueries({ queryKey: ["availability"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
       queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
@@ -1146,6 +1248,7 @@ export function useDeleteGoalPlan() {
       queryClient.invalidateQueries({ queryKey: ["plans:workout"] });
       queryClient.invalidateQueries({ queryKey: ["local-schedules"] });
       queryClient.invalidateQueries({ queryKey: ["occupied-dates"] });
+      queryClient.invalidateQueries({ queryKey: ["availability"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
       queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });

@@ -1,0 +1,42 @@
+Summary of latest Changes to the backend
+
+Issue 1: Meal/Workout Regen & Swap — Fixed
+Root cause: The mobile/API client was calling old standalone routes (/api/plan/:id/swap, /api/plan/:id/regenerate-day, /api/workout/:id/swap, etc.) that were removed when standalone plan features were eliminated. The web frontend's goal-plan-level regen routes were correct but swap endpoints didn't exist at all.
+
+What was added:
+
+New goal-plan-native endpoints (web frontend):
+
+Endpoint	Body	Purpose
+POST /api/goal-plans/:id/regenerate-meal-day	{ dayIndex: 0-6 }	Regenerate all meals for a day
+POST /api/goal-plans/:id/regenerate-workout-session	{ dayIndex: 0-6 }	Regenerate workout session
+POST /api/goal-plans/:id/swap-meal	{ dayIndex: 0-6, mealType: "lunch" }	Swap a single meal
+POST /api/goal-plans/:id/swap-workout	{ dayIndex: 0-6 }	Swap workout session
+Backward-compatible shim routes (mobile/API clients):
+
+Endpoint	Body	Purpose
+GET /api/plan/:id	—	Get meal plan by child ID
+GET /api/workout/:id	—	Get workout plan by child ID
+GET /api/plan/:id/grocery	—	Get grocery list
+POST /api/plan/:id/swap	{ dayIndex, mealType }	Swap meal via child ID
+POST /api/plan/:id/regenerate-day	{ dayIndex }	Regen meal day via child ID
+POST /api/workout/:id/swap	{ dayIndex }	Swap workout via child ID
+POST /api/workout/:id/regenerate-session	{ dayIndex }	Regen workout via child ID
+POST /api/plan/:id/grocery/regenerate	—	Rebuild grocery list
+GET /api/plans	—	List user's meal plans
+GET /api/workouts	—	List user's workout plans
+GET /api/allowance/current	—	Get AI usage allowance
+All shim routes resolve the parent goal plan from the child plan ID and operate on nested data.
+
+Frontend: Swap buttons added to each individual meal card in the Meals tab.
+
+Issue 2: Date Picker Stale After Reschedule — Fixed
+Root cause: The /api/availability endpoint correctly recomputes dates from current planStartDate values in the database. The problem was the frontend's TanStack Query cache — the availability data was cached and not refetched when the goal wizard opened after a reschedule.
+
+Fix: Set staleTime: 0 on the availability query in goal-wizard.tsx, ensuring fresh data is always fetched when the date picker is used.
+
+Files Changed
+server/routes.ts — Added swap endpoints + all backward-compatible shim routes
+client/src/pages/goal-detail.tsx — Added swap mutation + swap button UI on meal cards
+client/src/pages/goal-wizard.tsx — Set staleTime: 0 on availability query
+replit.md — Updated to document shim routes

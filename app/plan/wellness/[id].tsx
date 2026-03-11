@@ -467,7 +467,7 @@ export default function WellnessPlanDetailScreen() {
       >
         {activeTab === "overview" && <OverviewTab plan={plan} Colors={Colors} />}
         {activeTab === "meals" && mealPlanId && (
-          <MealPlanContent planId={mealPlanId} planData={plan?.mealPlan} hideTitle hideBudget={false} hideGroceryTab={false} />
+          <MealPlanContent planId={mealPlanId} planData={plan?.mealPlan} goalPlanId={id} hideTitle hideBudget={false} hideGroceryTab={false} />
         )}
         {activeTab === "meals" && !mealPlanId && (
           <View style={styles.emptyTab}>
@@ -476,7 +476,7 @@ export default function WellnessPlanDetailScreen() {
           </View>
         )}
         {activeTab === "workouts" && workoutPlanId && (
-          <WorkoutPlanContent planId={workoutPlanId} planData={plan?.workoutPlan} />
+          <WorkoutPlanContent planId={workoutPlanId} planData={plan?.workoutPlan} goalPlanId={id} />
         )}
         {activeTab === "workouts" && !workoutPlanId && (
           <View style={styles.emptyTab}>

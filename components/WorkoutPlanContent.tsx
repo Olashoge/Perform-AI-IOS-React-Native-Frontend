@@ -13,7 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Icon } from "@/components/Icon";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
-import { useWorkoutPlan, useExerciseFeedback, useDeleteExercisePreferenceByKey, useExercisePreferences, useWorkoutSwap, useWorkoutDayRegen } from "@/lib/api-hooks";
+import { useWorkoutPlan, useExerciseFeedback, useDeleteExercisePreferenceByKey, useExercisePreferences, useWorkoutSwap, useWorkoutDayRegen, useGoalPlanWorkoutSwap, useGoalPlanWorkoutRegen } from "@/lib/api-hooks";
 
 function toExerciseKey(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
@@ -22,9 +22,10 @@ function toExerciseKey(name: string): string {
 interface WorkoutPlanContentProps {
   planId: string;
   planData?: any;
+  goalPlanId?: string;
 }
 
-export function WorkoutPlanContent({ planId, planData }: WorkoutPlanContentProps) {
+export function WorkoutPlanContent({ planId, planData, goalPlanId }: WorkoutPlanContentProps) {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const fetchEnabled = !planData && !!planId;
@@ -32,8 +33,12 @@ export function WorkoutPlanContent({ planId, planData }: WorkoutPlanContentProps
   const data = planData || fetchedData;
   const isLoading = fetchEnabled ? fetchLoading : false;
   const error = fetchEnabled ? fetchError : null;
-  const swapMutation = useWorkoutSwap(planId);
-  const dayRegenMutation = useWorkoutDayRegen(planId);
+  const swapMutationLegacy = useWorkoutSwap(goalPlanId ? null : planId);
+  const dayRegenMutationLegacy = useWorkoutDayRegen(goalPlanId ? null : planId);
+  const swapMutationGoal = useGoalPlanWorkoutSwap(goalPlanId ?? null);
+  const dayRegenMutationGoal = useGoalPlanWorkoutRegen(goalPlanId ?? null);
+  const swapMutation = goalPlanId ? swapMutationGoal : swapMutationLegacy;
+  const dayRegenMutation = goalPlanId ? dayRegenMutationGoal : dayRegenMutationLegacy;
   const [expandedSessions, setExpandedSessions] = useState<Record<number, boolean>>({});
 
   const toggleSession = useCallback((dayIndex: number) => {
