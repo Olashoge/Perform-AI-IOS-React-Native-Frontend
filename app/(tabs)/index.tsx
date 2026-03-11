@@ -313,13 +313,6 @@ function DayDetailSection({ day, Colors }: { day: DayData | undefined; Colors: T
         </View>
       )}
 
-      <Pressable
-        style={({ pressed }) => [styles.planDayBtn, pressed && { opacity: 0.7 }]}
-        onPress={() => router.push({ pathname: "/daily/[date]", params: { date: day.date } })}
-      >
-        <Icon name="add" size={20} color={Colors.text} />
-        <Text style={styles.planDayText}>Plan this day</Text>
-      </Pressable>
     </View>
   );
 }
@@ -709,15 +702,6 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginBottom: 12,
   },
   emptyDayText: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textSecondary },
-
-  planDayBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingVertical: 12,
-    marginBottom: 16,
-  },
-  planDayText: { fontSize: 12, fontFamily: "Inter_500Medium", color: Colors.text },
 
   activePlansSection: { marginBottom: 20 },
   sectionLabel: { fontSize: 9, fontFamily: "Inter_700Bold", color: Colors.textSecondary, letterSpacing: 0.8, marginBottom: 12 },
