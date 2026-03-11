@@ -458,14 +458,14 @@ function MealCard({ mealType, meal, completed, onSwap, swapDisabled, isSwapping 
 }
 
 function BudgetCard({ allowance, Colors }: { allowance: AllowanceData; Colors: ThemeColors }) {
-  const swapsRemaining = Math.max(0, allowance.mealSwaps.limit - allowance.mealSwaps.used);
-  const regensRemaining = Math.max(0, allowance.dayRegens.limit - allowance.dayRegens.used);
-  const planRegensRemaining = Math.max(0, allowance.planRegens.limit - allowance.planRegens.used);
+  const swapsRemaining = Math.max(0, (allowance.mealSwaps?.limit ?? 0) - (allowance.mealSwaps?.used ?? 0));
+  const regensRemaining = Math.max(0, (allowance.dayRegens?.limit ?? 0) - (allowance.dayRegens?.used ?? 0));
+  const planRegensRemaining = Math.max(0, (allowance.planRegens?.limit ?? 0) - (allowance.planRegens?.used ?? 0));
 
   const items = [
-    { label: "Meal Swaps", remaining: swapsRemaining, limit: allowance.mealSwaps.limit, icon: "swap-horizontal-outline" as const },
-    { label: "Day Regens", remaining: regensRemaining, limit: allowance.dayRegens.limit, icon: "refresh-outline" as const },
-    { label: "Plan Regens", remaining: planRegensRemaining, limit: allowance.planRegens.limit, icon: "reload-outline" as const },
+    { label: "Meal Swaps", remaining: swapsRemaining, limit: allowance.mealSwaps?.limit ?? 0, icon: "swap-horizontal-outline" as const },
+    { label: "Day Regens", remaining: regensRemaining, limit: allowance.dayRegens?.limit ?? 0, icon: "refresh-outline" as const },
+    { label: "Plan Regens", remaining: planRegensRemaining, limit: allowance.planRegens?.limit ?? 0, icon: "reload-outline" as const },
   ];
 
   return (
@@ -568,8 +568,8 @@ export default function MealPlanContent({ planId, planData, goalPlanId, hideTitl
   const [activeTab, setActiveTab] = useState<"meals" | "grocery">("meals");
   const [expandedDays, setExpandedDays] = useState<Record<number, boolean>>({ 0: true });
 
-  const swapsRemaining = allowance ? Math.max(0, allowance.mealSwaps.limit - allowance.mealSwaps.used) : null;
-  const regensRemaining = allowance ? Math.max(0, allowance.dayRegens.limit - allowance.dayRegens.used) : null;
+  const swapsRemaining = allowance?.mealSwaps ? Math.max(0, (allowance.mealSwaps.limit ?? 0) - (allowance.mealSwaps.used ?? 0)) : null;
+  const regensRemaining = allowance?.dayRegens ? Math.max(0, (allowance.dayRegens.limit ?? 0) - (allowance.dayRegens.used ?? 0)) : null;
 
   const handleMealSwap = useCallback((dayIndex: number, mealType: string, mealName: string) => {
     if (swapsRemaining !== null && swapsRemaining <= 0) {

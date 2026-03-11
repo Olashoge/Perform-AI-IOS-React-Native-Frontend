@@ -1568,13 +1568,33 @@ export interface AllowanceData {
   cooldown?: { active: boolean; endsAt?: string };
 }
 
+function normalizeAllowanceData(raw: Record<string, unknown>): AllowanceData {
+  const pick = (
+    ...keys: string[]
+  ): { used: number; limit: number } => {
+    for (const key of keys) {
+      const v = raw[key] as { used?: number; limit?: number } | undefined;
+      if (v && typeof v === "object" && ("used" in v || "limit" in v)) {
+        return { used: Number(v.used ?? 0), limit: Number(v.limit ?? 0) };
+      }
+    }
+    return { used: 0, limit: 0 };
+  };
+  return {
+    mealSwaps: pick("mealSwaps", "meal_swaps", "swaps"),
+    dayRegens: pick("dayRegens", "day_regens", "regens", "dayRegen"),
+    planRegens: pick("planRegens", "plan_regens", "planRegen"),
+    cooldown: raw.cooldown as AllowanceData["cooldown"],
+  };
+}
+
 export function useAllowance() {
   return useQuery<AllowanceData>({
     queryKey: ["allowance"],
     queryFn: async () => {
       const response = await apiClient.get("/api/allowance/current");
       logApiCall("GET", "/api/allowance/current", response.status);
-      return response.data;
+      return normalizeAllowanceData(response.data as Record<string, unknown>);
     },
   });
 }
