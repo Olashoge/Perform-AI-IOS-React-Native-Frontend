@@ -559,6 +559,7 @@ export default function MealPlanContent({ planId, planData, hideTitle, hideBudge
   const dayRegenMutation = useDayRegen(planId ?? null);
   const { data: allowance } = useAllowance();
   const [activeTab, setActiveTab] = useState<"meals" | "grocery">("meals");
+  const [expandedDays, setExpandedDays] = useState<Record<number, boolean>>({ 0: true });
 
   const swapsRemaining = allowance ? Math.max(0, allowance.mealSwaps.limit - allowance.mealSwaps.used) : null;
   const regensRemaining = allowance ? Math.max(0, allowance.dayRegens.limit - allowance.dayRegens.used) : null;
@@ -738,36 +739,78 @@ export default function MealPlanContent({ planId, planData, hideTitle, hideBudge
             const dayOfWeek = getDayOfWeek(startDate, dayNum);
             const dayType = day.dayType || "";
             const dateStr = formatDayDate(startDate, dayNum);
+            const isDayExpanded = expandedDays[dayIdx] !== false;
+
+            const parseMacro = (val: string | number | undefined): number => {
+              if (!val) return 0;
+              const num = typeof val === "string" ? parseFloat(val.replace(/[^0-9.]/g, "")) : val;
+              return isNaN(num) ? 0 : num;
+            };
+            let dayCals = 0;
+            let dayProtein = 0;
+            let dayCarbs = 0;
+            let dayFat = 0;
+            mealEntries.forEach(([, m]) => {
+              const meal = m as MealData;
+              const nr = meal.nutritionEstimateRange || (meal as any).nutrition_estimate_range;
+              dayCals += parseMacro(nr?.calories || meal.calories);
+              dayProtein += parseMacro(nr?.protein || nr?.protein_g || meal.macros?.protein_g);
+              dayCarbs += parseMacro(nr?.carbs || nr?.carbs_g || meal.macros?.carbs_g);
+              dayFat += parseMacro(nr?.fat || nr?.fat_g || meal.macros?.fat_g);
+            });
 
             return (
               <View key={dayIdx} style={styles.daySection}>
-                <View style={styles.dayHeader}>
+                <Pressable
+                  style={styles.dayHeader}
+                  onPress={() => setExpandedDays((prev) => ({ ...prev, [dayIdx]: !isDayExpanded }))}
+                >
                   <View style={styles.dayHeaderLeft}>
-                    <Text>
-                      <Text style={styles.dayTitle}>
-                        Day {dayNum}{dayOfWeek ? ` - ${dayOfWeek}` : ""}{dayType ? ` (${dayType})` : ""}
-                      </Text>
-                      {dateStr ? <Text style={styles.dayDate}>{"  "}{dateStr}</Text> : null}
-                    </Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                      <View style={[styles.dayBadge, { backgroundColor: Colors.primary + "14" }]}>
+                        <Text style={[styles.dayBadgeText, { color: Colors.primary }]}>{dayNum}</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.dayTitle} numberOfLines={1}>
+                          {dayOfWeek || `Day ${dayNum}`}{dayType ? ` · ${dayType}` : ""}
+                        </Text>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                          {dateStr ? <Text style={styles.dayDate}>{dateStr}</Text> : null}
+                          {dayCals > 0 && <Text style={styles.dayCalSummary}>{Math.round(dayCals)} cal</Text>}
+                          {dayProtein > 0 && <Text style={styles.dayMacroText}>P {Math.round(dayProtein)}g</Text>}
+                          {dayCarbs > 0 && <Text style={styles.dayMacroText}>C {Math.round(dayCarbs)}g</Text>}
+                          {dayFat > 0 && <Text style={styles.dayMacroText}>F {Math.round(dayFat)}g</Text>}
+                          <Text style={styles.dayMealCount}>{mealEntries.length} meals</Text>
+                        </View>
+                      </View>
+                    </View>
                   </View>
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.regenDayBtn,
-                      pressed && { opacity: 0.7 },
-                      (dayRegenMutation.isPending || (regensRemaining !== null && regensRemaining <= 0)) && { opacity: 0.4 },
-                    ]}
-                    onPress={() => handleDayRegen(dayNum)}
-                    disabled={dayRegenMutation.isPending || (regensRemaining !== null && regensRemaining <= 0)}
-                  >
-                    {dayRegenMutation.isPending && dayRegenMutation.variables?.dayIndex === dayNum ? (
-                      <ActivityIndicator size={12} color={Colors.textSecondary} />
-                    ) : (
-                      <Icon name="refresh" size={16} color={Colors.textSecondary} />
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    {isDayExpanded && (
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.regenDayBtn,
+                          pressed && { opacity: 0.7 },
+                          (dayRegenMutation.isPending || (regensRemaining !== null && regensRemaining <= 0)) && { opacity: 0.4 },
+                        ]}
+                        onPress={(e) => { e.stopPropagation(); handleDayRegen(dayNum); }}
+                        disabled={dayRegenMutation.isPending || (regensRemaining !== null && regensRemaining <= 0)}
+                      >
+                        {dayRegenMutation.isPending && dayRegenMutation.variables?.dayIndex === dayNum ? (
+                          <ActivityIndicator size={12} color={Colors.textSecondary} />
+                        ) : (
+                          <Icon name="refresh" size={16} color={Colors.textSecondary} />
+                        )}
+                      </Pressable>
                     )}
-                    <Text style={styles.regenDayText}>Regenerate Day</Text>
-                  </Pressable>
-                </View>
-                {mealEntries.map(([mealType, meal]) => (
+                    <Ionicons
+                      name={isDayExpanded ? "chevron-up" : "chevron-down"}
+                      size={20}
+                      color={Colors.textSecondary}
+                    />
+                  </View>
+                </Pressable>
+                {isDayExpanded && mealEntries.map(([mealType, meal]) => (
                   <MealCard
                     key={mealType}
                     mealType={mealType}
@@ -976,53 +1019,71 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     fontWeight: "600" as const,
   },
   daySection: {
-    marginBottom: 24,
+    marginBottom: 12,
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    overflow: "hidden" as const,
   },
   dayHeader: {
     flexDirection: "row" as const,
     justifyContent: "space-between" as const,
-    alignItems: "flex-end" as const,
-    marginBottom: 12,
-    flexWrap: "wrap" as const,
+    alignItems: "center" as const,
+    padding: 14,
     gap: 8,
   },
   dayHeaderLeft: {
     flex: 1,
-    minWidth: 180,
+    minWidth: 0,
+  },
+  dayBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  },
+  dayBadgeText: {
+    fontSize: 14,
+    fontWeight: "700" as const,
   },
   dayTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "700" as const,
     color: Colors.text,
   },
   dayDate: {
-    fontSize: 13,
+    fontSize: 11,
     color: Colors.textSecondary,
     fontWeight: "400" as const,
   },
-  regenDayBtn: {
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    gap: 4,
-    backgroundColor: Colors.surface,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
+  dayCalSummary: {
+    fontSize: 11,
+    fontWeight: "600" as const,
+    color: Colors.warning,
   },
-  regenDayText: {
-    fontSize: 12,
+  dayMacroText: {
+    fontSize: 11,
     fontWeight: "500" as const,
     color: Colors.textSecondary,
   },
+  dayMealCount: {
+    fontSize: 11,
+    color: Colors.textTertiary,
+  },
+  regenDayBtn: {
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: Colors.surfaceElevated,
+  },
   mealCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 14,
     padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: Colors.border,
   },
   mealTopRow: {
     flexDirection: "row" as const,

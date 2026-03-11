@@ -63,6 +63,8 @@ const ICON_MAP = {
   bug: "bug-outline",
   medkit: "medkit-outline",
   location: "location-outline",
+  navigate: "navigate-outline",
+  compass: "compass-outline",
 } as const;
 
 export type IconName = keyof typeof ICON_MAP;

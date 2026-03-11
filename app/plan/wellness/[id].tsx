@@ -118,84 +118,186 @@ function OverviewTab({ plan, Colors }: { plan: any; Colors: ThemeColors }) {
   const endDate = plan.endDate || plan.end_date;
   const planType = plan.planType || plan.plan_type || "both";
   const pace = plan.pace;
+  const showMeals = planType === "meal" || planType === "both";
+  const showWorkouts = planType === "workout" || planType === "both";
 
   const mealPlan = plan.mealPlan;
   const workoutPlan = plan.workoutPlan;
+  const mealJson = mealPlan?.planJson ?? mealPlan;
+  const workoutJson = workoutPlan?.planJson ?? workoutPlan;
+  const mealDays = mealJson?.days ?? [];
+  const workoutDays = workoutJson?.days ?? [];
+  const totalDays = workoutDays.length || mealDays.length || 7;
+  const workoutDayCount = workoutDays.filter((d: any) => d.isWorkoutDay).length;
+  const restDayCount = workoutDays.length > 0 ? totalDays - workoutDayCount : 0;
+
+  const nutritionNotes = mealJson?.nutritionNotes;
+  const macroTargets = nutritionNotes?.dailyMacroTargetsRange;
+
+  const workoutSessions = workoutDays.filter((d: any) => d.isWorkoutDay && d.session);
+  const modes = [...new Set(workoutSessions.map((d: any) => (d.session.mode || d.session.type || "").toLowerCase()).filter(Boolean))];
+  const durations = workoutSessions.map((d: any) => d.session.durationMinutes || d.session.estimatedDuration || 0).filter((d: number) => d > 0);
+  const avgDuration = durations.length > 0 ? Math.round(durations.reduce((a: number, b: number) => a + b, 0) / durations.length) : 0;
 
   return (
     <View style={styles.overviewContainer}>
-      <View style={styles.heroCard}>
-        <View style={styles.heroHeader}>
-          <View style={[styles.heroIcon, { backgroundColor: Colors.primary + "15" }]}>
-            <Icon name="sparkles" size={28} color={Colors.primary} />
+      <View style={styles.identityCard}>
+        <View style={styles.identityHeader}>
+          <View style={[styles.identityIcon, { backgroundColor: Colors.primary + "12" }]}>
+            <Icon name="sparkles" size={24} color={Colors.primary} />
           </View>
-          <View style={{ flex: 1, gap: 6 }}>
-            <Text style={styles.heroTitle}>{planName}</Text>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.identityTitle}>{planName}</Text>
+            <View style={styles.chipRow}>
               <StatusChip status={status} Colors={Colors} />
               {primaryGoal && <GoalChip goal={primaryGoal} Colors={Colors} />}
             </View>
           </View>
         </View>
-
-        <View style={styles.divider} />
-
-        <View style={styles.infoGrid}>
+        <View style={styles.identityDivider} />
+        <View style={styles.identityMeta}>
+          <View style={styles.metaRow}>
+            <Icon name="layers" size={16} color={Colors.textSecondary} />
+            <Text style={styles.metaText}>
+              {planType === "both" ? "Meal & Workout" : planType === "meal" ? "Meal Only" : "Workout Only"}
+            </Text>
+          </View>
           {(startDate || endDate) && (
-            <View style={styles.infoItem}>
+            <View style={styles.metaRow}>
               <Icon name="calendar" size={16} color={Colors.textSecondary} />
-              <Text style={styles.infoLabel}>Schedule</Text>
-              <Text style={styles.infoValue}>
+              <Text style={styles.metaText}>
                 {formatDate(startDate)}{endDate ? ` – ${formatDate(endDate)}` : ""}
               </Text>
             </View>
           )}
-          <View style={styles.infoItem}>
-            <Icon name="layers" size={16} color={Colors.textSecondary} />
-            <Text style={styles.infoLabel}>Type</Text>
-            <Text style={styles.infoValue}>
-              {planType === "both" ? "Meal & Workout" : planType === "meal" ? "Meal Only" : "Workout Only"}
-            </Text>
-          </View>
           {pace && (
-            <View style={styles.infoItem}>
+            <View style={styles.metaRow}>
               <Icon name="speedometer" size={16} color={Colors.textSecondary} />
-              <Text style={styles.infoLabel}>Pace</Text>
-              <Text style={styles.infoValue}>{pace.charAt(0).toUpperCase() + pace.slice(1)}</Text>
+              <Text style={styles.metaText}>{pace.charAt(0).toUpperCase() + pace.slice(1)} pace</Text>
             </View>
           )}
         </View>
       </View>
 
-      {mealPlan && (
-        <View style={styles.summaryCard}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <Icon name="restaurant" size={20} color={Colors.accent} />
-            <Text style={styles.summaryTitle}>Nutrition Summary</Text>
+      {(workoutDays.length > 0 || mealDays.length > 0) && (
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Weekly Structure</Text>
+          <View style={styles.structureStats}>
+            <View style={styles.structureStat}>
+              <Text style={styles.structureValue}>{totalDays}</Text>
+              <Text style={styles.structureLabel}>Total Days</Text>
+            </View>
+            {workoutDays.length > 0 && (
+              <>
+                <View style={styles.structureDividerV} />
+                <View style={styles.structureStat}>
+                  <Text style={[styles.structureValue, { color: Colors.accent }]}>{workoutDayCount}</Text>
+                  <Text style={styles.structureLabel}>Workout</Text>
+                </View>
+                <View style={styles.structureDividerV} />
+                <View style={styles.structureStat}>
+                  <Text style={[styles.structureValue, { color: Colors.textSecondary }]}>{restDayCount}</Text>
+                  <Text style={styles.structureLabel}>Rest</Text>
+                </View>
+              </>
+            )}
           </View>
-          {mealPlan.name && (
-            <Text style={styles.summaryDetail}>{mealPlan.name}</Text>
+          {workoutDays.length > 0 && (
+            <View style={styles.dayStrip}>
+              {workoutDays.map((d: any, i: number) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.dayDot,
+                    { backgroundColor: d.isWorkoutDay ? Colors.accent : Colors.border },
+                  ]}
+                >
+                  <Text style={[styles.dayDotText, { color: d.isWorkoutDay ? "#fff" : Colors.textTertiary }]}>
+                    {i + 1}
+                  </Text>
+                </View>
+              ))}
+            </View>
           )}
-          <Text style={styles.summarySubtext}>
-            {mealPlan.status === "ready" ? "Ready to view in Meals tab" : `Status: ${mealPlan.status || "—"}`}
-          </Text>
         </View>
       )}
 
-      {workoutPlan && (
-        <View style={styles.summaryCard}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <Icon name="barbell" size={20} color={Colors.error} />
-            <Text style={styles.summaryTitle}>Training Summary</Text>
+      {macroTargets && (
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Icon name="restaurant" size={20} color={Colors.warning} />
+            <Text style={styles.sectionTitle}>Daily Nutrition Targets</Text>
           </View>
-          {workoutPlan.name && (
-            <Text style={styles.summaryDetail}>{workoutPlan.name}</Text>
-          )}
-          <Text style={styles.summarySubtext}>
-            {workoutPlan.status === "ready" ? "Ready to view in Workouts tab" : `Status: ${workoutPlan.status || "—"}`}
-          </Text>
+          <View style={styles.nutrientGrid}>
+            {macroTargets.calories && (
+              <View style={[styles.nutrientItem, { backgroundColor: Colors.warning + "10" }]}>
+                <Icon name="flame" size={16} color={Colors.warning} />
+                <Text style={styles.nutrientValue}>{macroTargets.calories}</Text>
+                <Text style={styles.nutrientLabel}>Calories</Text>
+              </View>
+            )}
+            {macroTargets.protein_g && (
+              <View style={[styles.nutrientItem, { backgroundColor: Colors.accent + "10" }]}>
+                <Text style={[styles.nutrientValue, { color: Colors.accent }]}>{macroTargets.protein_g}g</Text>
+                <Text style={styles.nutrientLabel}>Protein</Text>
+              </View>
+            )}
+            {macroTargets.carbs_g && (
+              <View style={[styles.nutrientItem, { backgroundColor: Colors.primary + "10" }]}>
+                <Text style={[styles.nutrientValue, { color: Colors.primary }]}>{macroTargets.carbs_g}g</Text>
+                <Text style={styles.nutrientLabel}>Carbs</Text>
+              </View>
+            )}
+            {macroTargets.fat_g && (
+              <View style={[styles.nutrientItem, { backgroundColor: Colors.error + "10" }]}>
+                <Text style={[styles.nutrientValue, { color: Colors.error }]}>{macroTargets.fat_g}g</Text>
+                <Text style={styles.nutrientLabel}>Fat</Text>
+              </View>
+            )}
+          </View>
         </View>
       )}
+
+      {workoutSessions.length > 0 && (
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Icon name="barbell" size={20} color={Colors.error} />
+            <Text style={styles.sectionTitle}>Training Summary</Text>
+          </View>
+          <View style={styles.trainingDetails}>
+            <View style={styles.trainingRow}>
+              <Text style={styles.trainingLabel}>Frequency</Text>
+              <Text style={styles.trainingValue}>{workoutDayCount}x per week</Text>
+            </View>
+            {modes.length > 0 && (
+              <View style={styles.trainingRow}>
+                <Text style={styles.trainingLabel}>Focus</Text>
+                <Text style={styles.trainingValue}>{modes.map(m => m.charAt(0).toUpperCase() + m.slice(1)).join(", ")}</Text>
+              </View>
+            )}
+            {avgDuration > 0 && (
+              <View style={styles.trainingRow}>
+                <Text style={styles.trainingLabel}>Avg. Duration</Text>
+                <Text style={styles.trainingValue}>{avgDuration} min</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
+
+      <View style={styles.guidanceCard}>
+        <Icon name="navigate" size={20} color={Colors.primary} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.guidanceTitle}>Ready to explore</Text>
+          <Text style={styles.guidanceText}>
+            {showMeals && showWorkouts
+              ? "Switch to the Meals or Workouts tab to dive into your plan details."
+              : showMeals
+                ? "Switch to the Meals tab to view your daily nutrition plan."
+                : "Switch to the Workouts tab to view your training schedule."}
+          </Text>
+        </View>
+      </View>
     </View>
   );
 }
@@ -488,79 +590,183 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     gap: 16,
   },
   overviewContainer: {
-    gap: 16,
-  },
-  heroCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: Colors.border,
     gap: 14,
   },
-  heroHeader: {
+  identityCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  identityHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
   },
-  heroIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
+  identityIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
-  heroTitle: {
+  identityTitle: {
     fontSize: 17,
     fontFamily: "Inter_700Bold",
     color: Colors.text,
+    marginBottom: 6,
   },
-  divider: {
+  chipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  identityDivider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: Colors.border,
+    marginTop: 14,
+    marginBottom: 12,
   },
-  infoGrid: {
-    gap: 10,
+  identityMeta: {
+    gap: 8,
   },
-  infoItem: {
+  metaRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
   },
-  infoLabel: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-    color: Colors.textSecondary,
-    width: 65,
-  },
-  infoValue: {
+  metaText: {
     fontSize: 12,
     fontFamily: "Inter_500Medium",
-    color: Colors.text,
-    flex: 1,
+    color: Colors.textSecondary,
   },
-  summaryCard: {
+  sectionCard: {
     backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  summaryTitle: {
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 14,
+  },
+  sectionTitle: {
     fontSize: 14,
     fontFamily: "Inter_600SemiBold",
     color: Colors.text,
   },
-  summaryDetail: {
-    fontSize: 13,
-    fontFamily: "Inter_500Medium",
-    color: Colors.text,
-    marginBottom: 4,
+  structureStats: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.surfaceElevated,
+    borderRadius: 12,
+    paddingVertical: 14,
+    marginBottom: 12,
   },
-  summarySubtext: {
-    fontSize: 11,
+  structureStat: {
+    flex: 1,
+    alignItems: "center",
+  },
+  structureValue: {
+    fontSize: 22,
+    fontFamily: "Inter_700Bold",
+    color: Colors.text,
+  },
+  structureLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_500Medium",
+    color: Colors.textSecondary,
+    textTransform: "uppercase" as const,
+    letterSpacing: 0.5,
+    marginTop: 2,
+  },
+  structureDividerV: {
+    width: StyleSheet.hairlineWidth,
+    height: 32,
+    backgroundColor: Colors.border,
+  },
+  dayStrip: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 6,
+  },
+  dayDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dayDotText: {
+    fontSize: 10,
+    fontFamily: "Inter_600SemiBold",
+  },
+  nutrientGrid: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  nutrientItem: {
+    flex: 1,
+    alignItems: "center",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    gap: 4,
+  },
+  nutrientValue: {
+    fontSize: 13,
+    fontFamily: "Inter_700Bold",
+    color: Colors.text,
+  },
+  nutrientLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_500Medium",
+    color: Colors.textSecondary,
+  },
+  trainingDetails: {
+    gap: 10,
+  },
+  trainingRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  trainingLabel: {
+    fontSize: 13,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
+  },
+  trainingValue: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.text,
+  },
+  guidanceCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    backgroundColor: Colors.primary + "08",
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.primary + "18",
+  },
+  guidanceTitle: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.primary,
+    marginBottom: 4,
+  },
+  guidanceText: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textSecondary,
+    lineHeight: 18,
   },
   emptyTab: {
     alignItems: "center",

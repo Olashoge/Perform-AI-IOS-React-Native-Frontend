@@ -1,0 +1,153 @@
+Upgrade the Wellness Plan detail page into a true performance command center while preserving the new wellness-first architecture.
+
+Context:
+- Wellness Plans are now the parent concept
+- The integrated detail page is working
+- Tabs now correctly render from the parent goal/wellness plan payload
+- Do NOT reintroduce standalone 7-day meal or workout plan behavior
+
+Goal:
+Refine the Wellness Plan detail page so it feels premium, structured, and action-oriented.
+
+REQUIREMENTS
+
+1. KEEP THE EXISTING PAGE STRUCTURE
+Preserve:
+- header with back button
+- overflow menu
+- tabs:
+  - Overview
+  - Meals
+  - Workouts
+
+Do not break the current working integrated data flow.
+
+2. IMPROVE THE HEADER HIERARCHY
+Refine the top section so it clearly communicates:
+- plan name
+- goal chip
+- status chip
+- date range
+
+Desired feel:
+A clean premium command-center header with stronger visual hierarchy and spacing.
+
+3. UPGRADE THE OVERVIEW TAB
+Refactor Overview so it becomes informative and useful, not just a placeholder.
+
+Overview tab should contain these sections:
+
+A. PLAN IDENTITY CARD
+Show:
+- plan title
+- goal
+- status
+- date range
+- plan type: Meal & Workout
+
+B. WEEKLY STRUCTURE CARD
+Show:
+- total days
+- workout days
+- rest/recovery days
+
+C. NUTRITION TARGET SUMMARY
+If data exists, show:
+- daily calorie target range
+- protein target range
+- carb target range
+- fat target range
+
+D. TRAINING SUMMARY
+Show:
+- workout frequency
+- general workout emphasis if available
+- duration summary if available
+
+E. NEXT ACTION / GUIDANCE
+Add a simple action-oriented block such as:
+- “Open Meals tab to view your nutrition plan”
+- “Open Workouts tab to view today’s training”
+This should feel intentional, not empty.
+
+4. ADD WEEK PROGRESS / STRUCTURE INDICATOR
+If feasible from existing data, add a lightweight weekly structure indicator in Overview.
+
+Examples:
+- Day 1 / 7
+- 7-day strip or markers
+- workout/rest distribution
+
+Keep it visually restrained and premium.
+
+5. IMPROVE MEALS TAB UX
+Preserve the current embedded meal content and actions.
+Improve usability by:
+
+A. DAY GROUPING
+Make day sections clearer and easier to scan.
+
+B. COLLAPSIBLE DAY BEHAVIOR
+If not already present, each day should be clearly grouped and easy to expand/collapse.
+
+C. DAILY NUTRITION SUMMARY
+At the start of each day section, show daily macro/calorie summary if available.
+
+D. MAINTAIN CURRENT ACTIONS
+Preserve:
+- like / dislike
+- swap
+- regenerate day
+- completion behavior
+
+6. IMPROVE WORKOUTS TAB UX
+Preserve the current embedded workout content and actions.
+Improve usability by:
+
+A. CLEAR DAY GROUPING
+Make workout day sections easier to scan.
+
+B. KEEP REST DAYS VISUALLY DISTINCT
+Rest/recovery days should feel meaningfully different from workout days.
+
+C. PRESERVE ACTIONS
+Keep:
+- regenerate
+- completion behavior
+- workout details expansion
+
+D. ADD SMALL TRAINING SUMMARY AT TOP
+If possible, show a compact summary at the top of the Workouts tab:
+- number of workout days
+- number of recovery days
+
+7. OVERFLOW MENU / PLAN ACTIONS
+Preserve existing working actions:
+- reschedule
+- unschedule
+- delete
+
+If the UI supports it cleanly, improve menu labeling and consistency so it feels like plan-level management.
+
+8. PREMIUM VISUAL CLEANUP
+Apply careful polish:
+- better spacing rhythm
+- cleaner section hierarchy
+- improved card consistency
+- avoid oversized empty areas
+- keep dark mode elegant and readable
+- keep icon usage restrained and consistent
+
+9. DO NOT BREAK DATA FLOW
+Very important:
+- continue using the already-working parent goal/wellness plan payload
+- do not reintroduce standalone meal/workout fetches
+- do not call removed endpoints
+- do not regress the recent fix
+
+10. RETURN SUMMARY
+At the end, provide:
+- files changed
+- overview improvements added
+- meals/workouts UX improvements added
+- anything skipped due to missing backend data
