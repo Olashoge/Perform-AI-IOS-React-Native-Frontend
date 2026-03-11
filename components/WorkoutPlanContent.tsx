@@ -497,19 +497,22 @@ function DayCard({
 
   if (!isWorkout) {
     return (
-      <View style={styles.dayCard}>
+      <View style={[styles.dayCard, styles.restDayCard]}>
         <View style={styles.dayHeaderRow}>
-          <View style={styles.dayLabelContainer}>
-            <Text numberOfLines={2} ellipsizeMode="tail">
-              <Text style={styles.dayLabel}>
-                {dayLabel}{dayOfWeek ? ` - ${dayOfWeek}` : ""} ({dayType})
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
+            <View style={[styles.dayBadge, { backgroundColor: Colors.textSecondary + "18" }]}>
+              <Text style={[styles.dayBadgeText, { color: Colors.textSecondary }]}>{dayIndex + 1}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.dayLabel} numberOfLines={1}>
+                {dayOfWeek || dayLabel} · Rest
               </Text>
-              {dateStr ? <Text style={styles.dayDateInline}>{"  "}{dateStr}</Text> : null}
-            </Text>
+              {dateStr ? <Text style={styles.dayDateSub}>{dateStr}</Text> : null}
+            </View>
           </View>
+          <Icon name="sleep" size={20} color={Colors.textTertiary} />
         </View>
         <View style={styles.restDayContent}>
-          <Icon name="sleep" size={28} color={Colors.textSecondary} />
           <Text style={styles.restDayText}>Recovery & Rest</Text>
           <Text style={styles.restDaySubtext}>
             Let your muscles recover and rebuild
@@ -527,41 +530,45 @@ function DayCard({
   return (
     <View style={styles.dayCard}>
       <Pressable onPress={onToggle} style={styles.dayHeaderRow}>
-        <View style={styles.dayLabelContainer}>
-          <Text numberOfLines={2} ellipsizeMode="tail">
-            <Text style={styles.dayLabel}>
-              {dayLabel}{dayOfWeek ? ` - ${dayOfWeek}` : ""} ({dayType})
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
+          <View style={[styles.dayBadge, { backgroundColor: Colors.error + "18" }]}>
+            <Text style={[styles.dayBadgeText, { color: Colors.error }]}>{dayIndex + 1}</Text>
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={styles.dayLabel} numberOfLines={1}>
+              {dayOfWeek || dayLabel} · Workout
             </Text>
-            {dateStr ? <Text style={styles.dayDateInline}>{"  "}{dateStr}</Text> : null}
-          </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+              {dateStr ? <Text style={styles.dayDateSub}>{dateStr}</Text> : null}
+              {(session?.durationMinutes || session?.estimatedDuration) ? (
+                <Text style={styles.dayMetaDetail}>{session.durationMinutes ?? session.estimatedDuration} min</Text>
+              ) : null}
+              {mainExercises.length > 0 && (
+                <Text style={styles.dayMetaDetail}>{mainExercises.length} exercises</Text>
+              )}
+            </View>
+          </View>
         </View>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          {onDayRegen && (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          {onDayRegen && expanded && (
             <Pressable
               onPress={(e) => { e.stopPropagation(); onDayRegen(); }}
               disabled={dayRegenDisabled}
-              style={({ pressed }) => ({
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 4,
-                paddingHorizontal: 8,
-                paddingVertical: 4,
-                borderRadius: 8,
-                backgroundColor: Colors.surfaceElevated,
-                opacity: pressed ? 0.7 : dayRegenDisabled ? 0.4 : 1,
-              })}
+              style={({ pressed }) => [
+                styles.regenBtn,
+                { opacity: pressed ? 0.7 : dayRegenDisabled ? 0.4 : 1 },
+              ]}
             >
               {dayRegenPending ? (
                 <ActivityIndicator size={12} color={Colors.textSecondary} />
               ) : (
                 <Icon name="refresh" size={16} color={Colors.textSecondary} />
               )}
-              <Text style={{ fontSize: 11, fontWeight: "500" as const, color: Colors.textSecondary }}>Regen</Text>
             </Pressable>
           )}
           <Ionicons
             name={expanded ? "chevron-up" : "chevron-down"}
-            size={22}
+            size={20}
             color={Colors.textSecondary}
           />
         </View>
@@ -841,26 +848,51 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 16,
+    padding: 14,
+    gap: 8,
   },
-  dayLabelContainer: {
-    flex: 1,
-    marginRight: 8,
+  dayBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dayBadgeText: {
+    fontSize: 14,
+    fontWeight: "700" as const,
   },
   dayLabel: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700" as const,
     color: Colors.text,
   },
-  dayDateInline: {
-    fontSize: 13,
+  dayDateSub: {
+    fontSize: 11,
     color: Colors.textSecondary,
     fontWeight: "400" as const,
   },
+  dayMetaDetail: {
+    fontSize: 11,
+    fontWeight: "500" as const,
+    color: Colors.textSecondary,
+  },
+  regenBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.surfaceElevated,
+  },
+  restDayCard: {
+    opacity: 0.85,
+  },
   restDayContent: {
     alignItems: "center",
-    paddingBottom: 24,
-    gap: 8,
+    paddingBottom: 20,
+    paddingTop: 4,
+    gap: 4,
   },
   restDayText: {
     fontSize: 14,

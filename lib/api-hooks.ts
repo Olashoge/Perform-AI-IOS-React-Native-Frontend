@@ -1116,10 +1116,14 @@ export function useUpdateGoalPlan() {
       logApiCall("PATCH", `/api/goal-plans/${id}`, response.status);
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["goal-plan", variables.id] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "goal-plan" });
       queryClient.invalidateQueries({ queryKey: ["plans:wellness"] });
       queryClient.invalidateQueries({ queryKey: ["plans:meal"] });
       queryClient.invalidateQueries({ queryKey: ["plans:workout"] });
+      queryClient.invalidateQueries({ queryKey: ["local-schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["occupied-dates"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
       queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
@@ -1136,9 +1140,12 @@ export function useDeleteGoalPlan() {
       return response.data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "goal-plan" });
       queryClient.invalidateQueries({ queryKey: ["plans:wellness"] });
       queryClient.invalidateQueries({ queryKey: ["plans:meal"] });
       queryClient.invalidateQueries({ queryKey: ["plans:workout"] });
+      queryClient.invalidateQueries({ queryKey: ["local-schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["occupied-dates"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
       queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
@@ -1582,6 +1589,8 @@ export function useDayRegen(planId: string | null) {
       queryClient.invalidateQueries({ queryKey: ["/api/plan", planId, "grocery"] });
       queryClient.invalidateQueries({ queryKey: ["allowance"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "goal-plan" });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
     },
     onError: (error: any) => {
       const msg = error?.response?.data?.message || error?.response?.data?.error || "Could not regenerate day";
@@ -1688,6 +1697,8 @@ export function useWorkoutDayRegen(workoutId: string | null) {
       }
       queryClient.refetchQueries({ queryKey: ["workout-plan", workoutId] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "goal-plan" });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
     },
     onError: (error: any) => {
       const msg = error?.response?.data?.message || "Could not regenerate workout session";

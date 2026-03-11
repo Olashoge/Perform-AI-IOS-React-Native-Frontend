@@ -743,8 +743,15 @@ export default function MealPlanContent({ planId, planData, hideTitle, hideBudge
 
             const parseMacro = (val: string | number | undefined): number => {
               if (!val) return 0;
-              const num = typeof val === "string" ? parseFloat(val.replace(/[^0-9.]/g, "")) : val;
-              return isNaN(num) ? 0 : num;
+              if (typeof val === "number") return isNaN(val) ? 0 : val;
+              const rangeMatch = val.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/);
+              if (rangeMatch) {
+                const low = parseFloat(rangeMatch[1]);
+                const high = parseFloat(rangeMatch[2]);
+                return Math.round((low + high) / 2);
+              }
+              const firstNum = val.match(/(\d+(?:\.\d+)?)/);
+              return firstNum ? parseFloat(firstNum[1]) : 0;
             };
             let dayCals = 0;
             let dayProtein = 0;
@@ -774,12 +781,18 @@ export default function MealPlanContent({ planId, planData, hideTitle, hideBudge
                         <Text style={styles.dayTitle} numberOfLines={1}>
                           {dayOfWeek || `Day ${dayNum}`}{dayType ? ` · ${dayType}` : ""}
                         </Text>
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 5, flexWrap: "wrap" }}>
                           {dateStr ? <Text style={styles.dayDate}>{dateStr}</Text> : null}
-                          {dayCals > 0 && <Text style={styles.dayCalSummary}>{Math.round(dayCals)} cal</Text>}
-                          {dayProtein > 0 && <Text style={styles.dayMacroText}>P {Math.round(dayProtein)}g</Text>}
-                          {dayCarbs > 0 && <Text style={styles.dayMacroText}>C {Math.round(dayCarbs)}g</Text>}
-                          {dayFat > 0 && <Text style={styles.dayMacroText}>F {Math.round(dayFat)}g</Text>}
+                          {dayCals > 0 && <Text style={styles.dayCalSummary}>~{Math.round(dayCals)} cal</Text>}
+                          {(dayProtein > 0 || dayCarbs > 0 || dayFat > 0) && (
+                            <Text style={styles.dayMacroText}>
+                              {[
+                                dayProtein > 0 ? `P ${Math.round(dayProtein)}g` : null,
+                                dayCarbs > 0 ? `C ${Math.round(dayCarbs)}g` : null,
+                                dayFat > 0 ? `F ${Math.round(dayFat)}g` : null,
+                              ].filter(Boolean).join(" · ")}
+                            </Text>
+                          )}
                           <Text style={styles.dayMealCount}>{mealEntries.length} meals</Text>
                         </View>
                       </View>

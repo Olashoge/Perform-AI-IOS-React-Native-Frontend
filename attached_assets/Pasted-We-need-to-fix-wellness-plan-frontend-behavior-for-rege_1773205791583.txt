@@ -1,0 +1,85 @@
+We need to fix wellness plan frontend behavior for regenerate, reschedule, calendars, grocery list, and tab polish.
+
+Context:
+- Wellness Plans are now the parent concept
+- The integrated detail page works
+- Meals and Workouts tabs render from the parent payload
+- But several actions are still stale or incomplete
+
+ISSUES
+
+1. Regenerate actions do not visibly refresh meals/workouts correctly
+2. Reschedule changes are not propagating everywhere
+3. Dashboard calendar and Calendar tab do not update after reschedule
+4. Wellness page dates are partially stale (start date may change, end date does not update correctly)
+5. Grocery List tab does not show a grocery list
+6. Meals tab has malformed daily calorie formatting and still needs UX cleanup
+7. Workouts tab works but still needs wellness-native polish
+
+TASK:
+Audit and fix the frontend so all wellness-plan mutations behave like parent-plan mutations and refresh the entire app state correctly.
+
+FRONTEND REQUIREMENTS
+
+1. FIX RESCHEDULE UI FLOW
+When a wellness plan is rescheduled:
+- refetch the parent wellness plan
+- refetch any query feeding the wellness plans list
+- refetch Dashboard calendar data
+- refetch Calendar tab data
+- refetch any daily plan / schedule summaries derived from that plan
+
+The app should immediately show the updated:
+- start date
+- end date
+- shifted meal dates
+- shifted workout dates
+- calendar entries
+
+2. FIX REGENERATE UI FLOW
+After meal day regenerate and workout day regenerate:
+- refetch or invalidate the parent goal-plan query
+- ensure the latest nested meal/workout data is displayed
+- confirm stale local child data is not lingering
+
+3. FIX GROCERY LIST TAB
+Use the correct wellness-owned grocery list data from the parent payload or the proper grocery list endpoint.
+If a rebuild action exists:
+- wire it correctly
+- show loading / success / failure states
+- refresh grocery list data after rebuild
+
+4. FIX MALFORMED DAILY SUMMARY FORMATTING
+The Meals tab is displaying malformed daily calorie text like combined numbers.
+Audit the daily summary calculation/formatting and fix:
+- total daily calories
+- meals count
+- any other aggregated daily display values
+
+5. MEALS TAB CLEANUP
+Improve the Meals tab UX:
+- clearer day headers
+- cleaner spacing between day groups
+- maintain collapsible behavior
+- keep actions intact
+- make daily summary easier to scan
+
+6. WORKOUTS TAB CLEANUP
+Improve the Workouts tab UX:
+- clearer distinction between workout days and rest days
+- better spacing rhythm
+- preserve regenerate and expand/collapse behavior
+- keep it consistent with the integrated wellness system
+
+7. DO NOT BREAK CURRENT DATA FLOW
+Continue using the parent wellness/goal-plan payload.
+Do not reintroduce removed standalone plan endpoints.
+
+8. RETURN SUMMARY
+At the end provide:
+- files changed
+- query invalidations/refetches added
+- calendar data sources refreshed
+- grocery list fixes
+- meals tab formatting fixes
+- workouts tab polish changes
