@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import * as fs from "fs";
 import * as path from "path";
+import * as http from "http";
 
 const app = express();
 const log = console.log;
@@ -108,7 +109,7 @@ function getAppName(): string {
   }
 }
 
-function serveExpoManifest(platform: string, res: Response) {
+function serveExpoManifest(platform: string, req: Request, res: Response) {
   const manifestPath = path.resolve(
     process.cwd(),
     "static-build",
@@ -116,18 +117,40 @@ function serveExpoManifest(platform: string, res: Response) {
     "manifest.json",
   );
 
-  if (!fs.existsSync(manifestPath)) {
-    return res
-      .status(404)
-      .json({ error: `Manifest not found for platform: ${platform}` });
+  if (fs.existsSync(manifestPath)) {
+    res.setHeader("expo-protocol-version", "1");
+    res.setHeader("expo-sfv-version", "0");
+    res.setHeader("content-type", "application/json");
+    const manifest = fs.readFileSync(manifestPath, "utf-8");
+    return res.send(manifest);
   }
 
-  res.setHeader("expo-protocol-version", "1");
-  res.setHeader("expo-sfv-version", "0");
-  res.setHeader("content-type", "application/json");
+  const proxyReq = http.request(
+    {
+      hostname: "localhost",
+      port: 8081,
+      path: req.path || "/",
+      method: req.method,
+      headers: {
+        ...req.headers,
+        host: "localhost:8081",
+      },
+    },
+    (proxyRes) => {
+      res.writeHead(proxyRes.statusCode || 200, proxyRes.headers);
+      proxyRes.pipe(res, { end: true });
+    },
+  );
 
-  const manifest = fs.readFileSync(manifestPath, "utf-8");
-  res.send(manifest);
+  proxyReq.on("error", (err) => {
+    log("Expo manifest proxy error:", err.message);
+    res.status(502).json({ error: "Expo dev server not reachable" });
+  });
+
+  if (req.body) {
+    proxyReq.write(JSON.stringify(req.body));
+  }
+  proxyReq.end();
 }
 
 function serveLandingPage({
@@ -183,7 +206,7 @@ function configureExpoAndLanding(app: express.Application) {
 
     const platform = req.header("expo-platform");
     if (platform && (platform === "ios" || platform === "android")) {
-      return serveExpoManifest(platform, res);
+      return serveExpoManifest(platform, req, res);
     }
 
     if (req.path === "/") {
@@ -201,7 +224,43 @@ function configureExpoAndLanding(app: express.Application) {
   app.use("/assets", express.static(path.resolve(process.cwd(), "assets")));
   app.use(express.static(path.resolve(process.cwd(), "static-build")));
 
+  if (process.env.NODE_ENV === "development") {
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      if (req.path.startsWith("/api")) return next();
+      proxyToMetro(req, res, next);
+    });
+  }
+
   log("Expo routing: Checking expo-platform header on / and /manifest");
+}
+
+function proxyToMetro(req: Request, res: Response, next: NextFunction) {
+  const proxyReq = http.request(
+    {
+      hostname: "localhost",
+      port: 8081,
+      path: req.url,
+      method: req.method,
+      headers: {
+        ...req.headers,
+        host: "localhost:8081",
+      },
+    },
+    (proxyRes) => {
+      if (proxyRes.statusCode === 404) {
+        return next();
+      }
+      res.writeHead(proxyRes.statusCode || 200, proxyRes.headers);
+      proxyRes.pipe(res, { end: true });
+    },
+  );
+
+  proxyReq.on("error", () => next());
+
+  if (req.body && typeof req.body === "object") {
+    proxyReq.write(JSON.stringify(req.body));
+  }
+  proxyReq.end();
 }
 
 function setupErrorHandler(app: express.Application) {
