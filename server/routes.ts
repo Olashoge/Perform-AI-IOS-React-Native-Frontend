@@ -780,7 +780,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/daily-workout/:date", proxyToExternal);
   app.get("/api/daily-coverage", proxyToExternal);
 
-  app.get("/api/allowance/current", proxyToExternal);
+  app.get("/api/allowance/current", (req: any, res: any) => {
+    const targetUrl = new URL(req.originalUrl, EXTERNAL_BACKEND);
+    const options: https.RequestOptions = {
+      hostname: targetUrl.hostname,
+      port: 443,
+      path: targetUrl.pathname + targetUrl.search,
+      method: req.method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(req.headers.authorization ? { Authorization: req.headers.authorization } : {}),
+      },
+    };
+    const proxyReq = https.request(options, (proxyRes) => {
+      let body = "";
+      proxyRes.on("data", (chunk: Buffer) => { body += chunk.toString(); });
+      proxyRes.on("end", () => {
+        console.log("[allowance] raw response:", body.slice(0, 500));
+        res.status(proxyRes.statusCode || 200);
+        Object.entries(proxyRes.headers).forEach(([key, value]) => {
+          if (key.toLowerCase() !== "transfer-encoding" && key.toLowerCase() !== "access-control-allow-origin") {
+            res.setHeader(key, value as string);
+          }
+        });
+        res.end(body);
+      });
+    });
+    proxyReq.on("error", (err) => {
+      console.error("Allowance proxy error:", err.message);
+      res.status(502).json({ error: "Backend proxy error" });
+    });
+    proxyReq.end();
+  });
 
   app.get("/api/plan/:id/grocery", proxyToExternal);
   app.post("/api/plan/:id/grocery/owned", proxyToExternal);

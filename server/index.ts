@@ -4,6 +4,7 @@ import { registerRoutes } from "./routes";
 import * as fs from "fs";
 import * as path from "path";
 import * as http from "http";
+import * as net from "net";
 
 const app = express();
 const log = console.log;
@@ -302,6 +303,35 @@ function setupErrorHandler(app: express.Application) {
   const server = await registerRoutes(app);
 
   setupErrorHandler(app);
+
+  // Proxy WebSocket upgrade requests to Metro (port 8081) for HMR support
+  server.on("upgrade", (req, socket, head) => {
+    if (req.url?.startsWith("/api")) return socket.destroy();
+
+    const target = net.connect(8081, "localhost");
+
+    target.on("connect", () => {
+      const headers = { ...req.headers } as Record<string, string | string[] | undefined>;
+      delete headers["origin"];
+      delete headers["referer"];
+      headers["host"] = "localhost:8081";
+
+      let reqLine = `${req.method || "GET"} ${req.url} HTTP/1.1\r\n`;
+      Object.entries(headers).forEach(([k, v]) => {
+        if (v !== undefined) reqLine += `${k}: ${Array.isArray(v) ? v.join(", ") : v}\r\n`;
+      });
+      reqLine += "\r\n";
+
+      target.write(reqLine);
+      if (head && head.length > 0) target.write(head);
+
+      socket.pipe(target);
+      target.pipe(socket);
+    });
+
+    target.on("error", () => socket.destroy());
+    socket.on("error", () => target.destroy());
+  });
 
   const port = parseInt(process.env.PORT || "5000", 10);
   server.listen(
