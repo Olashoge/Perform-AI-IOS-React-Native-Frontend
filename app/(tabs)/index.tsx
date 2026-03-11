@@ -356,7 +356,6 @@ function ActivePlansSection({ Colors }: { Colors: ThemeColors }) {
   if (activePlans.length === 0) {
     return (
       <View style={styles.activePlansSection}>
-        <Text style={styles.sectionLabel}>YOUR PLANS</Text>
         <View style={styles.emptyPlansCard}>
           <View style={styles.emptyPlansIconBg}>
             <Icon name="add" size={28} color={Colors.primary} />
