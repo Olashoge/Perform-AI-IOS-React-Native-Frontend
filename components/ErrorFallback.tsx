@@ -11,7 +11,7 @@ import {
   Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Icon } from "@/components/Icon";
+import { Ionicons } from "@expo/vector-icons";
 
 export type ErrorFallbackProps = {
   error: Error;
@@ -73,7 +73,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
             },
           ]}
         >
-          <Icon name="alertCircle" size={20} color={theme.text} />
+          <Ionicons name="alert-circle-outline" size={20} color={theme.text} />
         </Pressable>
       ) : null}
 
@@ -139,7 +139,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
                     { opacity: pressed ? 0.6 : 1 },
                   ]}
                 >
-                  <Icon name="close" size={24} color={theme.text} />
+                  <Ionicons name="close-outline" size={24} color={theme.text} />
                 </Pressable>
               </View>
 

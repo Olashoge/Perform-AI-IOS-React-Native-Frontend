@@ -209,6 +209,12 @@ function configureExpoAndLanding(app: express.Application) {
       return serveExpoManifest(platform, req, res);
     }
 
+    if (process.env.NODE_ENV === "development") {
+      return proxyToMetro(req, res, () => {
+        serveLandingPage({ req, res, landingPageTemplate, appName });
+      });
+    }
+
     if (req.path === "/") {
       return serveLandingPage({
         req,
