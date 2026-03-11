@@ -538,15 +538,20 @@ export function getDayOfWeek(startDate: string | undefined, dayIndex: number): s
 
 interface MealPlanContentProps {
   planId: string;
+  planData?: any;
   hideTitle?: boolean;
   hideBudget?: boolean;
   hideGroceryTab?: boolean;
 }
 
-export default function MealPlanContent({ planId, hideTitle, hideBudget, hideGroceryTab }: MealPlanContentProps) {
+export default function MealPlanContent({ planId, planData, hideTitle, hideBudget, hideGroceryTab }: MealPlanContentProps) {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
-  const { data: plan, isLoading, error, refetch } = useMealPlan(planId ?? null);
+  const fetchEnabled = !planData && !!planId;
+  const { data: fetchedPlan, isLoading: fetchLoading, error: fetchError, refetch } = useMealPlan(fetchEnabled ? planId : null);
+  const plan = planData || fetchedPlan;
+  const isLoading = fetchEnabled ? fetchLoading : false;
+  const error = fetchEnabled ? fetchError : null;
   const { data: groceryData, isLoading: groceryLoading } = useGroceryList(planId ?? null);
   const toggleOwnedMutation = useToggleGroceryOwned(planId ?? null);
   const regenerateMutation = useRegenerateGroceryList(planId ?? null);

@@ -1557,6 +1557,7 @@ export function useMealSwap(planId: string | null) {
       queryClient.refetchQueries({ queryKey: ["meal-plan", planId] });
       queryClient.invalidateQueries({ queryKey: ["/api/plan", planId, "grocery"] });
       queryClient.invalidateQueries({ queryKey: ["allowance"] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "goal-plan" });
     },
     onError: (error: any) => {
       const msg = error?.response?.data?.message || error?.response?.data?.error || "Could not swap meal";
@@ -1580,6 +1581,7 @@ export function useDayRegen(planId: string | null) {
       queryClient.refetchQueries({ queryKey: ["meal-plan", planId] });
       queryClient.invalidateQueries({ queryKey: ["/api/plan", planId, "grocery"] });
       queryClient.invalidateQueries({ queryKey: ["allowance"] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "goal-plan" });
     },
     onError: (error: any) => {
       const msg = error?.response?.data?.message || error?.response?.data?.error || "Could not regenerate day";
@@ -1601,6 +1603,7 @@ export function useWorkoutSwap(workoutId: string | null) {
         queryClient.setQueryData(["workout-plan", workoutId], data);
       }
       queryClient.refetchQueries({ queryKey: ["workout-plan", workoutId] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "goal-plan" });
     },
     onError: (error: any) => {
       const msg = error?.response?.data?.message || "Could not swap exercise";
@@ -1684,6 +1687,7 @@ export function useWorkoutDayRegen(workoutId: string | null) {
         queryClient.setQueryData(["workout-plan", workoutId], data);
       }
       queryClient.refetchQueries({ queryKey: ["workout-plan", workoutId] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "goal-plan" });
     },
     onError: (error: any) => {
       const msg = error?.response?.data?.message || "Could not regenerate workout session";

@@ -21,12 +21,17 @@ function toExerciseKey(name: string): string {
 
 interface WorkoutPlanContentProps {
   planId: string;
+  planData?: any;
 }
 
-export function WorkoutPlanContent({ planId }: WorkoutPlanContentProps) {
+export function WorkoutPlanContent({ planId, planData }: WorkoutPlanContentProps) {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
-  const { data, isLoading, error, refetch } = useWorkoutPlan(planId);
+  const fetchEnabled = !planData && !!planId;
+  const { data: fetchedData, isLoading: fetchLoading, error: fetchError, refetch } = useWorkoutPlan(fetchEnabled ? planId : null);
+  const data = planData || fetchedData;
+  const isLoading = fetchEnabled ? fetchLoading : false;
+  const error = fetchEnabled ? fetchError : null;
   const swapMutation = useWorkoutSwap(planId);
   const dayRegenMutation = useWorkoutDayRegen(planId);
   const [expandedSessions, setExpandedSessions] = useState<Record<number, boolean>>({});
