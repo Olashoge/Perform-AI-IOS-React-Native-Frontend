@@ -241,6 +241,8 @@ function configureExpoAndLanding(app: express.Application) {
 }
 
 function proxyToMetro(req: Request, res: Response, next: NextFunction) {
+  // Strip origin/referer so Metro's CORS middleware accepts the request
+  const { origin, referer, ...safeHeaders } = req.headers as Record<string, string | string[] | undefined>;
   const proxyReq = http.request(
     {
       hostname: "localhost",
@@ -248,7 +250,7 @@ function proxyToMetro(req: Request, res: Response, next: NextFunction) {
       path: req.url,
       method: req.method,
       headers: {
-        ...req.headers,
+        ...safeHeaders,
         host: "localhost:8081",
       },
     },
