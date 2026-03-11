@@ -13,7 +13,7 @@ import { Icon } from "@/components/Icon";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
-import { useWeekData, useMealPlans, useWorkoutPlans, DayData, Meal, Workout } from "@/lib/api-hooks";
+import { useWeekData, useWellnessPlans, DayData, Meal, Workout } from "@/lib/api-hooks";
 import { getWeekStartUTC, getWeekEndUTC } from "@/lib/week-utils";
 import { useWeekStart } from "@/lib/week-start-context";
 import { useAuth } from "@/lib/auth-context";
@@ -343,21 +343,24 @@ function isPlanActive(plan: any): boolean {
 
 function ActivePlansSection({ Colors }: { Colors: ThemeColors }) {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
-  const { data: mealPlans } = useMealPlans();
-  const { data: workoutPlans } = useWorkoutPlans();
+  const { data: wellnessPlans } = useWellnessPlans();
 
-  const activeMealPlans = useMemo(() =>
-    (mealPlans || []).filter((p: any) => isPlanActive(p)).slice(0, 2),
-    [mealPlans]
+  const activePlans = useMemo(() =>
+    (wellnessPlans || []).filter((p: any) => {
+      const status = p.status || p.generationStatus;
+      if (status && status !== "ready" && status !== "active") return false;
+      const startDate = p.startDate || p.start_date || p.planStartDate;
+      if (!startDate) return false;
+      const today = getTodayUTC();
+      const endDate = new Date(startDate + "T12:00:00Z");
+      endDate.setUTCDate(endDate.getUTCDate() + 6);
+      const end = endDate.toISOString().split("T")[0];
+      return today >= startDate && today <= end;
+    }).slice(0, 3),
+    [wellnessPlans]
   );
-  const activeWorkoutPlans = useMemo(() =>
-    (workoutPlans || []).filter((p: any) => isPlanActive(p)).slice(0, 2),
-    [workoutPlans]
-  );
 
-  const allPlans = [...activeMealPlans.map((p: any) => ({ ...p, planType: "meal" })), ...activeWorkoutPlans.map((p: any) => ({ ...p, planType: "workout" }))];
-
-  if (allPlans.length === 0) {
+  if (activePlans.length === 0) {
     return (
       <View style={styles.activePlansSection}>
         <Text style={styles.sectionLabel}>YOUR PLANS</Text>
@@ -366,7 +369,7 @@ function ActivePlansSection({ Colors }: { Colors: ThemeColors }) {
             <Icon name="add" size={28} color={Colors.primary} />
           </View>
           <Text style={styles.emptyPlansTitle}>Start Your First Plan</Text>
-          <Text style={styles.emptyPlansSub}>Create a meal or workout plan to get personalized recommendations and track your progress.</Text>
+          <Text style={styles.emptyPlansSub}>Create a wellness plan to get personalized meal and workout recommendations.</Text>
           <Pressable
             style={({ pressed }) => [styles.createPlanBtn, pressed && { opacity: 0.85 }]}
             onPress={() => {
@@ -374,7 +377,7 @@ function ActivePlansSection({ Colors }: { Colors: ThemeColors }) {
               router.push("/(tabs)/create");
             }}
           >
-            <Icon name="add" size={18} color="#fff" />
+            <Icon name="add" size={16} color="#fff" />
             <Text style={styles.createPlanBtnText}>Create Plan</Text>
           </Pressable>
         </View>
@@ -383,8 +386,8 @@ function ActivePlansSection({ Colors }: { Colors: ThemeColors }) {
   }
 
   function formatPlanDates(plan: any) {
-    const start = plan.startDate || plan.weekStart;
-    const end = plan.endDate || plan.weekEnd;
+    const start = plan.startDate || plan.start_date;
+    const end = plan.endDate || plan.end_date;
     if (!start) return "";
     const s = new Date(start + "T12:00:00Z");
     const e = end ? new Date(end + "T12:00:00Z") : null;
@@ -397,38 +400,37 @@ function ActivePlansSection({ Colors }: { Colors: ThemeColors }) {
   return (
     <View style={styles.activePlansSection}>
       <Text style={styles.sectionLabel}>ACTIVE PLANS</Text>
-      {allPlans.map((plan: any) => (
-        <Pressable
-          key={plan.id}
-          style={({ pressed }) => [styles.activePlanCard, pressed && { opacity: 0.85 }]}
-          onPress={() => {
-            if (plan.planType === "meal") {
-              router.push({ pathname: "/plan/meal/[id]", params: { id: plan.id } });
-            } else {
-              router.push({ pathname: "/plan/workout/[id]", params: { id: plan.id } });
-            }
-          }}
-        >
-          <View style={[styles.planIconBg, { backgroundColor: plan.planType === "meal" ? Colors.warning + "20" : Colors.scoreGreen + "20" }]}>
-            <Icon name={plan.planType === "meal" ? "restaurant" : "barbell"} size={20} color={plan.planType === "meal" ? Colors.warning : Colors.scoreGreen} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.planCardTitle} numberOfLines={1}>{plan.name || plan.title || "Plan"}</Text>
-            <View style={styles.planBadgeRow}>
-              <View style={styles.activeBadge}>
-                <Text style={styles.activeBadgeText}>Active</Text>
-              </View>
+      {activePlans.map((plan: any) => {
+        const id = plan._id || plan.id;
+        return (
+          <Pressable
+            key={id}
+            style={({ pressed }) => [styles.activePlanCard, pressed && { opacity: 0.85 }]}
+            onPress={() => {
+              router.push({ pathname: "/plan/wellness/[id]", params: { id } });
+            }}
+          >
+            <View style={[styles.planIconBg, { backgroundColor: Colors.primary + "20" }]}>
+              <Icon name="sparkles" size={20} color={Colors.primary} />
             </View>
-            {formatPlanDates(plan) ? (
-              <View style={styles.planDateRow}>
-                <Icon name="calendar" size={16} color={Colors.textSecondary} />
-                <Text style={styles.planDateText}>{formatPlanDates(plan)}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.planCardTitle} numberOfLines={1}>{plan.name || plan.title || "Wellness Plan"}</Text>
+              <View style={styles.planBadgeRow}>
+                <View style={styles.activeBadge}>
+                  <Text style={styles.activeBadgeText}>Active</Text>
+                </View>
               </View>
-            ) : null}
-          </View>
-          <Icon name="forward" size={20} color={Colors.textTertiary} />
-        </Pressable>
-      ))}
+              {formatPlanDates(plan) ? (
+                <View style={styles.planDateRow}>
+                  <Icon name="calendar" size={16} color={Colors.textSecondary} />
+                  <Text style={styles.planDateText}>{formatPlanDates(plan)}</Text>
+                </View>
+              ) : null}
+            </View>
+            <Icon name="forward" size={20} color={Colors.textTertiary} />
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
@@ -436,10 +438,10 @@ function ActivePlansSection({ Colors }: { Colors: ThemeColors }) {
 function QuickActionsGrid({ Colors }: { Colors: ThemeColors }) {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const actions = [
-    { icon: "heart" as const, label: "Wellness", sub: "Your health journey", color: Colors.error, onPress: () => router.push({ pathname: "/plans", params: { tab: "wellness" } }) },
-    { icon: "restaurant" as const, label: "Meal Plans", sub: "Adjust nutrition", color: Colors.warning, onPress: () => router.push({ pathname: "/plans", params: { tab: "meals" } }) },
-    { icon: "barbell" as const, label: "Workouts", sub: "View training", color: Colors.scoreGreen, onPress: () => router.push({ pathname: "/plans", params: { tab: "workouts" } }) },
+    { icon: "heart" as const, label: "Wellness", sub: "Your health journey", color: Colors.error, onPress: () => router.push("/plans" as any) },
     { icon: "calendar" as const, label: "View Week", sub: "See your schedule", color: Colors.primary, onPress: () => router.push("/(tabs)/calendar") },
+    { icon: "restaurant" as const, label: "Daily Meal", sub: "Today's nutrition", color: Colors.warning, onPress: () => router.push("/daily-meal-form" as any) },
+    { icon: "barbell" as const, label: "Daily Workout", sub: "Today's training", color: Colors.scoreGreen, onPress: () => router.push("/daily-workout-form" as any) },
   ];
 
   return (
