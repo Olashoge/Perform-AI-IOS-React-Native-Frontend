@@ -2,15 +2,25 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient, { storeTokens, clearTokens, getAccessToken, getRefreshToken } from './api-client';
 
+export interface AuthUser {
+  id?: string;
+  firstName?: string;
+  email?: string;
+  provider?: string;
+  name?: string;
+}
+
 interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   needsOnboarding: boolean;
-  user: any | null;
+  user: AuthUser | null;
   login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<void>;
+  signup: (firstName: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   completeOnboarding: () => void;
+  refreshUser: () => Promise<void>;
+  updateUser: (updates: Partial<AuthUser>) => void;
 }
 
 const ONBOARDING_KEY = 'perform_onboarding_complete';
@@ -28,11 +38,20 @@ async function fetchProfileOnboardingStatus(): Promise<boolean> {
   }
 }
 
+function parseUserFromResponse(userData: any, fallbackEmail?: string): AuthUser {
+  return {
+    id: userData?.id || userData?._id || undefined,
+    firstName: userData?.firstName || userData?.first_name || undefined,
+    email: userData?.email || fallbackEmail || undefined,
+    provider: userData?.provider || undefined,
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -55,14 +74,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const { accessToken, refreshToken: newRefresh } = response.data;
           await storeTokens(accessToken, newRefresh || refreshToken);
           setIsAuthenticated(true);
+
           const userData = response.data.user || {};
-          if (!userData.email && accessToken) {
+          let email = userData.email;
+          if (!email && accessToken) {
             try {
               const payload = JSON.parse(atob(accessToken.split('.')[1]));
-              if (payload.email) userData.email = payload.email;
+              if (payload.email) email = payload.email;
             } catch {}
           }
-          setUser(Object.keys(userData).length > 0 ? userData : null);
+          setUser(parseUserFromResponse(userData, email));
+
+          try {
+            const meRes = await apiClient.get('/api/me');
+            if (meRes.data) {
+              setUser(parseUserFromResponse(meRes.data, email));
+            }
+          } catch {}
 
           const cached = await AsyncStorage.getItem(ONBOARDING_KEY);
           if (cached === 'true') {
@@ -80,10 +108,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } else {
         setIsAuthenticated(true);
+        let email: string | undefined;
         try {
           const payload = JSON.parse(atob(token.split('.')[1]));
-          if (payload.email) setUser({ email: payload.email });
+          if (payload.email) email = payload.email;
         } catch {}
+        setUser(email ? { email } : null);
 
         const cached = await AsyncStorage.getItem(ONBOARDING_KEY);
         if (cached === 'true') {
@@ -111,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { accessToken, refreshToken, user: userData } = response.data;
     await storeTokens(accessToken, refreshToken);
-    setUser({ ...(userData || {}), email: userData?.email || email.toLowerCase() });
+    setUser(parseUserFromResponse(userData, email.toLowerCase()));
     setIsAuthenticated(true);
 
     const cached = await AsyncStorage.getItem(ONBOARDING_KEY);
@@ -126,10 +156,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function signup(name: string, email: string, password: string) {
+  async function signup(firstName: string, email: string, password: string) {
     try {
       await apiClient.post('/api/auth/signup', {
-        name,
+        firstName,
         email: email.toLowerCase(),
         password,
       });
@@ -152,6 +182,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setNeedsOnboarding(false);
   }
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const response = await apiClient.get('/api/me');
+      if (response.data) {
+        setUser(prev => ({
+          ...(prev || {}),
+          ...parseUserFromResponse(response.data, prev?.email),
+        }));
+      }
+    } catch {}
+  }, []);
+
+  const updateUser = useCallback((updates: Partial<AuthUser>) => {
+    setUser(prev => prev ? { ...prev, ...updates } : updates);
+  }, []);
+
   const completeOnboarding = useCallback(() => {
     setNeedsOnboarding(false);
     AsyncStorage.setItem(ONBOARDING_KEY, 'true');
@@ -167,8 +213,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signup,
       logout,
       completeOnboarding,
+      refreshUser,
+      updateUser,
     }),
-    [isAuthenticated, isLoading, needsOnboarding, user, completeOnboarding]
+    [isAuthenticated, isLoading, needsOnboarding, user, completeOnboarding, refreshUser, updateUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

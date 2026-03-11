@@ -22,6 +22,7 @@ import { useProfile } from "@/lib/api-hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import apiClient, { API_BASE_URL, getAccessToken } from "@/lib/api-client";
 import { getApiUrl } from "@/lib/query-client";
+import { Ionicons } from "@expo/vector-icons";
 
 function SegmentedControl({
   options,
@@ -66,14 +67,28 @@ function SegmentedControl({
 export default function SettingsIndexScreen() {
   const insets = useSafeAreaInsets();
   const webTopInset = Platform.OS === "web" ? 67 : 0;
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const { data: profile } = useProfile();
   const queryClient = useQueryClient();
   const { weekStartDay, setWeekStartDay } = useWeekStart();
   const { themeMode, setThemeMode } = useTheme();
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
-  const userEmail = user?.email || (profile as any)?.email || "Not set";
+
+  const [accountFirstName, setAccountFirstName] = useState(user?.firstName || "");
+  const [accountEmail, setAccountEmail] = useState(user?.email || (profile as any)?.email || "");
+  const [profileError, setProfileError] = useState("");
+  const [profileSuccess, setProfileSuccess] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  React.useEffect(() => {
+    if (user?.firstName && !accountFirstName) setAccountFirstName(user.firstName);
+  }, [user?.firstName]);
+
+  React.useEffect(() => {
+    const email = user?.email || (profile as any)?.email;
+    if (email && !accountEmail) setAccountEmail(email);
+  }, [user?.email, (profile as any)?.email]);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -89,6 +104,40 @@ export default function SettingsIndexScreen() {
 
   const isEmailUser = !user?.provider || user?.provider === "email";
   const deleteDisabled = deleteConfirmText !== "DELETE" || deletingAccount || (isEmailUser && !deletePassword);
+  const missingFirstName = !user?.firstName;
+
+  const handleSaveProfile = async () => {
+    const trimmedName = accountFirstName.trim();
+    const trimmedEmail = accountEmail.trim();
+    setProfileError("");
+    setProfileSuccess("");
+
+    if (!trimmedName || trimmedName.length < 2) {
+      setProfileError("First name must be at least 2 characters.");
+      return;
+    }
+    if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setProfileError("Please enter a valid email address.");
+      return;
+    }
+
+    setSavingProfile(true);
+    try {
+      const response = await apiClient.patch("/api/account", {
+        firstName: trimmedName,
+        email: trimmedEmail.toLowerCase(),
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setProfileSuccess("Profile updated successfully.");
+      updateUser({ firstName: trimmedName, email: trimmedEmail.toLowerCase() });
+      setAccountEmail(trimmedEmail.toLowerCase());
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.response?.data?.error || "Failed to update profile.";
+      setProfileError(msg);
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   const handleChangePassword = async () => {
     setPasswordError("");
@@ -113,7 +162,7 @@ export default function SettingsIndexScreen() {
 
     setChangingPassword(true);
     try {
-      await apiClient.post("/api/auth/change-password", {
+      await apiClient.post("/api/account/change-password", {
         currentPassword,
         newPassword,
       });
@@ -230,17 +279,51 @@ export default function SettingsIndexScreen() {
         showsVerticalScrollIndicator={false}
       >
 
-      <Text style={styles.sectionTitle}>LOGIN INFORMATION</Text>
-      <View style={styles.card}>
-        <View style={styles.infoRow}>
-          <View style={[styles.rowIconBg, { backgroundColor: Colors.primary + "1A" }]}>
-            <Icon name="mail" size={20} color={Colors.primary} />
-          </View>
-          <View style={styles.rowContent}>
-            <Text style={styles.rowLabel}>Email</Text>
-            <Text style={styles.rowValue}>{userEmail}</Text>
-          </View>
+      {missingFirstName && (
+        <View style={styles.bannerCard}>
+          <Ionicons name="person-circle-outline" size={20} color={Colors.warning} />
+          <Text style={styles.bannerText}>Add your first name so the app can greet you properly.</Text>
         </View>
+      )}
+
+      <Text style={styles.sectionTitle}>ACCOUNT</Text>
+      <View style={styles.card}>
+        <Text style={styles.fieldLabel}>First Name</Text>
+        <TextInput
+          style={[styles.input, { marginBottom: 10 }]}
+          placeholder="First name"
+          placeholderTextColor={Colors.textTertiary}
+          value={accountFirstName}
+          onChangeText={(t) => { setAccountFirstName(t); setProfileError(""); setProfileSuccess(""); }}
+          autoCapitalize="words"
+          autoCorrect={false}
+          textContentType="givenName"
+        />
+        <Text style={styles.fieldLabel}>Email</Text>
+        <TextInput
+          style={[styles.input, { marginBottom: 10 }]}
+          placeholder="Email address"
+          placeholderTextColor={Colors.textTertiary}
+          value={accountEmail}
+          onChangeText={(t) => { setAccountEmail(t); setProfileError(""); setProfileSuccess(""); }}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="email-address"
+          textContentType="emailAddress"
+        />
+        {!!profileError && <Text style={styles.errorText}>{profileError}</Text>}
+        {!!profileSuccess && <Text style={styles.successText}>{profileSuccess}</Text>}
+        <Pressable
+          style={({ pressed }) => [styles.changePasswordBtn, pressed && { opacity: 0.8 }, savingProfile && { opacity: 0.6 }]}
+          onPress={handleSaveProfile}
+          disabled={savingProfile}
+        >
+          {savingProfile ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Text style={styles.changePasswordBtnText}>Save Profile</Text>
+          )}
+        </Pressable>
       </View>
 
       <Text style={styles.sectionTitle}>WEEK STARTS ON</Text>
@@ -474,6 +557,31 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     marginTop: 24,
     marginBottom: 8,
     paddingLeft: 4,
+  },
+  bannerCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: Colors.warning + "15",
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: Colors.warning + "40",
+  },
+  bannerText: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    color: Colors.warning,
+    flex: 1,
+    lineHeight: 17,
+  },
+  fieldLabel: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.textSecondary,
+    marginBottom: 6,
+    letterSpacing: 0.3,
   },
   card: {
     backgroundColor: Colors.surface,

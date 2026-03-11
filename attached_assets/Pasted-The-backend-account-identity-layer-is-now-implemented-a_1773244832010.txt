@@ -1,0 +1,136 @@
+The backend/account identity layer is now implemented and working. The API now supports persisted firstName and account management. Update the mobile app (React Native / Expo) to consume this properly.
+
+CONTEXT
+Backend is now the source of truth for user identity.
+It supports:
+- signup with firstName
+- current authenticated user including firstName + email
+- account update for firstName/email
+- password change endpoint
+
+Your job is to update the mobile app UI and state management so identity is driven by backend firstName, not email prefix or placeholder values.
+
+OBJECTIVE
+1. Signup should collect First Name, not Full Name
+2. Mobile app should display firstName across top-level user-facing screens
+3. Settings should allow editing firstName and email
+4. Password change UI should work with backend endpoint
+5. Global auth/user state should refresh immediately after account updates
+
+TASKS
+
+1) AUDIT MOBILE APP
+Inspect current React Native auth flow, current-user fetch logic, signup screen, More page, Profile page, Settings page, and any user header/greeting components.
+Identify where the mobile app currently uses:
+- email prefix
+- username fallback
+- generic “User”
+instead of backend firstName.
+
+Return a short summary first.
+
+2) AUTH USER MODEL
+Update the mobile app auth/user type so it includes:
+- id
+- firstName
+- email
+
+Ensure all account/user parsing logic supports firstName consistently.
+
+3) SIGNUP SCREEN
+Update Create Account screen:
+- replace “Full Name” with “First Name”
+- submit firstName to backend
+- remove any fullName-specific logic
+- validate firstName cleanly on the client
+
+4) CURRENT USER FETCH
+Ensure the mobile app fetches the authenticated current user from backend and stores:
+- id
+- firstName
+- email
+
+Use this as the canonical identity source for the app.
+
+5) GLOBAL USER STATE
+Centralize authenticated user state cleanly.
+After signup/login/account update:
+- refresh user data
+- update all screens immediately
+- persist state correctly on app reopen if current architecture supports this
+
+6) DASHBOARD
+Update greeting to:
+- “Good morning, {firstName}”
+- or equivalent time-based greeting already used in app
+
+Do not use email prefix.
+
+7) MORE PAGE
+Update top identity area to show:
+- firstName
+- avatar circle with first initial if avatar system is placeholder-based
+
+Do not show raw email prefix as the primary identity.
+
+8) PROFILE PAGE
+Use firstName in profile header/top identity area where appropriate.
+Keep physical stats/goals functionality separate from account identity.
+
+9) SETTINGS PAGE
+Update Settings so it includes:
+A) Account section
+- First Name (editable)
+- Email (editable)
+- Save Profile button
+
+B) Security section
+- Current Password
+- New Password
+- Confirm New Password
+- Change Password button
+
+Wire these to backend endpoints.
+Use separate submit actions for profile save vs password change.
+
+10) PASSWORD CHANGE UX
+Ensure password change works end-to-end with backend.
+Requirements:
+- validate confirm password on client
+- handle wrong current password cleanly
+- show success/error state clearly
+- clear password fields after successful change
+
+11) LEGACY USER FALLBACK
+For users with no firstName:
+- do not display email prefix as fake identity
+- use graceful fallback
+- if appropriate, show a prompt/banner in settings encouraging them to add first name
+
+12) UI POLISH
+Small improvements:
+- avatar circle should show first initial if possible
+- settings copy should feel polished and consistent
+- account updates should show immediate success state
+- avoid page reload dependence
+
+13) TEST
+Test these flows in the mobile app:
+- signup with firstName
+- login
+- dashboard greeting uses firstName
+- more page uses firstName
+- settings prefilled with firstName + email
+- updating firstName updates UI immediately
+- updating email works
+- password change works
+- wrong current password shows clear error
+- legacy user fallback is graceful
+
+14) OUTPUT
+When done, provide:
+1. files changed
+2. screens/components changed
+3. endpoints used
+4. any manual steps I need to take
+5. concise tested-results checklist

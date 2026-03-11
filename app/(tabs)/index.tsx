@@ -542,10 +542,7 @@ export default function DashboardScreen() {
 
   const firstName = useMemo(() => {
     if (!user) return "";
-    const name = user.name || user.firstName || user.displayName || "";
-    if (name) return name.split(" ")[0];
-    if (user.email) return user.email.split("@")[0];
-    return "";
+    return user.firstName || "";
   }, [user]);
 
   return (

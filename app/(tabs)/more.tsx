@@ -30,8 +30,8 @@ function ProfileHeader({ Colors }: { Colors: ThemeColors }) {
   const { data: perfData } = usePerformanceData();
 
   const p = profile as any;
-  const displayName = p?.name || p?.username || user?.name || user?.username || user?.email?.split("@")[0] || "User";
-  const initials = displayName.slice(0, 2).toUpperCase();
+  const displayName = user?.firstName || p?.name || "Account";
+  const initial = displayName.slice(0, 1).toUpperCase();
   const streak = perfData?.streak ?? 0;
 
   return (
@@ -43,7 +43,7 @@ function ProfileHeader({ Colors }: { Colors: ThemeColors }) {
 
       <View style={styles.avatarContainer}>
         <View style={styles.avatarCircle}>
-          <Icon name="person" size={28} color={Colors.primary} />
+          <Text style={styles.avatarInitial}>{initial}</Text>
         </View>
         <Text style={styles.profileName}>{displayName}</Text>
       </View>
@@ -223,6 +223,11 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
     borderWidth: 3,
     borderColor: Colors.primary + "40",
+  },
+  avatarInitial: {
+    fontSize: 28,
+    fontFamily: "Inter_700Bold",
+    color: Colors.primary,
   },
   profileName: {
     fontSize: 14,

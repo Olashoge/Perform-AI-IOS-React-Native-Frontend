@@ -529,10 +529,14 @@ export default function ProfileScreen() {
 
         <View style={styles.avatarSection}>
           <View style={styles.avatar}>
-            <Icon name="person" size={28} color={Colors.primary} />
+            {user?.firstName ? (
+              <Text style={styles.avatarInitial}>{user.firstName.slice(0, 1).toUpperCase()}</Text>
+            ) : (
+              <Icon name="person" size={28} color={Colors.primary} />
+            )}
           </View>
           <Text style={styles.userName}>
-            {user?.name || "User"}
+            {user?.firstName || user?.name || "Account"}
           </Text>
           {user?.email && <Text style={styles.userEmail}>{user.email}</Text>}
         </View>
@@ -929,6 +933,11 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 14,
+  },
+  avatarInitial: {
+    fontSize: 36,
+    fontFamily: "Inter_700Bold",
+    color: Colors.primary,
   },
   userName: {
     fontSize: 18,

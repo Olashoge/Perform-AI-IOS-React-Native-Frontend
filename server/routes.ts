@@ -265,6 +265,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/refresh", proxyToExternal);
   app.post("/api/auth/change-password", proxyToExternal);
   app.post("/api/auth/forgot-password", proxyToExternal);
+  app.get("/api/me", proxyToExternal);
+  app.patch("/api/account", proxyToExternal);
+  app.post("/api/account/change-password", proxyToExternal);
 
   app.delete("/api/me", async (req: any, res: any) => {
     const authHeader = req.headers.authorization || "";

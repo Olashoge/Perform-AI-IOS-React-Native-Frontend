@@ -24,7 +24,7 @@ export default function SignUpScreen() {
   const insets = useSafeAreaInsets();
   const { signup } = useAuth();
   const { isDark } = useTheme();
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,12 +35,12 @@ export default function SignUpScreen() {
   const webBottomInset = Platform.OS === "web" ? 34 : 0;
 
   async function handleSignUp() {
-    const trimmedName = name.trim();
+    const trimmedFirstName = firstName.trim();
     const trimmedEmail = email.trim();
     const trimmedPassword = password;
 
-    if (trimmedName.length < 2) {
-      setError("Name must be at least 2 characters");
+    if (trimmedFirstName.length < 2) {
+      setError("First name must be at least 2 characters");
       return;
     }
     if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
@@ -56,7 +56,7 @@ export default function SignUpScreen() {
     setError("");
 
     try {
-      await signup(trimmedName, trimmedEmail, trimmedPassword);
+      await signup(trimmedFirstName, trimmedEmail, trimmedPassword);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/");
     } catch (err: any) {
@@ -109,13 +109,13 @@ export default function SignUpScreen() {
               </View>
               <TextInput
                 style={styles.input}
-                placeholder="Full Name"
+                placeholder="First Name"
                 placeholderTextColor={Colors.textTertiary}
-                value={name}
-                onChangeText={setName}
+                value={firstName}
+                onChangeText={setFirstName}
                 autoCapitalize="words"
                 autoCorrect={false}
-                textContentType="name"
+                textContentType="givenName"
                 returnKeyType="next"
               />
             </View>
