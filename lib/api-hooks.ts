@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Alert, Platform } from "react-native";
-import apiClient, { getAccessToken, API_BASE_URL } from "./api-client";
+import apiClient from "./api-client";
 import { logApiCall } from "./api-log";
 import { getWeekStartUTC, getWeekEndUTC, computeWeekStartForDate } from "./week-utils";
 
@@ -14,31 +13,6 @@ function cleanPlanName(raw: any): string {
   return name ? stripPlanDateSuffix(name) : name;
 }
 
-function getLocalServerUrl(): string {
-  const domain = process.env.EXPO_PUBLIC_DOMAIN;
-  if (domain) return `https://${domain}`;
-  if (Platform.OS === "web" && typeof window !== "undefined") {
-    return `${window.location.protocol}//${window.location.hostname}:5000`;
-  }
-  return API_BASE_URL;
-}
-
-async function localServerRequest(method: string, path: string, data?: any): Promise<any> {
-  const baseUrl = getLocalServerUrl();
-  const token = await getAccessToken();
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
-  const response = await fetch(`${baseUrl}${path}`, {
-    method,
-    headers,
-    body: data !== undefined ? JSON.stringify(data) : undefined,
-  });
-  const text = await response.text();
-  if (!response.ok) {
-    throw new Error(text || `Request failed with status ${response.status}`);
-  }
-  try { return JSON.parse(text); } catch { return text; }
-}
 
 function normalizeId(item: any): string | null {
   return item?.id ?? item?.mealId ?? item?.workoutId ?? item?._id ?? null;
@@ -81,11 +55,6 @@ function normalizeWorkout(item: any, date: string, index: number): Workout {
   };
 }
 
-function extractCompletionStatus(raw: any, itemType: string, itemKey: string): boolean | undefined {
-  const completions = Array.isArray(raw?.completions) ? raw.completions : [];
-  const match = completions.find((c: any) => c.itemType === itemType && c.itemKey === itemKey);
-  return match ? !!match.completed : undefined;
-}
 
 function normalizeDailyMeals(dailyMeal: any, date: string, completions: any[]): Meal[] {
   if (!dailyMeal || typeof dailyMeal !== "object") return [];
@@ -957,7 +926,6 @@ export function useUpdateGoalPlan() {
       queryClient.invalidateQueries({ queryKey: ["plans:wellness"] });
       queryClient.invalidateQueries({ queryKey: ["plans:meal"] });
       queryClient.invalidateQueries({ queryKey: ["plans:workout"] });
-      queryClient.invalidateQueries({ queryKey: ["local-schedules"] });
       queryClient.invalidateQueries({ queryKey: ["occupied-dates"] });
       queryClient.invalidateQueries({ queryKey: ["availability"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
@@ -980,7 +948,6 @@ export function useDeleteGoalPlan() {
       queryClient.invalidateQueries({ queryKey: ["plans:wellness"] });
       queryClient.invalidateQueries({ queryKey: ["plans:meal"] });
       queryClient.invalidateQueries({ queryKey: ["plans:workout"] });
-      queryClient.invalidateQueries({ queryKey: ["local-schedules"] });
       queryClient.invalidateQueries({ queryKey: ["occupied-dates"] });
       queryClient.invalidateQueries({ queryKey: ["availability"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
