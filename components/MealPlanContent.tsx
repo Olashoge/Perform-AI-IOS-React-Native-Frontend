@@ -15,7 +15,6 @@ import { Icon } from "@/components/Icon";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 import {
-  useMealPlan,
   useMealFeedback,
   useResolveIngredientProposal,
   computeMealFingerprint,
@@ -469,11 +468,7 @@ interface MealPlanContentProps {
 export default function MealPlanContent({ planId, planData, hideTitle, hideGroceryTab }: MealPlanContentProps) {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
-  const fetchEnabled = !planData && !!planId;
-  const { data: fetchedPlan, isLoading: fetchLoading, error: fetchError, refetch } = useMealPlan(fetchEnabled ? planId : null);
-  const plan = planData || fetchedPlan;
-  const isLoading = fetchEnabled ? fetchLoading : false;
-  const error = fetchEnabled ? fetchError : null;
+  const plan = planData;
   const { data: groceryData, isLoading: groceryLoading } = useGroceryList(planId ?? null);
   const toggleOwnedMutation = useToggleGroceryOwned(planId ?? null);
   const regenerateMutation = useRegenerateGroceryList(planId ?? null);
@@ -500,27 +495,12 @@ export default function MealPlanContent({ planId, planData, hideTitle, hideGroce
     }
   }, [regenerateMutation]);
 
-  if (isLoading) {
-    return (
-      <View style={[styles.contentCentered]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText}>Loading meal plan...</Text>
-      </View>
-    );
-  }
-
-  if (error || !plan) {
+  if (!plan) {
     return (
       <View style={[styles.contentCentered]}>
         <Icon name="alertCircle" size={28} color={Colors.error} />
         <Text style={styles.errorTitle}>Failed to load plan</Text>
-        <Text style={styles.errorSubtitle}>
-          {error instanceof Error ? error.message : "Something went wrong."}
-        </Text>
-        <Pressable style={styles.retryButton} onPress={() => refetch()}>
-          <Icon name="refresh" size={20} color={Colors.text} />
-          <Text style={styles.retryText}>Retry</Text>
-        </Pressable>
+        <Text style={styles.errorSubtitle}>Something went wrong.</Text>
       </View>
     );
   }
@@ -536,10 +516,6 @@ export default function MealPlanContent({ planId, planData, hideTitle, hideGroce
         <Text style={styles.generatingSubtitle}>
           Your meal plan is being created. This usually takes 1-2 minutes.
         </Text>
-        <Pressable style={styles.retryButton} onPress={() => refetch()}>
-          <Icon name="refresh" size={20} color={Colors.text} />
-          <Text style={styles.retryText}>Refresh</Text>
-        </Pressable>
       </View>
     );
   }
