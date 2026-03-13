@@ -13,25 +13,21 @@ import { Ionicons } from "@expo/vector-icons";
 import { Icon } from "@/components/Icon";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
-import { useWorkoutPlan, useExerciseFeedback, useDeleteExercisePreferenceByKey, useExercisePreferences } from "@/lib/api-hooks";
+import { useExerciseFeedback, useDeleteExercisePreferenceByKey, useExercisePreferences } from "@/lib/api-hooks";
 
 function toExerciseKey(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 }
 
 interface WorkoutPlanContentProps {
-  planId: string;
+  planId?: string;
   planData?: any;
 }
 
-export function WorkoutPlanContent({ planId, planData }: WorkoutPlanContentProps) {
+export function WorkoutPlanContent({ planData }: WorkoutPlanContentProps) {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
-  const fetchEnabled = !planData && !!planId;
-  const { data: fetchedData, isLoading: fetchLoading, error: fetchError, refetch } = useWorkoutPlan(fetchEnabled ? planId : null);
-  const data = planData || fetchedData;
-  const isLoading = fetchEnabled ? fetchLoading : false;
-  const error = fetchEnabled ? fetchError : null;
+  const data = planData;
   const [expandedSessions, setExpandedSessions] = useState<Record<number, boolean>>({});
 
   const toggleSession = useCallback((dayIndex: number) => {
@@ -41,38 +37,12 @@ export function WorkoutPlanContent({ planId, planData }: WorkoutPlanContentProps
   const plan = data?.planJson ?? data;
   const status = data?.status;
 
-  if (isLoading) {
-    return (
-      <View style={styles.centerContent}>
-        <ActivityIndicator size="large" color={Colors.error} />
-        <Text style={styles.loadingText}>Loading workout plan...</Text>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.centerContent}>
-        <Icon name="alertCircle" size={28} color={Colors.error} />
-        <Text style={styles.errorText}>Failed to load plan</Text>
-        <Pressable style={styles.retryButton} onPress={() => refetch()}>
-          <Icon name="refresh" size={20} color={Colors.text} />
-          <Text style={styles.retryText}>Retry</Text>
-        </Pressable>
-      </View>
-    );
-  }
-
   if (status === "generating") {
     return (
       <View style={styles.centerContent}>
         <ActivityIndicator size="large" color={Colors.error} />
         <Text style={styles.loadingText}>Plan is still generating...</Text>
         <Text style={styles.loadingSubtext}>Check back in a moment</Text>
-        <Pressable style={styles.retryButton} onPress={() => refetch()}>
-          <Icon name="refresh" size={20} color={Colors.text} />
-          <Text style={styles.retryText}>Refresh</Text>
-        </Pressable>
       </View>
     );
   }

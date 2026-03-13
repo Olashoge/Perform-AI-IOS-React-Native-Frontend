@@ -836,51 +836,6 @@ export function useGoalPlan(id: string | null) {
   });
 }
 
-export function useMealPlan(id: string | null) {
-  const planQuery = useQuery({
-    queryKey: ["meal-plan", id],
-    queryFn: async () => {
-      const response = await apiClient.get(`/api/plan/${id}`);
-      logApiCall("GET", `/api/plan/${id}`, response.status);
-      return response.data;
-    },
-    enabled: !!id,
-  });
-  const schedulesQuery = useLocalSchedules();
-  const data = useMemo(() => {
-    if (!planQuery.data || !schedulesQuery.data) return planQuery.data;
-    const planId = id || planQuery.data?._id || planQuery.data?.id;
-    if (planId && planId in schedulesQuery.data) {
-      const localStart = schedulesQuery.data[planId];
-      return { ...planQuery.data, startDate: localStart, planStartDate: localStart };
-    }
-    return planQuery.data;
-  }, [planQuery.data, schedulesQuery.data, id]);
-  return { ...planQuery, data };
-}
-
-export function useWorkoutPlan(id: string | null) {
-  const planQuery = useQuery({
-    queryKey: ["workout-plan", id],
-    queryFn: async () => {
-      const response = await apiClient.get(`/api/workout/${id}`);
-      logApiCall("GET", `/api/workout/${id}`, response.status);
-      return response.data;
-    },
-    enabled: !!id,
-  });
-  const schedulesQuery = useLocalSchedules();
-  const data = useMemo(() => {
-    if (!planQuery.data || !schedulesQuery.data) return planQuery.data;
-    const planId = id || planQuery.data?._id || planQuery.data?.id;
-    if (planId && planId in schedulesQuery.data) {
-      const localStart = schedulesQuery.data[planId];
-      return { ...planQuery.data, startDate: localStart, planStartDate: localStart };
-    }
-    return planQuery.data;
-  }, [planQuery.data, schedulesQuery.data, id]);
-  return { ...planQuery, data };
-}
 
 export function useOccupiedDates(excludePlanId?: string) {
   const params = new URLSearchParams();
@@ -987,19 +942,6 @@ export function useWellnessPlans() {
   });
 }
 
-export function useLocalSchedules() {
-  return useQuery({
-    queryKey: ["local-schedules"],
-    queryFn: async () => {
-      try {
-        return await localServerRequest("GET", "/api/local/plan-schedules");
-      } catch {
-        return {};
-      }
-    },
-    staleTime: 30000,
-  });
-}
 
 export function useUpdateGoalPlan() {
   const queryClient = useQueryClient();
