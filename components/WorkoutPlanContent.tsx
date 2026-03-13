@@ -138,10 +138,6 @@ export function WorkoutPlanContent({ planId, planData }: WorkoutPlanContentProps
   );
 }
 
-export function useWorkoutPlanData(planId: string | null) {
-  return useWorkoutPlan(planId);
-}
-
 function StatBadge({ icon, label, value }: { icon: string; label: string; value: string }) {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);

@@ -234,9 +234,7 @@ function WellnessPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
     initialDate: "",
     title: "Schedule Plan",
   });
-  const mealConflicts = useConflictDates("meal");
-  const workoutConflicts = useConflictDates("workout");
-  const wellnessConflictDates = useMemo(() => [...new Set([...mealConflicts, ...workoutConflicts])], [mealConflicts, workoutConflicts]);
+  const wellnessConflictDates = useConflictDates();
 
   const onRefresh = useCallback(() => {
     wellnessQuery.refetch();
