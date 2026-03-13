@@ -346,9 +346,7 @@ export default function WellnessPlanDetailScreen() {
   const { data: plan, isLoading, isError, refetch } = useGoalPlan(id || null);
   const updateGoalPlan = useUpdateGoalPlan();
   const deleteGoalPlan = useDeleteGoalPlan();
-  const mealConflicts = useConflictDates("meal");
-  const workoutConflicts = useConflictDates("workout");
-  const conflictDates = useMemo(() => [...new Set([...mealConflicts, ...workoutConflicts])], [mealConflicts, workoutConflicts]);
+  const conflictDates = useConflictDates();
 
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [schedulePicker, setSchedulePicker] = useState({ visible: false, initialDate: "", title: "Schedule Plan" });

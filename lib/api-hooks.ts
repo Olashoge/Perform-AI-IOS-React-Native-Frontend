@@ -909,23 +909,11 @@ function computeDateRange(startDate: string, numDays: number): string[] {
   return dates;
 }
 
-export function useConflictDates(planType: "meal" | "workout", excludePlanId?: string) {
-  const mealPlans = useMealPlans();
-  const workoutPlans = useWorkoutPlans();
+export function useConflictDates(excludePlanId?: string) {
   const wellnessPlans = useWellnessPlans();
 
   return useMemo(() => {
-    const plans = planType === "meal" ? (mealPlans.data || []) : (workoutPlans.data || []);
     const dates: string[] = [];
-    for (const plan of plans) {
-      const id = plan._id || plan.id;
-      if (excludePlanId && id === excludePlanId) continue;
-      const startDate = plan.startDate || plan.start_date || plan.planStartDate;
-      if (!startDate) continue;
-      const pj = plan.planJson ? (typeof plan.planJson === "string" ? JSON.parse(plan.planJson) : plan.planJson) : null;
-      const numDays = pj?.days ? (Array.isArray(pj.days) ? pj.days.length : 7) : 7;
-      dates.push(...computeDateRange(startDate, numDays));
-    }
     for (const wp of (wellnessPlans.data || [])) {
       const id = wp._id || wp.id;
       if (excludePlanId && id === excludePlanId) continue;
@@ -934,7 +922,7 @@ export function useConflictDates(planType: "meal" | "workout", excludePlanId?: s
       dates.push(...computeDateRange(startDate, 7));
     }
     return dates;
-  }, [mealPlans.data, workoutPlans.data, wellnessPlans.data, planType, excludePlanId]);
+  }, [wellnessPlans.data, excludePlanId]);
 }
 
 export function useCreateDailyMeal() {
@@ -983,20 +971,6 @@ export function useDailyCoverage() {
   });
 }
 
-function normalizePlanRecord(p: any): any {
-  const pj = p.planJson ? (typeof p.planJson === "string" ? JSON.parse(p.planJson) : p.planJson) : null;
-  const name = cleanPlanName(p.name || p.title || pj?.title || pj?.planName) || "Plan";
-  const startDate = p.startDate || p.planStartDate || pj?.startDate || null;
-  const numDays = pj?.days ? (Array.isArray(pj.days) ? pj.days.length : 7) : 7;
-  let endDate = p.endDate || null;
-  if (!endDate && startDate && numDays > 0) {
-    const sd = new Date(startDate + "T12:00:00Z");
-    sd.setUTCDate(sd.getUTCDate() + numDays - 1);
-    endDate = sd.toISOString().slice(0, 10);
-  }
-  return { ...p, name, startDate, endDate };
-}
-
 export function useWellnessPlans() {
   return useQuery({
     queryKey: ["plans:wellness"],
@@ -1025,57 +999,6 @@ export function useLocalSchedules() {
     },
     staleTime: 30000,
   });
-}
-
-function mergeLocalSchedules(plans: any[], schedules: Record<string, string | null>): any[] {
-  if (!schedules || Object.keys(schedules).length === 0) return plans;
-  return plans.map((p) => {
-    const id = p.id || p._id;
-    if (id && id in schedules) {
-      const localStart = schedules[id];
-      const numDays = p.planJson?.days?.length || 7;
-      let endDate = null;
-      if (localStart && numDays > 0) {
-        const sd = new Date(localStart + "T12:00:00Z");
-        sd.setUTCDate(sd.getUTCDate() + numDays - 1);
-        endDate = sd.toISOString().slice(0, 10);
-      }
-      return { ...p, startDate: localStart, endDate: localStart ? endDate : null };
-    }
-    return p;
-  });
-}
-
-export function useMealPlans() {
-  const plansQuery = useQuery({
-    queryKey: ["plans:meal"],
-    queryFn: async () => {
-      const response = await apiClient.get("/api/plans");
-      logApiCall("GET", "/api/plans", response.status);
-      const plans = Array.isArray(response.data) ? response.data : response.data?.plans || [];
-      return plans.filter((p: any) => !p.deleted && !p.isDeleted && !p.deletedAt).map(normalizePlanRecord);
-    },
-    staleTime: 30000,
-  });
-  const schedulesQuery = useLocalSchedules();
-  const data = plansQuery.data ? mergeLocalSchedules(plansQuery.data, schedulesQuery.data || {}) : undefined;
-  return { ...plansQuery, data: data as any[] | undefined };
-}
-
-export function useWorkoutPlans() {
-  const plansQuery = useQuery({
-    queryKey: ["plans:workout"],
-    queryFn: async () => {
-      const response = await apiClient.get("/api/workouts");
-      logApiCall("GET", "/api/workouts", response.status);
-      const plans = Array.isArray(response.data) ? response.data : response.data?.workouts || response.data?.plans || [];
-      return plans.filter((p: any) => !p.deleted && !p.isDeleted && !p.deletedAt).map(normalizePlanRecord);
-    },
-    staleTime: 30000,
-  });
-  const schedulesQuery = useLocalSchedules();
-  const data = plansQuery.data ? mergeLocalSchedules(plansQuery.data, schedulesQuery.data || {}) : undefined;
-  return { ...plansQuery, data: data as any[] | undefined };
 }
 
 export function useUpdateGoalPlan() {
@@ -1121,52 +1044,6 @@ export function useDeleteGoalPlan() {
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
       queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
-    },
-  });
-}
-
-export function useDeleteMealPlan() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const result = await localServerRequest("DELETE", `/api/plans/${id}`);
-      logApiCall("DELETE", `/api/plans/${id}`, 200);
-      return result;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["plans:meal"] });
-      queryClient.invalidateQueries({ queryKey: ["plans:wellness"] });
-      queryClient.invalidateQueries({ queryKey: ["local-schedules"] });
-      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
-      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
-      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
-    },
-    onError: (error: any) => {
-      const msg = error?.message || "Could not delete meal plan";
-      Alert.alert("Delete Failed", msg);
-    },
-  });
-}
-
-export function useDeleteWorkoutPlan() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const result = await localServerRequest("DELETE", `/api/workouts/${id}`);
-      logApiCall("DELETE", `/api/workouts/${id}`, 200);
-      return result;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["plans:workout"] });
-      queryClient.invalidateQueries({ queryKey: ["plans:wellness"] });
-      queryClient.invalidateQueries({ queryKey: ["local-schedules"] });
-      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
-      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
-      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
-    },
-    onError: (error: any) => {
-      const msg = error?.message || "Could not delete workout plan";
-      Alert.alert("Delete Failed", msg);
     },
   });
 }
@@ -1503,65 +1380,4 @@ export function useRegenerateGroceryList(mealPlanId: string | null) {
   });
 }
 
-export function useUpdateMealPlanSchedule() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, startDate }: { id: string; startDate: string | null }) => {
-      const result = await localServerRequest("PATCH", `/api/plans/${id}/schedule`, { startDate });
-      logApiCall("PATCH", `/api/plans/${id}/schedule`, 200);
-      return result;
-    },
-    onSuccess: (_data, variables) => {
-      queryClient.setQueryData(["plans:meal"], (old: any[] | undefined) => {
-        if (!old) return old;
-        return old.map((p: any) =>
-          (p.id === variables.id || p._id === variables.id)
-            ? { ...p, startDate: variables.startDate }
-            : p
-        );
-      });
-      queryClient.invalidateQueries({ queryKey: ["meal-plan", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["local-schedules"] });
-      queryClient.invalidateQueries({ queryKey: ["occupied-dates"] });
-      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
-      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
-      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
-    },
-    onError: (error: any) => {
-      const msg = error?.message || "Could not update schedule";
-      Alert.alert("Schedule Error", msg);
-    },
-  });
-}
-
-export function useUpdateWorkoutPlanSchedule() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, startDate }: { id: string; startDate: string | null }) => {
-      const result = await localServerRequest("PATCH", `/api/workouts/${id}/schedule`, { startDate });
-      logApiCall("PATCH", `/api/workouts/${id}/schedule`, 200);
-      return result;
-    },
-    onSuccess: (_data, variables) => {
-      queryClient.setQueryData(["plans:workout"], (old: any[] | undefined) => {
-        if (!old) return old;
-        return old.map((p: any) =>
-          (p.id === variables.id || p._id === variables.id)
-            ? { ...p, startDate: variables.startDate }
-            : p
-        );
-      });
-      queryClient.invalidateQueries({ queryKey: ["workout-plan", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["local-schedules"] });
-      queryClient.invalidateQueries({ queryKey: ["occupied-dates"] });
-      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "week-data" });
-      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
-      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "day-data" });
-    },
-    onError: (error: any) => {
-      const msg = error?.message || "Could not update schedule";
-      Alert.alert("Schedule Error", msg);
-    },
-  });
-}
 
