@@ -937,36 +937,6 @@ export function useConflictDates(planType: "meal" | "workout", excludePlanId?: s
   }, [mealPlans.data, workoutPlans.data, wellnessPlans.data, planType, excludePlanId]);
 }
 
-export function useCreateMealPlan() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (payload: any) => {
-      const response = await apiClient.post("/api/plan", payload);
-      logApiCall("POST", "/api/plan", response.status);
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["plans:meal"] });
-      queryClient.invalidateQueries({ queryKey: ["occupied-dates"] });
-    },
-  });
-}
-
-export function useCreateWorkoutPlan() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (payload: any) => {
-      const response = await apiClient.post("/api/workout", payload);
-      logApiCall("POST", "/api/workout", response.status);
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["plans:workout"] });
-      queryClient.invalidateQueries({ queryKey: ["occupied-dates"] });
-    },
-  });
-}
-
 export function useCreateDailyMeal() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -1010,32 +980,6 @@ export function useDailyCoverage() {
       return response.data;
     },
     staleTime: 30000,
-  });
-}
-
-export function useMealPlanStatus(planId: string | null, enabled: boolean) {
-  return useQuery({
-    queryKey: ["meal-plan-status", planId],
-    queryFn: async () => {
-      const response = await apiClient.get(`/api/plan/${planId}/status`);
-      logApiCall("GET", `/api/plan/${planId}/status`, response.status);
-      return response.data;
-    },
-    enabled: !!planId && enabled,
-    refetchInterval: 2500,
-  });
-}
-
-export function useWorkoutPlanStatus(planId: string | null, enabled: boolean) {
-  return useQuery({
-    queryKey: ["workout-plan-status", planId],
-    queryFn: async () => {
-      const response = await apiClient.get(`/api/workout/${planId}/status`);
-      logApiCall("GET", `/api/workout/${planId}/status`, response.status);
-      return response.data;
-    },
-    enabled: !!planId && enabled,
-    refetchInterval: 2500,
   });
 }
 

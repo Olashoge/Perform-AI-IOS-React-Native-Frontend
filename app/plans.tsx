@@ -304,9 +304,6 @@ function WellnessPage({ Colors, styles }: { Colors: ThemeColors; styles: any }) 
         <Text style={styles.pageSubtitle}>Holistic plans for your health journey</Text>
 
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
-          <Pressable style={{ padding: 8 }} onPress={() => {}}>
-            <Icon name="swapVertical" size={20} color={Colors.textSecondary} />
-          </Pressable>
           <Pressable
             style={styles.newPlanButton}
             onPress={() => {
