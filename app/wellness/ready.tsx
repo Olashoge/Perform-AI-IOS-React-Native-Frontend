@@ -106,7 +106,7 @@ export default function ReadyScreen() {
               }
             }}
           >
-            <Text style={styles.primaryButtonText}>View My Plans</Text>
+            <Text style={styles.primaryButtonText}>View My Wellness Plan</Text>
           </Pressable>
         </View>
       </View>

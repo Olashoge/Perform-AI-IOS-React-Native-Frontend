@@ -181,7 +181,7 @@ export default function Step3Screen() {
           styles.scrollContent,
           {
             paddingTop: insets.top + 16 + webTopInset,
-            paddingBottom: insets.bottom + 100,
+            paddingBottom: insets.bottom + 180,
           },
         ]}
         showsVerticalScrollIndicator={false}
@@ -343,6 +343,16 @@ export default function Step3Screen() {
           placeholder="e.g. bad knees, lower back pain, recovering from shoulder surgery..."
           placeholderTextColor={Colors.textTertiary}
           multiline={false}
+        />
+
+        <Text style={styles.sectionLabel}>Workout Notes</Text>
+        <TextInput
+          style={[styles.textInput, { minHeight: 70 }]}
+          value={workoutForm.workoutNotes}
+          onChangeText={(t) => updateWorkoutForm({ workoutNotes: t })}
+          placeholder="Any additional workout preferences or context for the AI..."
+          placeholderTextColor={Colors.textTertiary}
+          multiline
         />
       </KeyboardAwareScrollViewCompat>
 

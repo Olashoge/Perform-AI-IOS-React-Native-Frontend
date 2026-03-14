@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import apiClient from "./api-client";
 import { logApiCall } from "./api-log";
 import { getWeekStartUTC, getWeekEndUTC, computeWeekStartForDate } from "./week-utils";
@@ -315,6 +315,7 @@ export function useWeeklySummary() {
 export function useWeekData(weekStart?: string) {
   return useQuery<DayData[]>({
     queryKey: ["week-data", weekStart],
+    placeholderData: keepPreviousData,
     queryFn: async () => {
       const params = weekStart ? `?weekStart=${weekStart}` : "";
       const url = `/api/week-data${params}`;
@@ -474,7 +475,7 @@ export interface ProfileData {
   religiousRestrictions: string[];
   allergiesIntolerances: string[];
   foodsToAvoid: string[];
-  foodsToAvoidNotes: string;
+  mealNotes: string;
   appetiteLevel: string;
   spicePreference: string;
   bodyContext: string;
@@ -482,6 +483,7 @@ export interface ProfileData {
   workoutLocationDefault: string;
   equipmentAvailable: string[];
   equipmentOtherNotes: string;
+  workoutNotes: string;
 }
 
 export function useProfile() {

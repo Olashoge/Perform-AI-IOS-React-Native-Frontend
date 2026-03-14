@@ -8,6 +8,7 @@ export interface MealForm {
   dietStyles: string[];
   foodsToAvoid: string[];
   allergies: string;
+  mealNotes: string;
   mealsPerDay: number;
   mealSlots: string[] | undefined;
   prepStyle: string;
@@ -29,6 +30,7 @@ export interface WorkoutForm {
   sessionLength: number;
   experienceLevel: string;
   limitations: string;
+  workoutNotes: string;
   equipmentAvailable: string[];
 }
 
@@ -47,6 +49,7 @@ const defaultMealForm: MealForm = {
   dietStyles: ["No Preference"],
   foodsToAvoid: [],
   allergies: "",
+  mealNotes: "",
   mealsPerDay: 3,
   mealSlots: undefined,
   prepStyle: "cook_daily",
@@ -68,6 +71,7 @@ const defaultWorkoutForm: WorkoutForm = {
   sessionLength: 45,
   experienceLevel: "intermediate",
   limitations: "",
+  workoutNotes: "",
   equipmentAvailable: [],
 };
 

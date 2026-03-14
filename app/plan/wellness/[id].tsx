@@ -221,26 +221,25 @@ function OverviewTab({ plan, Colors }: { plan: any; Colors: ThemeColors }) {
           <View style={styles.nutrientGrid}>
             {nutrition.calories && (
               <View style={[styles.nutrientItem, { backgroundColor: Colors.warning + "10" }]}>
-                <Icon name="flame" size={16} color={Colors.warning} />
-                <Text style={styles.nutrientValue}>{nutrition.calories}</Text>
+                <Text style={[styles.nutrientValue, { color: Colors.warning }]}>{nutrition.calories}</Text>
                 <Text style={styles.nutrientLabel}>Calories</Text>
               </View>
             )}
             {nutrition.protein_g && (
               <View style={[styles.nutrientItem, { backgroundColor: Colors.accent + "10" }]}>
-                <Text style={[styles.nutrientValue, { color: Colors.accent }]}>{nutrition.protein_g}g</Text>
+                <Text style={[styles.nutrientValue, { color: Colors.accent }]}>{String(nutrition.protein_g).replace(/g$/i, "")}g</Text>
                 <Text style={styles.nutrientLabel}>Protein</Text>
               </View>
             )}
             {nutrition.carbs_g && (
               <View style={[styles.nutrientItem, { backgroundColor: Colors.primary + "10" }]}>
-                <Text style={[styles.nutrientValue, { color: Colors.primary }]}>{nutrition.carbs_g}g</Text>
+                <Text style={[styles.nutrientValue, { color: Colors.primary }]}>{String(nutrition.carbs_g).replace(/g$/i, "")}g</Text>
                 <Text style={styles.nutrientLabel}>Carbs</Text>
               </View>
             )}
             {nutrition.fat_g && (
               <View style={[styles.nutrientItem, { backgroundColor: Colors.error + "10" }]}>
-                <Text style={[styles.nutrientValue, { color: Colors.error }]}>{nutrition.fat_g}g</Text>
+                <Text style={[styles.nutrientValue, { color: Colors.error }]}>{String(nutrition.fat_g).replace(/g$/i, "")}g</Text>
                 <Text style={styles.nutrientLabel}>Fat</Text>
               </View>
             )}
@@ -338,7 +337,7 @@ export default function WellnessPlanDetailScreen() {
   const { data: plan, isLoading, isError, refetch } = useGoalPlan(id || null);
   const updateGoalPlan = useUpdateGoalPlan();
   const deleteGoalPlan = useDeleteGoalPlan();
-  const conflictDates = useConflictDates();
+  const conflictDates = useConflictDates(plan?._id || plan?.id || id || undefined);
 
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [schedulePicker, setSchedulePicker] = useState({ visible: false, initialDate: "", title: "Schedule Plan" });

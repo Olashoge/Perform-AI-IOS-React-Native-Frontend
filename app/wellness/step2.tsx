@@ -178,7 +178,7 @@ export default function Step2Screen() {
           styles.scrollContent,
           {
             paddingTop: insets.top + 16 + webTopInset,
-            paddingBottom: insets.bottom + 100,
+            paddingBottom: insets.bottom + 180,
           },
         ]}
         showsVerticalScrollIndicator={false}
@@ -234,6 +234,16 @@ export default function Step2Screen() {
           placeholder="e.g. peanuts, shellfish, lactose, gluten"
           placeholderTextColor={Colors.textTertiary}
           multiline={false}
+        />
+
+        <Text style={styles.sectionLabel}>Meal Notes</Text>
+        <TextInput
+          style={[styles.textInput, { minHeight: 70 }]}
+          value={mealForm.mealNotes}
+          onChangeText={(t) => updateMealForm({ mealNotes: t })}
+          placeholder="Any additional meal preferences, cultural notes, or context for the AI..."
+          placeholderTextColor={Colors.textTertiary}
+          multiline
         />
 
         <Text style={styles.sectionLabel}>Meals Per Day</Text>
