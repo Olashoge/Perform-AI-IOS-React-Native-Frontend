@@ -111,33 +111,23 @@ function TabBar({ activeTab, onTabChange, showMeals, showWorkouts, Colors }: { a
 
 function OverviewTab({ plan, Colors }: { plan: any; Colors: ThemeColors }) {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
-  const status = plan.status || plan.generationStatus || "active";
-  const planName = plan.name || plan.title || "Wellness Plan";
-  const primaryGoal = plan.goalType || plan.primaryGoal || plan.primary_goal;
-  const startDate = plan.startDate || plan.start_date;
-  const endDate = plan.endDate || plan.end_date;
-  const planType = plan.planType || plan.plan_type || "both";
-  const pace = plan.pace;
+
+  const overview = plan?.overview;
+  const identity = overview?.identity;
+  const weeklyStructure: { totalDays: number; workoutDays: number; restDays: number; workoutPattern: boolean[] } | null = overview?.weeklyStructure ?? null;
+  const nutrition: { calories: string | null; protein_g: string | null; carbs_g: string | null; fat_g: string | null } | null = overview?.nutrition ?? null;
+  const training: { frequencyPerWeek: number | null; focusModes: string[]; avgDurationMinutes: number | null } | null = overview?.training ?? null;
+
+  const planName = identity?.title ?? "Wellness Plan";
+  const status = identity?.status ?? "active";
+  const primaryGoal = identity?.goalType ?? null;
+  const planType = identity?.planType ?? "both";
+  const pace = identity?.pace ?? null;
+  const startDate = identity?.startDate ?? null;
+  const endDate = identity?.endDate ?? null;
+
   const showMeals = planType === "meal" || planType === "both";
   const showWorkouts = planType === "workout" || planType === "both";
-
-  const mealPlan = plan.mealPlan;
-  const workoutPlan = plan.workoutPlan;
-  const mealJson = mealPlan?.planJson ?? mealPlan;
-  const workoutJson = workoutPlan?.planJson ?? workoutPlan;
-  const mealDays = mealJson?.days ?? [];
-  const workoutDays = workoutJson?.days ?? [];
-  const totalDays = workoutDays.length || mealDays.length || 7;
-  const workoutDayCount = workoutDays.filter((d: any) => d.isWorkoutDay).length;
-  const restDayCount = workoutDays.length > 0 ? totalDays - workoutDayCount : 0;
-
-  const nutritionNotes = mealJson?.nutritionNotes;
-  const macroTargets = nutritionNotes?.dailyMacroTargetsRange;
-
-  const workoutSessions = workoutDays.filter((d: any) => d.isWorkoutDay && d.session);
-  const modes = [...new Set(workoutSessions.map((d: any) => (d.session.mode || d.session.type || "").toLowerCase()).filter(Boolean))];
-  const durations = workoutSessions.map((d: any) => d.session.durationMinutes || d.session.estimatedDuration || 0).filter((d: number) => d > 0);
-  const avgDuration = durations.length > 0 ? Math.round(durations.reduce((a: number, b: number) => a + b, 0) / durations.length) : 0;
 
   return (
     <View style={styles.overviewContainer}>
@@ -166,7 +156,7 @@ function OverviewTab({ plan, Colors }: { plan: any; Colors: ThemeColors }) {
             <View style={styles.metaRow}>
               <Icon name="calendar" size={16} color={Colors.textSecondary} />
               <Text style={styles.metaText}>
-                {formatDate(startDate)}{endDate ? ` – ${formatDate(endDate)}` : ""}
+                {formatDate(startDate ?? undefined)}{endDate ? ` – ${formatDate(endDate)}` : ""}
               </Text>
             </View>
           )}
@@ -179,40 +169,40 @@ function OverviewTab({ plan, Colors }: { plan: any; Colors: ThemeColors }) {
         </View>
       </View>
 
-      {(workoutDays.length > 0 || mealDays.length > 0) && (
+      {weeklyStructure && (
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Weekly Structure</Text>
           <View style={styles.structureStats}>
             <View style={styles.structureStat}>
-              <Text style={styles.structureValue}>{totalDays}</Text>
+              <Text style={styles.structureValue}>{weeklyStructure.totalDays}</Text>
               <Text style={styles.structureLabel}>Total Days</Text>
             </View>
-            {workoutDays.length > 0 && (
+            {weeklyStructure.workoutDays > 0 && (
               <>
                 <View style={styles.structureDividerV} />
                 <View style={styles.structureStat}>
-                  <Text style={[styles.structureValue, { color: Colors.accent }]}>{workoutDayCount}</Text>
+                  <Text style={[styles.structureValue, { color: Colors.accent }]}>{weeklyStructure.workoutDays}</Text>
                   <Text style={styles.structureLabel}>Workout</Text>
                 </View>
                 <View style={styles.structureDividerV} />
                 <View style={styles.structureStat}>
-                  <Text style={[styles.structureValue, { color: Colors.textSecondary }]}>{restDayCount}</Text>
+                  <Text style={[styles.structureValue, { color: Colors.textSecondary }]}>{weeklyStructure.restDays}</Text>
                   <Text style={styles.structureLabel}>Rest</Text>
                 </View>
               </>
             )}
           </View>
-          {workoutDays.length > 0 && (
+          {weeklyStructure.workoutPattern?.length > 0 && (
             <View style={styles.dayStrip}>
-              {workoutDays.map((d: any, i: number) => (
+              {weeklyStructure.workoutPattern.map((isWorkout: boolean, i: number) => (
                 <View
                   key={i}
                   style={[
                     styles.dayDot,
-                    { backgroundColor: d.isWorkoutDay ? Colors.accent : Colors.border },
+                    { backgroundColor: isWorkout ? Colors.accent : Colors.border },
                   ]}
                 >
-                  <Text style={[styles.dayDotText, { color: d.isWorkoutDay ? "#fff" : Colors.textTertiary }]}>
+                  <Text style={[styles.dayDotText, { color: isWorkout ? "#fff" : Colors.textTertiary }]}>
                     {i + 1}
                   </Text>
                 </View>
@@ -222,35 +212,35 @@ function OverviewTab({ plan, Colors }: { plan: any; Colors: ThemeColors }) {
         </View>
       )}
 
-      {macroTargets && (
+      {nutrition && (
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <Icon name="restaurant" size={20} color={Colors.warning} />
             <Text style={styles.sectionTitle}>Daily Nutrition Targets</Text>
           </View>
           <View style={styles.nutrientGrid}>
-            {macroTargets.calories && (
+            {nutrition.calories && (
               <View style={[styles.nutrientItem, { backgroundColor: Colors.warning + "10" }]}>
                 <Icon name="flame" size={16} color={Colors.warning} />
-                <Text style={styles.nutrientValue}>{macroTargets.calories}</Text>
+                <Text style={styles.nutrientValue}>{nutrition.calories}</Text>
                 <Text style={styles.nutrientLabel}>Calories</Text>
               </View>
             )}
-            {macroTargets.protein_g && (
+            {nutrition.protein_g && (
               <View style={[styles.nutrientItem, { backgroundColor: Colors.accent + "10" }]}>
-                <Text style={[styles.nutrientValue, { color: Colors.accent }]}>{macroTargets.protein_g}g</Text>
+                <Text style={[styles.nutrientValue, { color: Colors.accent }]}>{nutrition.protein_g}g</Text>
                 <Text style={styles.nutrientLabel}>Protein</Text>
               </View>
             )}
-            {macroTargets.carbs_g && (
+            {nutrition.carbs_g && (
               <View style={[styles.nutrientItem, { backgroundColor: Colors.primary + "10" }]}>
-                <Text style={[styles.nutrientValue, { color: Colors.primary }]}>{macroTargets.carbs_g}g</Text>
+                <Text style={[styles.nutrientValue, { color: Colors.primary }]}>{nutrition.carbs_g}g</Text>
                 <Text style={styles.nutrientLabel}>Carbs</Text>
               </View>
             )}
-            {macroTargets.fat_g && (
+            {nutrition.fat_g && (
               <View style={[styles.nutrientItem, { backgroundColor: Colors.error + "10" }]}>
-                <Text style={[styles.nutrientValue, { color: Colors.error }]}>{macroTargets.fat_g}g</Text>
+                <Text style={[styles.nutrientValue, { color: Colors.error }]}>{nutrition.fat_g}g</Text>
                 <Text style={styles.nutrientLabel}>Fat</Text>
               </View>
             )}
@@ -258,27 +248,29 @@ function OverviewTab({ plan, Colors }: { plan: any; Colors: ThemeColors }) {
         </View>
       )}
 
-      {workoutSessions.length > 0 && (
+      {training && (
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <Icon name="barbell" size={20} color={Colors.error} />
             <Text style={styles.sectionTitle}>Training Summary</Text>
           </View>
           <View style={styles.trainingDetails}>
-            <View style={styles.trainingRow}>
-              <Text style={styles.trainingLabel}>Frequency</Text>
-              <Text style={styles.trainingValue}>{workoutDayCount}x per week</Text>
-            </View>
-            {modes.length > 0 && (
+            {training.frequencyPerWeek != null && (
               <View style={styles.trainingRow}>
-                <Text style={styles.trainingLabel}>Focus</Text>
-                <Text style={styles.trainingValue}>{modes.map(m => m.charAt(0).toUpperCase() + m.slice(1)).join(", ")}</Text>
+                <Text style={styles.trainingLabel}>Frequency</Text>
+                <Text style={styles.trainingValue}>{training.frequencyPerWeek}x per week</Text>
               </View>
             )}
-            {avgDuration > 0 && (
+            {training.focusModes.length > 0 && (
+              <View style={styles.trainingRow}>
+                <Text style={styles.trainingLabel}>Focus</Text>
+                <Text style={styles.trainingValue}>{training.focusModes.map((m: string) => m.charAt(0).toUpperCase() + m.slice(1)).join(", ")}</Text>
+              </View>
+            )}
+            {training.avgDurationMinutes != null && training.avgDurationMinutes > 0 && (
               <View style={styles.trainingRow}>
                 <Text style={styles.trainingLabel}>Avg. Duration</Text>
-                <Text style={styles.trainingValue}>{avgDuration} min</Text>
+                <Text style={styles.trainingValue}>{training.avgDurationMinutes} min</Text>
               </View>
             )}
           </View>
