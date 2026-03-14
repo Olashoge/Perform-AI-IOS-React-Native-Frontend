@@ -86,6 +86,7 @@ export default function Step4Screen() {
         dietStyles: state.mealForm.dietStyles.length > 0 ? state.mealForm.dietStyles : ["No Preference"],
         foodsToAvoid: state.mealForm.foodsToAvoid,
         allergies: state.mealForm.allergies || undefined,
+        mealNotes: state.mealForm.mealNotes || undefined,
         mealsPerDay: state.mealForm.mealsPerDay,
         mealSlots: mealSlots && mealSlots.length > 0 ? mealSlots : undefined,
         prepStyle: state.mealForm.prepStyle,
@@ -111,6 +112,7 @@ export default function Step4Screen() {
         sessionLength: sessionLen,
         experienceLevel: state.workoutForm.experienceLevel,
         limitations: state.workoutForm.limitations || undefined,
+        workoutNotes: state.workoutForm.workoutNotes || undefined,
         equipmentAvailable: state.workoutForm.equipmentAvailable,
       };
     }

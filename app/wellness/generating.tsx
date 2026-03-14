@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,19 @@ import { useGenerationStatus } from "@/lib/api-hooks";
 import { useWellness } from "@/lib/wellness-context";
 
 const WEB_TOP_INSET = 67;
+
+const WELLNESS_TIPS = [
+  "Consistency beats intensity — small daily actions compound into big results.",
+  "Protein at every meal supports muscle repair and keeps you fuller, longer.",
+  "Rest days are when your muscles actually grow. Recovery is part of the plan.",
+  "Staying hydrated improves focus, energy, and workout performance.",
+  "A good night's sleep is one of the most powerful tools for fat loss and muscle gain.",
+  "Progress photos and measurements tell a better story than the scale alone.",
+  "Meal prep on Sundays can save hours and hundreds of calories through the week.",
+  "Compound movements like squats and deadlifts burn more calories than isolation exercises.",
+  "Eating mindfully — without screens — helps you recognize fullness cues faster.",
+  "Even a 10-minute walk after meals can significantly improve blood sugar regulation.",
+];
 
 const STAGES: { key: keyof GenerationStages; label: string }[] = [
   { key: "TRAINING", label: "Training Plan" },
@@ -67,6 +80,8 @@ export default function GeneratingScreen() {
   const [enabled, setEnabled] = useState(true);
   const [visualStage, setVisualStage] = useState(0);
   const [startTime] = useState(Date.now());
+  const [tipIndex, setTipIndex] = useState(() => Math.floor(Math.random() * WELLNESS_TIPS.length));
+  const tipRef = useRef(tipIndex);
 
   const { data } = useGenerationStatus(goalPlanId ?? null, enabled);
 
@@ -78,6 +93,14 @@ export default function GeneratingScreen() {
     }, 1000);
     return () => clearInterval(interval);
   }, [startTime]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      tipRef.current = (tipRef.current + 1) % WELLNESS_TIPS.length;
+      setTipIndex(tipRef.current);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (data?.status === "ready") {
@@ -179,6 +202,11 @@ export default function GeneratingScreen() {
               );
             })}
           </View>
+
+          <View style={styles.tipCard}>
+            <Text style={styles.tipLabel}>WELLNESS TIP</Text>
+            <Text style={styles.tipText}>{WELLNESS_TIPS[tipIndex]}</Text>
+          </View>
         </View>
       )}
     </View>
@@ -238,6 +266,28 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     fontSize: 11,
     fontFamily: "Inter_400Regular",
     color: Colors.textSecondary,
+  },
+  tipCard: {
+    width: "100%",
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    padding: 16,
+    marginTop: 16,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.primary,
+  },
+  tipLabel: {
+    fontSize: 9,
+    fontFamily: "Inter_700Bold",
+    color: Colors.primary,
+    letterSpacing: 0.8,
+    marginBottom: 6,
+  },
+  tipText: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textSecondary,
+    lineHeight: 20,
   },
   errorIconWrap: {
     marginBottom: 24,

@@ -309,7 +309,7 @@ const defaultFormData: ProfileData = {
   religiousRestrictions: [],
   allergiesIntolerances: [],
   foodsToAvoid: [],
-  foodsToAvoidNotes: "",
+  mealNotes: "",
   appetiteLevel: "",
   spicePreference: "",
   bodyContext: "",
@@ -317,6 +317,7 @@ const defaultFormData: ProfileData = {
   workoutLocationDefault: "",
   equipmentAvailable: [],
   equipmentOtherNotes: "",
+  workoutNotes: "",
 };
 
 function cmToFeetInches(cm: number): { feet: number; inches: number } {
@@ -360,6 +361,10 @@ export default function ProfileScreen() {
   useEffect(() => {
     if (profile.data && !loaded) {
       const d = { ...defaultFormData, ...profile.data };
+      // Migrate legacy foodsToAvoidNotes → mealNotes
+      if (!d.mealNotes && (profile.data as any).foodsToAvoidNotes) {
+        d.mealNotes = (profile.data as any).foodsToAvoidNotes;
+      }
       setFormData(d);
       setLoaded(true);
       const imp = d.unitSystem === "imperial";
@@ -784,6 +789,17 @@ export default function ProfileScreen() {
               placeholder="Any other equipment or notes not listed above..."
             />
           </FormField>
+
+          <FormField label="Workout Notes">
+            <TextInput
+              style={[styles.textInput, styles.multilineInput]}
+              value={formData.workoutNotes}
+              onChangeText={(t) => updateField("workoutNotes", t)}
+              multiline
+              placeholderTextColor={Colors.textTertiary}
+              placeholder="Any additional workout preferences or context for the AI..."
+            />
+          </FormField>
         </View>
 
         <SectionHeader icon="nutrition" title="NUTRITION & LIFESTYLE" />
@@ -830,14 +846,14 @@ export default function ProfileScreen() {
             </View>
           </FormField>
 
-          <FormField label="Foods to Avoid Notes">
+          <FormField label="Meal Notes">
             <TextInput
               style={[styles.textInput, styles.multilineInput]}
-              value={formData.foodsToAvoidNotes}
-              onChangeText={(t) => updateField("foodsToAvoidNotes", t)}
+              value={formData.mealNotes}
+              onChangeText={(t) => updateField("mealNotes", t)}
               multiline
               placeholderTextColor={Colors.textTertiary}
-              placeholder="e.g. allergic to tree nuts but not peanuts"
+              placeholder="Any additional meal preferences, cultural context, or notes for the AI..."
             />
           </FormField>
 
