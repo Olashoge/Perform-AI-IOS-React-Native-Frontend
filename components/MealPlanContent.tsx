@@ -22,6 +22,9 @@ import {
   useGroceryList,
   useToggleGroceryOwned,
   useRegenerateGroceryList,
+  useGoalPlanGroceryList,
+  useGoalPlanToggleGroceryOwned,
+  useGoalPlanRegenerateGroceryList,
   GrocerySection,
 } from "@/lib/api-hooks";
 
@@ -460,18 +463,30 @@ export function getDayOfWeek(startDate: string | undefined, dayIndex: number): s
 
 interface MealPlanContentProps {
   planId: string;
+  goalPlanId?: string;
   planData?: any;
   hideTitle?: boolean;
   hideGroceryTab?: boolean;
 }
 
-export default function MealPlanContent({ planId, planData, hideTitle, hideGroceryTab }: MealPlanContentProps) {
+export default function MealPlanContent({ planId, goalPlanId, planData, hideTitle, hideGroceryTab }: MealPlanContentProps) {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const plan = planData;
-  const { data: groceryData, isLoading: groceryLoading } = useGroceryList(planId ?? null);
-  const toggleOwnedMutation = useToggleGroceryOwned(planId ?? null);
-  const regenerateMutation = useRegenerateGroceryList(planId ?? null);
+
+  // When a goalPlanId is provided (Wellness Plan flow), use the goal-plan grocery routes.
+  // Otherwise fall back to the legacy meal-plan routes for standalone plans.
+  const gpGrocery = useGoalPlanGroceryList(goalPlanId ?? null);
+  const mpGrocery = useGroceryList(goalPlanId ? null : (planId ?? null));
+  const { data: groceryData, isLoading: groceryLoading } = goalPlanId ? gpGrocery : mpGrocery;
+
+  const gpToggle = useGoalPlanToggleGroceryOwned(goalPlanId ?? null);
+  const mpToggle = useToggleGroceryOwned(goalPlanId ? null : (planId ?? null));
+  const toggleOwnedMutation = goalPlanId ? gpToggle : mpToggle;
+
+  const gpRegenerate = useGoalPlanRegenerateGroceryList(goalPlanId ?? null);
+  const mpRegenerate = useRegenerateGroceryList(goalPlanId ? null : (planId ?? null));
+  const regenerateMutation = goalPlanId ? gpRegenerate : mpRegenerate;
   const [activeTab, setActiveTab] = useState<"meals" | "grocery">("meals");
   const [expandedDays, setExpandedDays] = useState<Record<number, boolean>>({ 0: true });
 

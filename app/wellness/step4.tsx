@@ -125,7 +125,7 @@ export default function Step4Screen() {
       if (!planId) {
         throw new Error("No goalPlanId returned from server");
       }
-      router.replace(`/wellness/generating?goalPlanId=${planId}` as any);
+      router.replace(`/wellness/generating?goalPlanId=${planId}&planType=${state.planType}` as any);
     } catch (err: any) {
       console.error("[Wellness] Generation error:", err?.response?.status, JSON.stringify(err?.response?.data));
       const msg = err?.response?.data?.error
