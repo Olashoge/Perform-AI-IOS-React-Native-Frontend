@@ -106,7 +106,7 @@ export default function GeneratingScreen() {
     if (data?.status === "ready") {
       setEnabled(false);
       resetWizard();
-      router.replace(`/wellness/ready?goalPlanId=${goalPlanId}`);
+      router.replace(`/wellness/ready?goalPlanId=${goalPlanId}&planType=${urlPlanType || data?.planType || ""}` as any);
     } else if (data?.status === "failed") {
       setEnabled(false);
     }

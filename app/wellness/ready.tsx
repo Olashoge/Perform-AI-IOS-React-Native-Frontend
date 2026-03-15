@@ -21,8 +21,9 @@ export default function ReadyScreen() {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
-  const { goalPlanId } = useLocalSearchParams<{ goalPlanId: string }>();
+  const { goalPlanId, planType: urlPlanType } = useLocalSearchParams<{ goalPlanId: string; planType: string }>();
   const { data, isLoading } = useGoalPlan(goalPlanId ?? null);
+  const planType = urlPlanType || data?.planType;
   const topInset = Platform.OS === "web" ? WEB_TOP_INSET : insets.top;
 
   return (
@@ -49,27 +50,29 @@ export default function ReadyScreen() {
           />
         )}
 
-        {data && (
+        {(data || planType) && (
           <View style={styles.summaryCard}>
-            {data.planType && (
+            {planType && (
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Plan Type</Text>
                 <Text style={styles.summaryValue}>
-                  {data.planType === "both"
+                  {planType === "both"
                     ? "Meal & Workout"
-                    : data.planType === "meal"
+                    : planType === "meal"
                       ? "Meal Only"
-                      : "Workout Only"}
+                      : planType === "workout"
+                        ? "Workout Only"
+                        : planType}
                 </Text>
               </View>
             )}
-            {data.startDate && (
+            {data?.startDate && (
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Start Date</Text>
                 <Text style={styles.summaryValue}>{data.startDate}</Text>
               </View>
             )}
-            {(data.planType === "meal" || data.planType === "both") && data.mealPlan && (
+            {(planType === "meal" || planType === "both") && data?.mealPlan && (
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Meal Plan</Text>
                 <View style={styles.badge}>
@@ -79,7 +82,7 @@ export default function ReadyScreen() {
                 </View>
               </View>
             )}
-            {(data.planType === "workout" || data.planType === "both") && data.workoutPlan && (
+            {(planType === "workout" || planType === "both") && data?.workoutPlan && (
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Workout Plan</Text>
                 <View style={styles.badge}>

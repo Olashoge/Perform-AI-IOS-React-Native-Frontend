@@ -121,13 +121,13 @@ function OverviewTab({ plan, Colors }: { plan: any; Colors: ThemeColors }) {
   const planName = identity?.title ?? "Wellness Plan";
   const status = identity?.status ?? "active";
   const primaryGoal = identity?.goalType ?? null;
-  const planType = plan?.planType || plan?.plan_type || identity?.planType || "both";
+  const planType = plan?.planType || plan?.plan_type || identity?.planType || null;
   const pace = identity?.pace ?? null;
   const startDate = identity?.startDate ?? null;
   const endDate = identity?.endDate ?? null;
 
-  const showMeals = planType === "meal" || planType === "both";
-  const showWorkouts = planType === "workout" || planType === "both";
+  const showMeals = planType === "meal" || planType === "both" || planType === null;
+  const showWorkouts = planType === "workout" || planType === "both" || planType === null;
 
   return (
     <View style={styles.overviewContainer}>
@@ -149,7 +149,7 @@ function OverviewTab({ plan, Colors }: { plan: any; Colors: ThemeColors }) {
           <View style={styles.metaRow}>
             <Icon name="layers" size={16} color={Colors.textSecondary} />
             <Text style={styles.metaText}>
-              {planType === "both" ? "Meal & Workout" : planType === "meal" ? "Meal Only" : "Workout Only"}
+              {planType === "both" ? "Meal & Workout" : planType === "meal" ? "Meal Only" : planType === "workout" ? "Workout Only" : "Wellness Plan"}
             </Text>
           </View>
           {(startDate || endDate) && (
@@ -342,9 +342,9 @@ export default function WellnessPlanDetailScreen() {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [schedulePicker, setSchedulePicker] = useState({ visible: false, initialDate: "", title: "Schedule Plan" });
 
-  const planType = plan?.planType || plan?.plan_type || "both";
-  const showMeals = planType === "meal" || planType === "both";
-  const showWorkouts = planType === "workout" || planType === "both";
+  const planType = plan?.planType || plan?.plan_type || null;
+  const showMeals = planType === "meal" || planType === "both" || planType === null;
+  const showWorkouts = planType === "workout" || planType === "both" || planType === null;
   const mealPlanId = plan?.mealPlanId || plan?.meal_plan_id;
   const workoutPlanId = plan?.workoutPlanId || plan?.workout_plan_id;
   const startDate = plan?.startDate || plan?.start_date || plan?.planStartDate;
