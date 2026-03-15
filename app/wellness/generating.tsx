@@ -75,7 +75,7 @@ export default function GeneratingScreen() {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
-  const { goalPlanId } = useLocalSearchParams<{ goalPlanId: string }>();
+  const { goalPlanId, planType: urlPlanType } = useLocalSearchParams<{ goalPlanId: string; planType: string }>();
   const { resetWizard } = useWellness();
   const [enabled, setEnabled] = useState(true);
   const [visualStage, setVisualStage] = useState(0);
@@ -114,9 +114,15 @@ export default function GeneratingScreen() {
 
   const isFailed = data?.status === "failed";
 
+  const visibleStages = useMemo(() => {
+    if (urlPlanType === "meal") return STAGES.filter((s) => s.key !== "TRAINING");
+    if (urlPlanType === "workout") return STAGES.filter((s) => s.key !== "NUTRITION");
+    return STAGES;
+  }, [urlPlanType]);
+
   const computedStageStatuses = useMemo(() => {
     const result: Record<string, string> = {};
-    STAGES.forEach((stage, idx) => {
+    visibleStages.forEach((stage, idx) => {
       if (idx < visualStage) {
         result[stage.key] = "DONE";
       } else if (idx === visualStage) {
@@ -126,10 +132,10 @@ export default function GeneratingScreen() {
       }
     });
     if (data?.status === "ready") {
-      STAGES.forEach((stage) => { result[stage.key] = "DONE"; });
+      visibleStages.forEach((stage) => { result[stage.key] = "DONE"; });
     }
     return result;
-  }, [visualStage, data?.status]);
+  }, [visibleStages, visualStage, data?.status]);
 
   const stageStatuses = computedStageStatuses;
   const topInset = Platform.OS === "web" ? WEB_TOP_INSET : insets.top;
@@ -180,7 +186,7 @@ export default function GeneratingScreen() {
           </Text>
 
           <View style={styles.stagesContainer}>
-            {STAGES.map((stage) => {
+            {visibleStages.map((stage) => {
               const rawStatus = stageStatuses?.[stage.key] ?? "pending";
               const normalized = normalizeStageStatus(rawStatus);
               const icon = getStageIcon(rawStatus, Colors);

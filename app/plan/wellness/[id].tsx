@@ -121,7 +121,7 @@ function OverviewTab({ plan, Colors }: { plan: any; Colors: ThemeColors }) {
   const planName = identity?.title ?? "Wellness Plan";
   const status = identity?.status ?? "active";
   const primaryGoal = identity?.goalType ?? null;
-  const planType = identity?.planType ?? "both";
+  const planType = plan?.planType || plan?.plan_type || identity?.planType || "both";
   const pace = identity?.pace ?? null;
   const startDate = identity?.startDate ?? null;
   const endDate = identity?.endDate ?? null;
@@ -456,7 +456,7 @@ export default function WellnessPlanDetailScreen() {
       >
         {activeTab === "overview" && <OverviewTab plan={plan} Colors={Colors} />}
         {activeTab === "meals" && mealPlanId && (
-          <MealPlanContent planId={mealPlanId} planData={plan?.mealPlan} hideTitle hideGroceryTab={false} />
+          <MealPlanContent planId={mealPlanId} goalPlanId={plan?._id || plan?.id || id} planData={plan?.mealPlan} hideTitle hideGroceryTab={false} />
         )}
         {activeTab === "meals" && !mealPlanId && (
           <View style={styles.emptyTab}>

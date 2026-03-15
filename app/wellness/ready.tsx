@@ -69,7 +69,7 @@ export default function ReadyScreen() {
                 <Text style={styles.summaryValue}>{data.startDate}</Text>
               </View>
             )}
-            {data.mealPlan && (
+            {(data.planType === "meal" || data.planType === "both") && data.mealPlan && (
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Meal Plan</Text>
                 <View style={styles.badge}>
@@ -79,7 +79,7 @@ export default function ReadyScreen() {
                 </View>
               </View>
             )}
-            {data.workoutPlan && (
+            {(data.planType === "workout" || data.planType === "both") && data.workoutPlan && (
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Workout Plan</Text>
                 <View style={styles.badge}>

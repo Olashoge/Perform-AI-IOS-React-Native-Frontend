@@ -67,7 +67,7 @@ function SegmentedControl({
 export default function SettingsIndexScreen() {
   const insets = useSafeAreaInsets();
   const webTopInset = Platform.OS === "web" ? 67 : 0;
-  const { user, logout, updateUser } = useAuth();
+  const { user, logout, updateUser, refreshUser } = useAuth();
   const { data: profile } = useProfile();
   const queryClient = useQueryClient();
   const { weekStartDay, setWeekStartDay } = useWeekStart();
@@ -131,6 +131,7 @@ export default function SettingsIndexScreen() {
       setProfileSuccess("Profile updated successfully.");
       updateUser({ firstName: trimmedName, email: trimmedEmail.toLowerCase() });
       setAccountEmail(trimmedEmail.toLowerCase());
+      refreshUser().catch(() => {});
     } catch (err: any) {
       const msg = err.response?.data?.message || err.response?.data?.error || "Failed to update profile.";
       setProfileError(msg);

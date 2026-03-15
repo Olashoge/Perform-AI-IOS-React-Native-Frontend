@@ -227,7 +227,7 @@ export default function Step1Screen() {
           styles.scrollContent,
           {
             paddingTop: insets.top + 16 + webTopInset,
-            paddingBottom: insets.bottom + 120,
+            paddingBottom: insets.bottom + 180,
           },
         ]}
         showsVerticalScrollIndicator={false}

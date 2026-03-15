@@ -24,6 +24,7 @@ interface AuthContextValue {
 }
 
 const ONBOARDING_KEY = 'perform_onboarding_complete';
+const FIRST_NAME_KEY = 'perform_user_firstname';
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -92,6 +93,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
           } catch {}
 
+          // Restore cached firstName if the API didn't return one
+          const cachedFirstName = await AsyncStorage.getItem(FIRST_NAME_KEY);
+          if (cachedFirstName) {
+            setUser(prev => (prev && !prev.firstName ? { ...prev, firstName: cachedFirstName } : prev));
+          }
+
           const cached = await AsyncStorage.getItem(ONBOARDING_KEY);
           if (cached === 'true') {
             setNeedsOnboarding(false);
@@ -113,7 +120,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const payload = JSON.parse(atob(token.split('.')[1]));
           if (payload.email) email = payload.email;
         } catch {}
-        setUser(email ? { email } : null);
+        const cachedFirstNameFallback = await AsyncStorage.getItem(FIRST_NAME_KEY);
+        setUser(email ? { email, firstName: cachedFirstNameFallback || undefined } : null);
 
         const cached = await AsyncStorage.getItem(ONBOARDING_KEY);
         if (cached === 'true') {
@@ -177,6 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function logout() {
     await clearTokens();
     await AsyncStorage.removeItem(ONBOARDING_KEY);
+    await AsyncStorage.removeItem(FIRST_NAME_KEY);
     setUser(null);
     setIsAuthenticated(false);
     setNeedsOnboarding(false);
@@ -196,6 +205,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateUser = useCallback((updates: Partial<AuthUser>) => {
     setUser(prev => prev ? { ...prev, ...updates } : updates);
+    if (updates.firstName) {
+      AsyncStorage.setItem(FIRST_NAME_KEY, updates.firstName).catch(() => {});
+    }
   }, []);
 
   const completeOnboarding = useCallback(() => {

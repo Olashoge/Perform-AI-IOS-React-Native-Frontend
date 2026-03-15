@@ -1291,4 +1291,75 @@ export function useRegenerateGroceryList(mealPlanId: string | null) {
   });
 }
 
+// Goal-plan grocery hooks — use these in the Wellness Plan flow
+export function useGoalPlanGroceryList(goalPlanId: string | null) {
+  return useQuery<GroceryListData>({
+    queryKey: ["/api/goal-plans", goalPlanId, "grocery"],
+    queryFn: async () => {
+      const response = await apiClient.get(`/api/goal-plans/${goalPlanId}/grocery`);
+      logApiCall("GET", `/api/goal-plans/${goalPlanId}/grocery`, response.status);
+      return response.data;
+    },
+    enabled: !!goalPlanId,
+  });
+}
+
+export function useGoalPlanToggleGroceryOwned(goalPlanId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ itemKey, isOwned }: { itemKey: string; isOwned: boolean }) => {
+      const response = await apiClient.post(`/api/goal-plans/${goalPlanId}/grocery/owned`, {
+        itemKey,
+        isOwned,
+      });
+      logApiCall("POST", `/api/goal-plans/${goalPlanId}/grocery/owned`, response.status);
+      return response.data;
+    },
+    onMutate: async ({ itemKey, isOwned }) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/goal-plans", goalPlanId, "grocery"] });
+      const previousData = queryClient.getQueryData<GroceryListData>(["/api/goal-plans", goalPlanId, "grocery"]);
+
+      if (previousData) {
+        const newOwned = { ...previousData.ownedItems };
+        const sections = previousData.groceryList?.sections ?? [];
+        for (const section of sections) {
+          for (const item of section.items ?? []) {
+            if (item.key === itemKey) {
+              newOwned[itemKey] = isOwned;
+            }
+          }
+        }
+        queryClient.setQueryData<GroceryListData>(
+          ["/api/goal-plans", goalPlanId, "grocery"],
+          { ...previousData, ownedItems: newOwned }
+        );
+      }
+
+      return { previousData };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/goal-plans", goalPlanId, "grocery"] });
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(["/api/goal-plans", goalPlanId, "grocery"], context.previousData);
+      }
+    },
+  });
+}
+
+export function useGoalPlanRegenerateGroceryList(goalPlanId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const response = await apiClient.post(`/api/goal-plans/${goalPlanId}/grocery/regenerate`);
+      logApiCall("POST", `/api/goal-plans/${goalPlanId}/grocery/regenerate`, response.status);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/goal-plans", goalPlanId, "grocery"] });
+    },
+  });
+}
+
 
