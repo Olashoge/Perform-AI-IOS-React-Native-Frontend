@@ -456,7 +456,7 @@ export default function WellnessPlanDetailScreen() {
       >
         {activeTab === "overview" && <OverviewTab plan={plan} Colors={Colors} />}
         {activeTab === "meals" && mealPlanId && (
-          <MealPlanContent planId={mealPlanId} goalPlanId={plan?._id || plan?.id || id} planData={plan?.mealPlan} hideTitle hideGroceryTab={false} />
+          <MealPlanContent planId={mealPlanId} planData={plan?.mealPlan} hideTitle />
         )}
         {activeTab === "meals" && !mealPlanId && (
           <View style={styles.emptyTab}>
