@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,8 +6,10 @@ import {
   StyleSheet,
   Pressable,
   Platform,
+  RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { Icon } from "@/components/Icon";
 import { router } from "expo-router";
@@ -84,7 +86,19 @@ export default function MoreScreen() {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
   const webTopInset = Platform.OS === "web" ? 67 : 0;
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["profile"] }),
+      queryClient.invalidateQueries({ queryKey: ["week-data"] }),
+      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] }),
+    ]);
+    setRefreshing(false);
+  }, [queryClient]);
 
   const menuSections: { title?: string; items: MenuItem[] }[] = [
     {
@@ -146,6 +160,14 @@ export default function MoreScreen() {
       showsVerticalScrollIndicator={false}
       contentInsetAdjustmentBehavior="never"
       automaticallyAdjustContentInsets={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={Colors.primary}
+          colors={[Colors.primary]}
+        />
+      }
     >
       <Text style={styles.headerTitle}>More</Text>
 

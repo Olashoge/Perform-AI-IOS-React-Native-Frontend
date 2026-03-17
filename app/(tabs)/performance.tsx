@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,8 +7,10 @@ import {
   ActivityIndicator,
   Platform,
   Pressable,
+  RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { Icon } from "@/components/Icon";
 import { useRouter } from "expo-router";
@@ -289,7 +291,19 @@ export default function PerformanceScreen() {
   const insets = useSafeAreaInsets();
   const { data, isLoading } = usePerformanceData();
   const { data: wellnessPlans } = useWellnessPlans();
+  const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
   const webTopInset = Platform.OS === "web" ? 67 : 0;
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["week-data"] }),
+      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] }),
+      queryClient.invalidateQueries({ queryKey: ["wellness-plans"] }),
+    ]);
+    setRefreshing(false);
+  }, [queryClient]);
 
   const activeWellnessPlanId = useMemo(() => {
     if (!wellnessPlans || wellnessPlans.length === 0) return undefined;
@@ -317,6 +331,14 @@ export default function PerformanceScreen() {
       showsVerticalScrollIndicator={false}
       contentInsetAdjustmentBehavior="never"
       automaticallyAdjustContentInsets={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={Colors.primary}
+          colors={[Colors.primary]}
+        />
+      }
     >
       <IdentityBlock
         score={data.currentScore}

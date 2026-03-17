@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,8 +7,10 @@ import {
   Pressable,
   ActivityIndicator,
   Platform,
+  RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useQueryClient } from "@tanstack/react-query";
 import { Icon } from "@/components/Icon";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -133,8 +135,20 @@ export default function CalendarScreen() {
   const { weekStartDay } = useWeekStart();
   const [weekOffset, setWeekOffset] = useState(0);
   const weekStart = useMemo(() => getWeekStartUTC(weekOffset, undefined, weekStartDay), [weekOffset, weekStartDay]);
-  const { data: weekData, isLoading } = useWeekData(weekStart);
+  const { data: weekData, isLoading, refetch } = useWeekData(weekStart);
+  const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
   const safeWeekData = Array.isArray(weekData) ? weekData : [];
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([
+      refetch(),
+      queryClient.invalidateQueries({ queryKey: ["week-data"] }),
+      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] }),
+    ]);
+    setRefreshing(false);
+  }, [refetch, queryClient]);
   const webTopInset = Platform.OS === "web" ? 67 : 0;
 
   const today = new Date().toISOString().split("T")[0];
@@ -193,6 +207,14 @@ export default function CalendarScreen() {
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="never"
         automaticallyAdjustContentInsets={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.primary}
+            colors={[Colors.primary]}
+          />
+        }
       >
         <Text style={styles.headerTitle}>Calendar</Text>
 

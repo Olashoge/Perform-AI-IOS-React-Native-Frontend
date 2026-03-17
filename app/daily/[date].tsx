@@ -10,8 +10,10 @@ import {
   Platform,
   Modal,
   Alert,
+  RefreshControl,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Icon } from "@/components/Icon";
@@ -685,6 +687,7 @@ export default function DailyDetailScreen() {
   const toggleMutation = useToggleCompletion();
   const createDailyMeal = useCreateDailyMeal();
   const createDailyWorkout = useCreateDailyWorkout();
+  const queryClient = useQueryClient();
   const webTopInset = Platform.OS === "web" ? 67 : 0;
 
   const [localToggles, setLocalToggles] = useState<Record<string, boolean>>({});
@@ -693,6 +696,17 @@ export default function DailyDetailScreen() {
   const [generatingWorkout, setGeneratingWorkout] = useState(false);
   const [pollInterval, setPollInterval] = useState<number | null>(null);
   const [generateHandled, setGenerateHandled] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([
+      refetch(),
+      queryClient.invalidateQueries({ queryKey: ["week-data"] }),
+      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] }),
+    ]);
+    setRefreshing(false);
+  }, [refetch, queryClient]);
 
   const dateObj = date ? new Date(date + "T12:00:00") : new Date();
   const dayName = WEEKDAYS[dateObj.getDay()];
@@ -855,6 +869,14 @@ export default function DailyDetailScreen() {
           style={styles.scrollView}
           contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 + (Platform.OS === "web" ? 34 : 0) }]}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={Colors.primary}
+              colors={[Colors.primary]}
+            />
+          }
         >
           {totalItems > 0 && (
             <View style={styles.scoreBar}>
