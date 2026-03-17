@@ -557,7 +557,7 @@ function PlanBottomSheet({
   onClose: () => void;
   canAddMeal: boolean;
   canAddWorkout: boolean;
-  onGenerateMeal: (mealsPerDay: number) => void;
+  onGenerateMeal: () => void;
   onGenerateWorkout: () => void;
   dateLabel: string;
   generatingMeal: boolean;
@@ -565,16 +565,6 @@ function PlanBottomSheet({
 }) {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
-  const [showMealPicker, setShowMealPicker] = useState(false);
-
-  const handleMealTap = () => {
-    setShowMealPicker(true);
-  };
-
-  const handleMealCount = (count: number) => {
-    setShowMealPicker(false);
-    onGenerateMeal(count);
-  };
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -584,12 +574,11 @@ function PlanBottomSheet({
           <Text style={styles.sheetTitle}>Plan This Day</Text>
           <Text style={styles.sheetSubtitle}>{dateLabel}</Text>
 
-          {!showMealPicker ? (
-            <View style={styles.sheetOptions}>
+          <View style={styles.sheetOptions}>
               {canAddMeal && (
                 <Pressable
                   style={({ pressed }) => [styles.sheetOption, pressed && { opacity: 0.8 }]}
-                  onPress={handleMealTap}
+                  onPress={onGenerateMeal}
                   disabled={generatingMeal}
                 >
                   <View style={[styles.sheetIconCircle, { backgroundColor: Colors.accent + "20" }]}>
@@ -647,30 +636,6 @@ function PlanBottomSheet({
                 </View>
               )}
             </View>
-          ) : (
-            <View style={styles.sheetOptions}>
-              <Text style={styles.mealPickerLabel}>How many meals?</Text>
-              <View style={styles.mealPickerRow}>
-                <Pressable
-                  style={({ pressed }) => [styles.mealPickerBtn, pressed && { opacity: 0.8 }]}
-                  onPress={() => handleMealCount(2)}
-                >
-                  <Text style={styles.mealPickerNum}>2</Text>
-                  <Text style={styles.mealPickerBtnLabel}>Lunch & Dinner</Text>
-                </Pressable>
-                <Pressable
-                  style={({ pressed }) => [styles.mealPickerBtn, pressed && { opacity: 0.8 }]}
-                  onPress={() => handleMealCount(3)}
-                >
-                  <Text style={styles.mealPickerNum}>3</Text>
-                  <Text style={styles.mealPickerBtnLabel}>Breakfast, Lunch & Dinner</Text>
-                </Pressable>
-              </View>
-              <Pressable onPress={() => setShowMealPicker(false)} style={styles.mealPickerBack}>
-                <Text style={styles.mealPickerBackText}>Back</Text>
-              </Pressable>
-            </View>
-          )}
         </Pressable>
       </Pressable>
     </Modal>
@@ -790,47 +755,19 @@ export default function DailyDetailScreen() {
     });
   }
 
-  const handleGenerateMeal = useCallback((mealsPerDay: number) => {
+  const handleGenerateMeal = useCallback(() => {
     if (!date) return;
-    setGeneratingMeal(true);
     setShowSheet(false);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-    createDailyMeal.mutate(
-      { date, mealsPerDay },
-      {
-        onSuccess: () => {
-          setPollInterval(2500);
-        },
-        onError: (err: any) => {
-          setGeneratingMeal(false);
-          const msg = err?.response?.data?.error || err?.message || "Failed to generate meal";
-          Alert.alert("Error", msg);
-        },
-      }
-    );
-  }, [date, createDailyMeal]);
+    router.push({ pathname: "/daily-meal-form", params: { date } } as any);
+  }, [date]);
 
   const handleGenerateWorkout = useCallback(() => {
     if (!date) return;
-    setGeneratingWorkout(true);
     setShowSheet(false);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-    createDailyWorkout.mutate(
-      { date },
-      {
-        onSuccess: () => {
-          setPollInterval(2500);
-        },
-        onError: (err: any) => {
-          setGeneratingWorkout(false);
-          const msg = err?.response?.data?.error || err?.message || "Failed to generate workout";
-          Alert.alert("Error", msg);
-        },
-      }
-    );
-  }, [date, createDailyWorkout]);
+    router.push({ pathname: "/daily-workout-form", params: { date } } as any);
+  }, [date]);
 
   function getScoreColor(s: number) {
     if (s >= 50) return Colors.scoreGreen;
