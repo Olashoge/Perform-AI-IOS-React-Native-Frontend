@@ -132,7 +132,11 @@ export default function DailyGeneratingScreen() {
               style={styles.primaryButton}
               onPress={() => {
                 Haptics.impactAsync();
-                router.back();
+                router.replace({
+                  pathname:
+                    type === "meal" ? "/daily-meal-form" : "/daily-workout-form",
+                  params: { date: date ?? "" },
+                } as any);
               }}
             >
               <Text style={styles.primaryButtonText}>Try Again</Text>
