@@ -13,7 +13,7 @@ import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollV
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Icon } from "@/components/Icon";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useCreateDailyWorkout, useProfile, ProfileData } from "@/lib/api-hooks";
@@ -147,6 +147,7 @@ function ProfileSummaryCard({ profile }: { profile: ProfileData }) {
 export default function DailyWorkoutFormScreen() {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
+  const { date: paramDate } = useLocalSearchParams<{ date?: string }>();
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? WEB_TOP_INSET : insets.top;
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
@@ -155,7 +156,7 @@ export default function DailyWorkoutFormScreen() {
   const prefilled = useRef(false);
 
   const today = new Date().toISOString().split("T")[0];
-  const [date, setDate] = useState(today);
+  const [date, setDate] = useState(paramDate || today);
   const [goal, setGoal] = useState("weight_loss");
   const [location, setLocation] = useState("gym");
   const [trainingMode, setTrainingMode] = useState("both");
