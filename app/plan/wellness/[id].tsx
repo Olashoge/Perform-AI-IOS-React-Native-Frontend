@@ -109,6 +109,66 @@ function TabBar({ activeTab, onTabChange, showMeals, showWorkouts, Colors }: { a
   );
 }
 
+function buildPlanSummary(plan: any): { paragraphs: string[] } | null {
+  const planType = plan?.planType || plan?.plan_type || plan?.overview?.identity?.planType || null;
+  const mealSummary = (plan?.mealPlan?.planJson?.summary || "").trim();
+  const workoutSummary = (plan?.workoutPlan?.planJson?.summary || "").trim();
+
+  // Primary source: AI-generated plan summaries embedded in the response
+  if (mealSummary && workoutSummary && mealSummary !== workoutSummary) {
+    return { paragraphs: [mealSummary, workoutSummary] };
+  }
+  if (mealSummary || workoutSummary) {
+    return { paragraphs: [mealSummary || workoutSummary] };
+  }
+
+  // Fallback: derive a concise narrative from plan.overview structured data
+  const overview = plan?.overview;
+  if (!overview) return null;
+
+  const identity = overview.identity;
+  const training = overview.training;
+  const nutrition = overview.nutrition;
+  const weeklyStructure = overview.weeklyStructure;
+  const goalType = identity?.goalType ?? null;
+  const pace = identity?.pace ?? null;
+
+  const hasMealData = (planType === "meal" || planType === "both" || !planType) && !!nutrition?.calories;
+  const hasTrainingData = (planType === "workout" || planType === "both" || !planType) && !!training?.frequencyPerWeek;
+
+  if (!goalType && !hasMealData && !hasTrainingData) return null;
+
+  const goalLabel = goalType ? goalType.replace(/_/g, " ").toLowerCase() : null;
+  const totalDays = weeklyStructure?.totalDays ?? null;
+  const daysStr = totalDays ? `${totalDays}-day ` : "";
+
+  let text = "";
+
+  if (hasMealData && hasTrainingData) {
+    const focusParts = training.focusModes?.slice(0, 2).map((m: string) => m.toLowerCase()) ?? [];
+    const focusStr = focusParts.length > 0 ? ` (${focusParts.join(", ")})` : "";
+    const durationStr = training.avgDurationMinutes ? `, ~${training.avgDurationMinutes} min/session` : "";
+    const restStr = weeklyStructure?.restDays > 0 ? ` with ${weeklyStructure.restDays} rest days` : "";
+    text = `${daysStr}combined plan${goalLabel ? ` targeting ${goalLabel}` : ""}. Training ${training.frequencyPerWeek}x/week${focusStr}${durationStr}${restStr}. Meals calibrated at ${nutrition.calories}/day.`;
+  } else if (hasMealData) {
+    const proteinStr = nutrition.protein_g ? `, ${String(nutrition.protein_g).replace(/g$/i, "")}g protein` : "";
+    text = `${daysStr}meal plan${goalLabel ? ` designed for ${goalLabel}` : ""}. Daily target: ${nutrition.calories}${proteinStr}.`;
+    if (pace) text += ` ${pace.charAt(0).toUpperCase() + pace.slice(1)} pace.`;
+  } else if (hasTrainingData) {
+    const focusParts = training.focusModes?.slice(0, 2).map((m: string) => m.toLowerCase()) ?? [];
+    const focusStr = focusParts.length > 0 ? `, ${focusParts.join(" + ")}` : "";
+    const durationStr = training.avgDurationMinutes ? ` · ~${training.avgDurationMinutes} min` : "";
+    const restStr = weeklyStructure?.restDays > 0 ? ` · ${weeklyStructure.restDays} rest days` : "";
+    text = `${daysStr}training plan${goalLabel ? ` for ${goalLabel}` : ""}. ${training.frequencyPerWeek} sessions/week${focusStr}${durationStr}${restStr}.`;
+    if (pace) text += ` ${pace.charAt(0).toUpperCase() + pace.slice(1)} pace.`;
+  } else if (goalLabel) {
+    text = `This plan is structured around your ${goalLabel} goal.`;
+    if (pace) text += ` ${pace.charAt(0).toUpperCase() + pace.slice(1)} pace.`;
+  }
+
+  return text ? { paragraphs: [text] } : null;
+}
+
 function OverviewTab({ plan, Colors }: { plan: any; Colors: ThemeColors }) {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
 
@@ -128,6 +188,8 @@ function OverviewTab({ plan, Colors }: { plan: any; Colors: ThemeColors }) {
 
   const showMeals = planType === "meal" || planType === "both" || planType === null;
   const showWorkouts = planType === "workout" || planType === "both" || planType === null;
+
+  const planSummary = useMemo(() => buildPlanSummary(plan), [plan]);
 
   return (
     <View style={styles.overviewContainer}>
@@ -168,6 +230,20 @@ function OverviewTab({ plan, Colors }: { plan: any; Colors: ThemeColors }) {
           )}
         </View>
       </View>
+
+      {planSummary && (
+        <View style={styles.planSummaryCard}>
+          <View style={styles.planSummaryHeader}>
+            <Icon name="document" size={16} color={Colors.primary} />
+            <Text style={styles.planSummaryTitle}>About This Plan</Text>
+          </View>
+          {planSummary.paragraphs.map((para, i) => (
+            <Text key={i} style={[styles.planSummaryText, i > 0 && styles.planSummaryTextSpaced]}>
+              {para}
+            </Text>
+          ))}
+        </View>
+      )}
 
       {weeklyStructure && (
         <View style={styles.sectionCard}>
@@ -629,6 +705,37 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     fontSize: 12,
     fontFamily: "Inter_500Medium",
     color: Colors.textSecondary,
+  },
+  planSummaryCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.primary,
+  },
+  planSummaryHeader: {
+    flexDirection: "row" as const,
+    alignItems: "center",
+    gap: 7,
+    marginBottom: 10,
+  },
+  planSummaryTitle: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.primary,
+    textTransform: "uppercase" as const,
+    letterSpacing: 0.6,
+  },
+  planSummaryText: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: Colors.text,
+    lineHeight: 21,
+  },
+  planSummaryTextSpaced: {
+    marginTop: 12,
   },
   sectionCard: {
     backgroundColor: Colors.surface,
