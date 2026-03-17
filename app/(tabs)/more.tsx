@@ -126,6 +126,12 @@ export default function MoreScreen() {
           label: "Wellness Plans",
           onPress: () => router.push("/plans" as any),
         },
+        {
+          icon: "calendar-outline",
+          iconColor: Colors.primary,
+          label: "Daily Plans",
+          onPress: () => router.push("/daily-plans" as any),
+        },
       ],
     },
     {

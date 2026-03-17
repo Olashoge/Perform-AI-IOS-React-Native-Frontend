@@ -952,6 +952,121 @@ export function useDailyGeneratingPoll(date: string, pollEnabled: boolean) {
   });
 }
 
+// ── Daily Plans summary & management ──────────────────────────────────────
+
+export interface DailyMealSummary {
+  date: string;
+  status: string;
+  mealsPerDay?: number;
+  title?: string;
+  name?: string;
+}
+
+export interface DailyWorkoutSummary {
+  date: string;
+  status: string;
+  title?: string;
+  name?: string;
+}
+
+export function useDailyMealsSummary() {
+  return useQuery<DailyMealSummary[]>({
+    queryKey: ["daily-meals-summary"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/daily-meals/summary");
+      logApiCall("GET", "/api/daily-meals/summary", response.status);
+      return Array.isArray(response.data) ? response.data : (response.data?.meals ?? response.data?.data ?? []);
+    },
+    staleTime: 30_000,
+  });
+}
+
+export function useDailyWorkoutsSummary() {
+  return useQuery<DailyWorkoutSummary[]>({
+    queryKey: ["daily-workouts-summary"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/daily-workouts/summary");
+      logApiCall("GET", "/api/daily-workouts/summary", response.status);
+      return Array.isArray(response.data) ? response.data : (response.data?.workouts ?? response.data?.data ?? []);
+    },
+    staleTime: 30_000,
+  });
+}
+
+export function useDeleteDailyMeal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (date: string) => {
+      const response = await apiClient.delete(`/api/daily-meal/${date}`);
+      logApiCall("DELETE", `/api/daily-meal/${date}`, response.status);
+      return response.data;
+    },
+    onSuccess: (_data, date) => {
+      queryClient.invalidateQueries({ queryKey: ["daily-meals-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["day-data", date] });
+      queryClient.invalidateQueries({ queryKey: ["week-data"] });
+      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-coverage"] });
+    },
+  });
+}
+
+export function useDeleteDailyWorkout() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (date: string) => {
+      const response = await apiClient.delete(`/api/daily-workout/${date}`);
+      logApiCall("DELETE", `/api/daily-workout/${date}`, response.status);
+      return response.data;
+    },
+    onSuccess: (_data, date) => {
+      queryClient.invalidateQueries({ queryKey: ["daily-workouts-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["day-data", date] });
+      queryClient.invalidateQueries({ queryKey: ["week-data"] });
+      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-coverage"] });
+    },
+  });
+}
+
+export function useRescheduleDailyMeal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ date, newDate }: { date: string; newDate: string }) => {
+      const response = await apiClient.patch(`/api/daily-meal/${date}/reschedule`, { newDate });
+      logApiCall("PATCH", `/api/daily-meal/${date}/reschedule`, response.status);
+      return response.data;
+    },
+    onSuccess: (_data, { date, newDate }) => {
+      queryClient.invalidateQueries({ queryKey: ["daily-meals-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["day-data", date] });
+      queryClient.invalidateQueries({ queryKey: ["day-data", newDate] });
+      queryClient.invalidateQueries({ queryKey: ["week-data"] });
+      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-coverage"] });
+    },
+  });
+}
+
+export function useRescheduleDailyWorkout() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ date, newDate }: { date: string; newDate: string }) => {
+      const response = await apiClient.patch(`/api/daily-workout/${date}/reschedule`, { newDate });
+      logApiCall("PATCH", `/api/daily-workout/${date}/reschedule`, response.status);
+      return response.data;
+    },
+    onSuccess: (_data, { date, newDate }) => {
+      queryClient.invalidateQueries({ queryKey: ["daily-workouts-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["day-data", date] });
+      queryClient.invalidateQueries({ queryKey: ["day-data", newDate] });
+      queryClient.invalidateQueries({ queryKey: ["week-data"] });
+      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-coverage"] });
+    },
+  });
+}
+
 export function useWellnessPlans() {
   return useQuery({
     queryKey: ["plans:wellness"],
