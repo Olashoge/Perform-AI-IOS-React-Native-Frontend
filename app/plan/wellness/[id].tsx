@@ -109,8 +109,29 @@ function TabBar({ activeTab, onTabChange, showMeals, showWorkouts, Colors }: { a
   );
 }
 
+function derivePlanType(plan: any): "meal" | "workout" | "both" | null {
+  // Sub-plan presence is the most truthful signal — use it when available.
+  // A meal-only plan has mealPlan embedded but no workoutPlan, regardless of
+  // what planType string the API may have incorrectly returned.
+  const hasMealPlan = !!(plan?.mealPlan);
+  const hasWorkoutPlan = !!(plan?.workoutPlan);
+
+  if (hasMealPlan || hasWorkoutPlan) {
+    if (hasMealPlan && hasWorkoutPlan) return "both";
+    if (hasMealPlan) return "meal";
+    return "workout";
+  }
+
+  // No embedded sub-plans yet (plan is still generating or not yet loaded).
+  // Fall back to the canonical planType string, but only accept known values.
+  const raw = plan?.planType || plan?.plan_type || plan?.overview?.identity?.planType;
+  if (raw === "meal" || raw === "workout" || raw === "both") return raw;
+
+  return null;
+}
+
 function buildPlanSummary(plan: any): { paragraphs: string[] } | null {
-  const planType = plan?.planType || plan?.plan_type || plan?.overview?.identity?.planType || null;
+  const planType = derivePlanType(plan);
   const mealSummary = (plan?.mealPlan?.planJson?.summary || "").trim();
   const workoutSummary = (plan?.workoutPlan?.planJson?.summary || "").trim();
 
@@ -181,7 +202,7 @@ function OverviewTab({ plan, Colors }: { plan: any; Colors: ThemeColors }) {
   const planName = identity?.title ?? "Wellness Plan";
   const status = identity?.status ?? "active";
   const primaryGoal = identity?.goalType ?? null;
-  const planType = plan?.planType || plan?.plan_type || identity?.planType || null;
+  const planType = derivePlanType(plan);
   const pace = identity?.pace ?? null;
   const startDate = identity?.startDate ?? null;
   const endDate = identity?.endDate ?? null;
@@ -211,7 +232,7 @@ function OverviewTab({ plan, Colors }: { plan: any; Colors: ThemeColors }) {
           <View style={styles.metaRow}>
             <Icon name="layers" size={16} color={Colors.textSecondary} />
             <Text style={styles.metaText}>
-              {planType === "both" ? "Meal & Workout" : planType === "meal" ? "Meal Only" : planType === "workout" ? "Workout Only" : "Wellness Plan"}
+              {planType === "both" ? "Meal & Workout" : planType === "meal" ? "Meal" : planType === "workout" ? "Workout" : "Wellness Plan"}
             </Text>
           </View>
           {(startDate || endDate) && (
@@ -418,7 +439,7 @@ export default function WellnessPlanDetailScreen() {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [schedulePicker, setSchedulePicker] = useState({ visible: false, initialDate: "", title: "Schedule Plan" });
 
-  const planType = plan?.planType || plan?.plan_type || null;
+  const planType = derivePlanType(plan);
   const showMeals = planType === "meal" || planType === "both" || planType === null;
   const showWorkouts = planType === "workout" || planType === "both" || planType === null;
   const mealPlanId = plan?.mealPlanId || plan?.meal_plan_id;
