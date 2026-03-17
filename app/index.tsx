@@ -1,6 +1,6 @@
-import React, { useMemo } from "react";
+import React, { useRef, useEffect, useMemo } from "react";
 import { Redirect } from "expo-router";
-import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { View, Text, ActivityIndicator, StyleSheet, Animated, Image } from "react-native";
 import { useAuth } from "@/lib/auth-context";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 
@@ -8,12 +8,29 @@ export default function Index() {
   const Colors = useColors();
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const { isAuthenticated, isLoading, needsOnboarding } = useAuth();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 280,
+      useNativeDriver: true,
+    }).start();
+  }, []);
 
   if (isLoading) {
     return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
+      <Animated.View style={[styles.loading, { opacity: fadeAnim }]}>
+        <Image
+          source={require("../assets/images/splash-icon.png")}
+          style={styles.splashIcon}
+          resizeMode="contain"
+        />
+        <View style={styles.brandLockup}>
+          <Text style={styles.brandName}>Perform AI</Text>
+        </View>
+        <ActivityIndicator size="small" color={Colors.primary} style={styles.spinner} />
+      </Animated.View>
     );
   }
 
@@ -34,5 +51,22 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: Colors.background,
+  },
+  splashIcon: {
+    width: 72,
+    height: 72,
+    marginBottom: 16,
+  },
+  brandLockup: {
+    alignItems: "center",
+  },
+  brandName: {
+    fontSize: 28,
+    fontFamily: "Inter_700Bold",
+    color: Colors.text,
+    letterSpacing: -0.5,
+  },
+  spinner: {
+    marginTop: 36,
   },
 });
