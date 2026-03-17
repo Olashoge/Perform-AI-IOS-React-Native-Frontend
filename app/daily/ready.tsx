@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
+import { useQueryClient } from "@tanstack/react-query";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 
 const WEB_TOP_INSET = 67;
@@ -28,11 +29,20 @@ export default function DailyReadyScreen() {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? WEB_TOP_INSET : insets.top;
+  const queryClient = useQueryClient();
 
   const { type, date } = useLocalSearchParams<{
     type: "meal" | "workout";
     date: string;
   }>();
+
+  // Safety-net: ensure day-data is fresh in case the generating screen's
+  // refetch didn't complete before navigation (e.g. very fast tap)
+  useEffect(() => {
+    if (date) {
+      queryClient.refetchQueries({ queryKey: ["day-data", date] });
+    }
+  }, [date, queryClient]);
 
   const typeLabel = type === "meal" ? "Meal" : "Workout";
   const formattedDate = date ? formatDate(date) : "";

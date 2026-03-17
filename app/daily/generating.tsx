@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Icon } from "@/components/Icon";
 import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
+import { useQueryClient } from "@tanstack/react-query";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useDailyGeneratingPoll } from "@/lib/api-hooks";
 
@@ -55,6 +56,7 @@ export default function DailyGeneratingScreen() {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? WEB_TOP_INSET : insets.top;
+  const queryClient = useQueryClient();
 
   const { type, date } = useLocalSearchParams<{
     type: "meal" | "workout";
@@ -96,7 +98,7 @@ export default function DailyGeneratingScreen() {
     return () => clearInterval(interval);
   }, []);
 
-  // Detect ready
+  // Detect ready — flush cache before navigating so day detail is immediately fresh
   useEffect(() => {
     if (!data || navigatedRef.current) return;
     const isReady = type === "meal" ? data.hasDailyMeal : data.hasDailyWorkout;
@@ -104,12 +106,21 @@ export default function DailyGeneratingScreen() {
       navigatedRef.current = true;
       setPollEnabled(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.replace({
-        pathname: "/daily/ready",
-        params: { type: type ?? "meal", date: date ?? "" },
-      } as any);
+      // Invalidate week-level caches so dashboard/calendar surfaces update
+      queryClient.invalidateQueries({ queryKey: ["week-data"] });
+      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-coverage"] });
+      // Force a fresh day-data fetch BEFORE navigating — this ensures the
+      // /daily/[date] screen gets the full meal/workout content and does not
+      // render stale cache (staleTime: 30s would otherwise suppress the refetch).
+      queryClient.refetchQueries({ queryKey: ["day-data", date] }).then(() => {
+        router.replace({
+          pathname: "/daily/ready",
+          params: { type: type ?? "meal", date: date ?? "" },
+        } as any);
+      });
     }
-  }, [data, type, date]);
+  }, [data, type, date, queryClient]);
 
   const typeLabel = type === "meal" ? "Meal" : "Workout";
   const stages = STAGES_BY_TYPE[type ?? "meal"];

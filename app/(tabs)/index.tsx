@@ -7,8 +7,10 @@ import {
   ActivityIndicator,
   Pressable,
   Platform,
+  RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useQueryClient } from "@tanstack/react-query";
 import { Icon } from "@/components/Icon";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -510,7 +512,19 @@ export default function DashboardScreen() {
     [weekOffset, weekStartDay]
   );
 
-  const { data: weekDays, isLoading } = useWeekData(viewedWeekStart);
+  const { data: weekDays, isLoading, refetch } = useWeekData(viewedWeekStart);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([
+      refetch(),
+      queryClient.invalidateQueries({ queryKey: ["week-data"] }),
+      queryClient.invalidateQueries({ queryKey: ["weekly-summary"] }),
+      queryClient.invalidateQueries({ queryKey: ["wellness-plans"] }),
+    ]);
+    setRefreshing(false);
+  }, [refetch, queryClient]);
 
   const isCurrentWeek = viewedWeekStart === currentWeekStart;
 
@@ -573,6 +587,14 @@ export default function DashboardScreen() {
       showsVerticalScrollIndicator={false}
       contentInsetAdjustmentBehavior="never"
       automaticallyAdjustContentInsets={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={Colors.primary}
+          colors={[Colors.primary]}
+        />
+      }
     >
 
       <View style={styles.dashboardHeader}>
