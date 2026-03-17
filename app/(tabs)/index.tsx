@@ -512,6 +512,7 @@ export default function DashboardScreen() {
     [weekOffset, weekStartDay]
   );
 
+  const queryClient = useQueryClient();
   const { data: weekDays, isLoading, refetch } = useWeekData(viewedWeekStart);
   const [refreshing, setRefreshing] = useState(false);
 
