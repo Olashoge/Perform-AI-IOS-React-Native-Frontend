@@ -13,7 +13,7 @@ import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollV
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Icon } from "@/components/Icon";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColors, ThemeColors } from "@/lib/theme-context";
 import { useProfile, useCreateDailyMeal, ProfileData } from "@/lib/api-hooks";
@@ -120,13 +120,14 @@ export default function DailyMealFormScreen() {
   const styles = useMemo(() => createStyles(Colors), [Colors]);
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? WEB_TOP_INSET : insets.top;
+  const { date: paramDate } = useLocalSearchParams<{ date?: string }>();
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
   const { data: profile, isLoading: profileLoading } = useProfile();
   const createDailyMeal = useCreateDailyMeal();
   const prefilled = useRef(false);
 
   const today = new Date().toISOString().split("T")[0];
-  const [date, setDate] = useState(today);
+  const [date, setDate] = useState(paramDate || today);
   const [goal, setGoal] = useState("weight_loss");
   const [mealsPerDay, setMealsPerDay] = useState(3);
   const [mealSlots, setMealSlots] = useState<string[]>([]);

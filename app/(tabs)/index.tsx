@@ -306,11 +306,40 @@ function DayDetailSection({ day, Colors }: { day: DayData | undefined; Colors: T
         </Pressable>
       ))}
 
-      {!hasContent && (
-        <View style={styles.emptyDayCard}>
-          <Icon name="calendar" size={28} color={Colors.textTertiary} />
-          <Text style={styles.emptyDayText}>No meals or workouts scheduled</Text>
-        </View>
+      {!hasMeals && (
+        <Pressable
+          style={({ pressed }) => [styles.addContentCard, pressed && { opacity: 0.7 }]}
+          onPress={() => router.push({ pathname: "/daily-meal-form", params: { date: day.date } } as any)}
+        >
+          <View style={[styles.nutritionIconBg, { backgroundColor: Colors.warning + "20" }]}>
+            <Icon name="restaurant" size={20} color={Colors.warning} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.addContentLabel}>Add Meal</Text>
+            <Text style={styles.addContentSub}>Generate nutrition for this day</Text>
+          </View>
+          <View style={styles.addContentBadge}>
+            <Icon name="add" size={18} color={Colors.primary} />
+          </View>
+        </Pressable>
+      )}
+
+      {!hasWorkouts && (
+        <Pressable
+          style={({ pressed }) => [styles.addContentCard, pressed && { opacity: 0.7 }]}
+          onPress={() => router.push({ pathname: "/daily-workout-form", params: { date: day.date } } as any)}
+        >
+          <View style={[styles.nutritionIconBg, { backgroundColor: Colors.scoreGreen + "20" }]}>
+            <Icon name="barbell" size={20} color={Colors.scoreGreen} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.addContentLabel}>Add Workout</Text>
+            <Text style={styles.addContentSub}>Generate training for this day</Text>
+          </View>
+          <View style={styles.addContentBadge}>
+            <Icon name="add" size={18} color={Colors.primary} />
+          </View>
+        </Pressable>
       )}
 
     </View>
@@ -692,15 +721,36 @@ const createStyles = (Colors: ThemeColors) => StyleSheet.create({
   },
   workoutDesc: { fontSize: 11, fontFamily: "Inter_400Regular", color: Colors.textSecondary, marginTop: 2 },
 
-  emptyDayCard: {
+  addContentCard: {
     backgroundColor: Colors.surface,
     borderRadius: 16,
-    padding: 32,
-    alignItems: "center",
-    gap: 8,
+    padding: 16,
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 12,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
-  emptyDayText: { fontSize: 12, fontFamily: "Inter_400Regular", color: Colors.textSecondary },
+  addContentLabel: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+    color: Colors.text,
+  },
+  addContentSub: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  addContentBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: Colors.primary + "15",
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  },
 
   activePlansSection: { marginBottom: 20 },
   sectionLabel: { fontSize: 9, fontFamily: "Inter_700Bold", color: Colors.textSecondary, letterSpacing: 0.8, marginBottom: 12 },
