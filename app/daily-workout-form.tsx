@@ -311,7 +311,10 @@ export default function DailyWorkoutFormScreen() {
         focusAreas,
         workoutNotes: workoutNotes.trim() || undefined,
       });
-      router.replace({ pathname: "/daily/[date]", params: { date } });
+      router.replace({
+        pathname: "/daily/generating",
+        params: { type: "workout", date },
+      } as any);
     } catch (err: any) {
       setSubmitting(false);
       if (err?.response?.status === 429) {

@@ -933,6 +933,25 @@ export function useDailyCoverage() {
   });
 }
 
+export function useDailyGeneratingPoll(date: string, pollEnabled: boolean) {
+  return useQuery<DayData>({
+    queryKey: ["day-data", date],
+    queryFn: async () => {
+      const url = `/api/day-data/${date}`;
+      try {
+        const response = await apiClient.get(url);
+        logApiCall("GET", url, response.status);
+        return normalizeDayData(response.data, date);
+      } catch (err: any) {
+        logApiCall("GET", url, err.response?.status ?? "ERR");
+        return generateMockDayData(date);
+      }
+    },
+    enabled: !!date,
+    refetchInterval: pollEnabled ? 2000 : false,
+  });
+}
+
 export function useWellnessPlans() {
   return useQuery({
     queryKey: ["plans:wellness"],
