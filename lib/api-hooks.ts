@@ -854,8 +854,29 @@ export function useConflictDates(excludePlanId?: string) {
 export function useCreateDailyMeal() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ date, mealsPerDay }: { date: string; mealsPerDay: number }) => {
-      const response = await apiClient.post("/api/daily-meal", { date, mealsPerDay });
+    mutationFn: async ({
+      date,
+      mealsPerDay,
+      dietStyles,
+      cookingTime,
+      budgetMode,
+      mealNotes,
+    }: {
+      date: string;
+      mealsPerDay: number;
+      dietStyles?: string[];
+      cookingTime?: string;
+      budgetMode?: string;
+      mealNotes?: string;
+    }) => {
+      const response = await apiClient.post("/api/daily-meal", {
+        date,
+        mealsPerDay,
+        dietStyles,
+        cookingTime,
+        budgetMode,
+        mealNotes,
+      });
       logApiCall("POST", "/api/daily-meal", response.status);
       return response.data;
     },
@@ -871,8 +892,23 @@ export function useCreateDailyMeal() {
 export function useCreateDailyWorkout() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ date }: { date: string }) => {
-      const response = await apiClient.post("/api/daily-workout", { date });
+    mutationFn: async ({
+      date,
+      trainingMode,
+      focusAreas,
+      workoutNotes,
+    }: {
+      date: string;
+      trainingMode?: string;
+      focusAreas?: string[];
+      workoutNotes?: string;
+    }) => {
+      const response = await apiClient.post("/api/daily-workout", {
+        date,
+        trainingMode,
+        focusAreas,
+        workoutNotes,
+      });
       logApiCall("POST", "/api/daily-workout", response.status);
       return response.data;
     },
