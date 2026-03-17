@@ -31,6 +31,22 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="daily/generating"
+        options={{
+          headerShown: false,
+          presentation: "card",
+          gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
+        name="daily/ready"
+        options={{
+          headerShown: false,
+          presentation: "card",
+          gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
         name="create"
         options={{
           headerShown: false,
